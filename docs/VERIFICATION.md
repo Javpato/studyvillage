@@ -2,6 +2,14 @@
 
 Current web build version: **1.0.0-dev.1**, PWA cache **studyvillage-93fcc8c5ebe5c207**. This combines Hand navigation with the device-neutral **Modo lápiz / Pen mode / Mode stylet** labels. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
 
+## Pages deployment failure investigation
+
+[Run 42098357886](https://github.com/Javpato/studyvillage/actions/runs/42098357886), commit `3df5aa03c05f99df37c40f509784b225f401fcad`, built and uploaded successfully. The first deployment stayed in `updating_pages`; the retry accepted the same artifact, repeatedly returned an empty status, and reached the 600,000 ms deployment timeout. This is a failure after artifact creation, not a TypeScript/build failure. Both environment deployment records have terminal failure/error states; there is no active review gate to approve.
+
+The downloaded artifact `13448450665` contains 163 regular files totaling 6,126,307 bytes, with no symlinks, hard links or unsafe paths. All files match the local build byte-for-byte. The preceding successful package has the same file count and is only 1,838 bytes smaller. `scripts/verify-pages.mjs` passed against the actual failed artifact in Chromium and WebKit at the `/studyvillage/` path, including full offline-cache installation, saved writing, palm handling, Hand pinch and offline reload. A fixture with a missing cached asset is rejected before any browser or deployment starts.
+
+The publishing workflow previously compiled the app without browser verification. It now runs the unit/server suites and the packaged-app check before artifact upload, and pull requests validate without deploying. This closes a verification gap; it does not claim to repair GitHub's Pages backend. No app input defect was reproduced in these checks, and no further publication was requested during this investigation. The published site was still serving `studyvillage-462ef152b1465a38` when inspected. Similar first-hand reports of accepted artifacts followed by empty-status timeouts exist in [GitHub Community](https://github.com/orgs/community/discussions/212117); those reports support a hosting-side explanation but are not an official root-cause determination.
+
 ## Hand navigation — web update for iPad testing
 
 Both the room board and notebook offer Hand navigation: two fresh fingers pan and pinch in Pencil mode, while pen/mouse dragging in Hand never edits ink. Switching tools cancels unfinished edits and excludes resting contacts; a third contact blocks navigation until all contacts lift. Writing-time zoom suppression, pen priority and native selection suppression are retained. The notebook pinch anchor accounts for centered/rotated paper and responds immediately when reversing at the zoom limits.
