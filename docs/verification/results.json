@@ -135,5 +135,16 @@
     "packagesMatchedWebFiles": 154,
     "archivesVerified": 5,
     "sha256Manifest": "deliverables/SHA256SUMS"
+  },
+  "publicDeployment": {
+    "url": "https://javpato.github.io/studyvillage/",
+    "commit": "96665002dc3aaa71d6274f6561e389e0f64f65b0",
+    "githubActionsPassed": true,
+    "liveWebKitTouchSmoke": true,
+    "notebookInkExportAfterReloadPassed": true,
+    "secureContext": true,
+    "serviceWorkerScope": "/studyvillage/",
+    "reportedPhysicalIPadOS": "17.7.10",
+    "physicalIPadTest": "pending user test"
   }
 }

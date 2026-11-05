@@ -74,7 +74,7 @@ Integration journeys ran on production snapshots; the final change after snapsho
 
 | Artifact | Build | Runtime verification |
 |---|---|---|
-| `app/dist` | Complete static HTTPS/PWA bundle | Chromium and WebKit on Linux; no public deployment |
+| `app/dist` | Complete static HTTPS/PWA bundle | Chromium and WebKit on Linux; public HTTPS client on GitHub Pages |
 | `server/dist/server.mjs` | Node 24 persistent server | Real WebSocket, restart, storage, ACL and local AI protocol-fixture tests |
 | `deliverables/linux-current/StudyVillage-linux-x64.tar.gz` | Current x64 desktop folder/archive | Launched on this Linux machine: sandbox enabled, context isolation, no renderer Node access, WebRTC API, real file save, terminal server profile, SQLite/legacy import and reload passed |
 | `deliverables/windows-current/StudyVillage-windows-x64.zip` | Current unsigned x64 application | Cross-built on Linux; Windows execution not tested |
@@ -100,6 +100,12 @@ Earlier reviewed images: `verification/original-{village,house}.png`, `rebuild-{
 - Shared ink currently uses one text layer per author; shared page organization is limited. Legacy boards/notes coexist with the independent new notebook system. See INK.md and ARCHITECTURE.md for precise boundaries.
 - Direct WebRTC exposes connection timing/metadata to a modified client; no SFU-style concealment is claimed.
 - Main/new French flows were reviewed and catalogue coverage is automated; a native-speaker pass over the inherited catalogue is still useful.
-- Free hosting/signaling have quotas/availability limits. No paid component is mandatory; no public site, account or universal relay service has been provisioned.
+- Free hosting/signaling have quotas/availability limits. No paid component is mandatory; the public HTTPS client is hosted on GitHub Pages; no persistent multiplayer server or universal relay service has been provisioned.
 
 The software is prepared for these short physical checks: install the HTTPS PWA on the actual iPad/iPhone; write with the actual Pencil, rest a palm, rotate and reopen offline; annotate a multipage PDF and share only one page. Install the Android APK and check its available pen, keyboard and permissions. On the Mac/Windows device, check OS compatibility, first launch and file export. Finally join from two different networks, test microphone/camera switching, background/resume and the chosen relay. Report the actual device/OS rather than inferring results from Linux automation.
+
+## Public iPad test link — 5 November 2026
+
+The client is published at **https://javpato.github.io/studyvillage/** through the repository's GitHub Pages workflow. Deployment of commit `9666500` passed. A clean WebKit tablet-sized browser checked HTTP 200, HTTPS secure context, relative sprite/asset URLs under `/studyvillage/`, touch navigation into the house and garden, notebook drawing/save/reload with exported stroke verification, and the correctly scoped service worker. No page errors or failed app-asset requests were observed. This verifies the deployed URL, not physical iPad hardware.
+
+The owner's iPad reports iPadOS **17.7.10**. Its actual Safari/Pencil/media behavior is pending the owner's test; the PDF.js legacy Safari18+ support boundary still applies. The initial deployment probe incorrectly expected a save-status message after reopening an existing notebook; it was corrected to verify the persisted ink through an editable export, which passed.

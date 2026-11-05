@@ -26,7 +26,7 @@ Original paths below are relative to `../hackathon`; replacement paths are in th
 | One endpoint per identity | Up to 3 signed devices share one person/house/scene; selected media endpoint, actual-host authority | Persistent and temporary paired-device tests, unauthorized public-card spoof rejection; encrypted identity browser transfer |
 | `session`, `transport`, `server` | Keep temporary host and persistent Node/SQLite modes; improve reconnect and paired endpoint routing | Real server restart/ACL journeys, temporary protocol tests and available live P2P journeys. No automatic host migration |
 | Organizer-owned Ollama | Shared AI only from authorized packaged desktop temporary host or persistent-server machine | Provider matrix, unavailable/unsupported model, queue/cancel/timeout/schema tests; server fixture works with administrator offline. Actual model inference not yet measured |
-| PWA and wrappers | Versioned offline bundle; isolated Electron profile; separate AndroidID; terminal saved-server shortcut | Offline/startup and waiting-update test; available desktop smoke/builds. No public deployment or native iOS route |
+| PWA and wrappers | Versioned offline bundle; isolated Electron profile; separate AndroidID; terminal saved-server shortcut | Offline/startup and waiting-update test; available desktop smoke/builds. Public HTTPS client on GitHub Pages; no native iOS route |
 | Networking defaults | Default PeerJS/STUN plus explicit HTTPS signaling and authenticated TURN settings | Config validation and available direct/relay tests. No unlimited free infrastructure or guaranteed CGNAT traversal |
 
 ## Furniture additions
