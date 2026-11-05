@@ -2,7 +2,7 @@
 
 ## Browser, iPhone and iPad
 
-Live HTTPS app: **https://javpato.github.io/studyvillage/**. The `Publish StudyVillage` workflow builds and publishes `app/dist` on pushes to `main`; it can also be run manually from GitHub Actions. The site hosts the web client; persistent multiplayer servers remain a separate service.
+Live HTTPS app: **https://javpato.github.io/studyvillage/**. The `Publish StudyVillage` workflow tests, builds and verifies `app/dist` before publishing on pushes to `main`; it can also be run manually from GitHub Actions. Pull requests run the same checks without uploading or deploying a Pages artifact. The site hosts the web client; persistent multiplayer servers remain a separate service.
 
 Run `npm ci` with Node 24, then `npm run dev` and open http://127.0.0.1:3100. `npm run build` produces the standalone `app/dist` bundle, including icons, PDF worker, web manifest and versioned offline cache.
 
@@ -16,10 +16,13 @@ For local production testing:
 
 ```sh
 npm run build
-npx vite preview --config app/vite.config.ts --host 127.0.0.1 --port 3101
-# In another terminal:
-node scripts/verify-pwa.mjs
+npx playwright install --with-deps chromium webkit
+npm run test:pages
 ```
+
+The Pages check serves the built files under `/studyvillage/`, without a development-server fallback. It verifies every precached file, opens the packaged app in Chromium and WebKit, exercises writing and Hand navigation, and checks saved ink after an offline reload. `SV_BUILD_DIR=/path/to/extracted/site npm run test:pages` checks an extracted CI artifact without rebuilding it. `CHROME_PATH` can point to an installed Chromium executable; `SV_BROWSERS=chromium` or `webkit` limits a local diagnostic run. CI always runs both engines.
+
+A successful build is distinct from a successful Pages publication. If `deploy-pages` accepts the artifact but repeatedly returns `updating_pages` or an empty status and times out, inspect the deployment logs and GitHub's service state before retrying. Validate the uploaded artifact with the command above. Increasing the timeout or changing handwriting code does not establish a fix for that failure. After the hosting problem is resolved, start a fresh workflow so the current validation steps run before publication.
 
 An arbitrary HTTP LAN address is not a secure iPad camera/PWA route. Use HTTPS with a certificate trusted by the testing device; `npm run dev:lan` helps prepare local HTTPS. Do not disable browser security to make camera access work.
 
