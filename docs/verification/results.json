@@ -155,14 +155,18 @@
   },
   "publicDeployment": {
     "url": "https://javpato.github.io/studyvillage/",
-    "commit": "96665002dc3aaa71d6274f6561e389e0f64f65b0",
+    "commit": "5ac233f24e7b9f7b1d9a1be83e93737f8748a393",
+    "githubActionsRun": 41943723330,
     "githubActionsPassed": true,
     "liveWebKitTouchSmoke": true,
-    "notebookInkExportAfterReloadPassed": true,
+    "pwaCache": "studyvillage-6fc387a41ee85d65",
+    "pencilModePersisted": true,
+    "syntheticPencilOverPalmAndReloadPassed": true,
     "secureContext": true,
     "serviceWorkerScope": "/studyvillage/",
+    "pageErrors": [],
     "reportedPhysicalIPadOS": "17.7.10",
-    "physicalIPadTest": "pending user test"
+    "physicalIPadTest": "pending owner retest after reported input bugs"
   },
   "ipadPencilCorrection": {
     "productionChromium": 14,
@@ -176,6 +180,21 @@
     "syntheticPointerCapture": true,
     "preservedNativePinchZoom": true,
     "previousPhysicalFeedback": "Palm/Pencil interference, text-selection callout and stale controls after browser zoom",
-    "fixtureCorrections": "Chromium-only fake-camera suite excluded from WebKit; subpixel comparisons allow <0.01 pixel engine geometry rounding."
+    "fixtureCorrections": "Chromium-only fake-camera suite excluded from WebKit; subpixel comparisons allow <0.01 pixel engine geometry rounding.",
+    "packagedLinuxSmoke": true,
+    "packagesMatchedWebFiles": 154,
+    "archivesVerified": 5,
+    "sha256Manifest": "deliverables/SHA256SUMS"
+  },
+  "previousPublicDeployment": {
+    "url": "https://javpato.github.io/studyvillage/",
+    "commit": "96665002dc3aaa71d6274f6561e389e0f64f65b0",
+    "githubActionsPassed": true,
+    "liveWebKitTouchSmoke": true,
+    "notebookInkExportAfterReloadPassed": true,
+    "secureContext": true,
+    "serviceWorkerScope": "/studyvillage/",
+    "reportedPhysicalIPadOS": "17.7.10",
+    "physicalIPadTest": "pending user test"
   }
 }
