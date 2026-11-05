@@ -2,9 +2,11 @@
 
 ## Browser, iPhone and iPad
 
+Live HTTPS app: **https://javpato.github.io/studyvillage/**. The `Publish StudyVillage` workflow builds and publishes `app/dist` on pushes to `main`; it can also be run manually from GitHub Actions. The site hosts the web client; persistent multiplayer servers remain a separate service.
+
 Run `npm ci` with Node 24, then `npm run dev` and open http://127.0.0.1:3100. `npm run build` produces the standalone `app/dist` bundle, including icons, PDF worker, web manifest and versioned offline cache.
 
-Publish **the contents of app/dist** to a static HTTPS host. A free provider address is sufficient: no purchased domain is needed. One option is Cloudflare Pages → Create project → Direct Upload. Choose the build directory and use the assigned `*.pages.dev` address. This task has not published a site or created an external account. The Free plan currently allows 500 builds/month, 20,000 files/site and 25 MiB/file; the app is static and does not need paid Functions. Check [current Pages limits](https://developers.cloudflare.com/pages/platform/limits/) before deploying.
+Publish **the contents of app/dist** to a static HTTPS host. A free provider address is sufficient: no purchased domain is needed. One option is Cloudflare Pages → Create project → Direct Upload. Choose the build directory and use the assigned `*.pages.dev` address. The project uses GitHub Pages at the address above; the following is an alternative hosting route. The Free plan currently allows 500 builds/month, 20,000 files/site and 25 MiB/file; the app is static and does not need paid Functions. Check [current Pages limits](https://developers.cloudflare.com/pages/platform/limits/) before deploying.
 
 On iPhone/iPad, open that HTTPS address in Safari → Share → Add to Home Screen. Finish the initial load online. Locally saved notebooks can then reopen offline at the same address. An update waits for old app windows to close; it does not force reload during writing. Changing host/origin creates a different browser storage space: export an editable backup before moving. Device loss or browser data removal can remove local files.
 

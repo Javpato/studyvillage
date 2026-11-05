@@ -1,5 +1,7 @@
 # StudyVillage
 
+[Open StudyVillage in your browser](https://javpato.github.io/studyvillage/). On iPad, open this link in Safari and use Share → Add to Home Screen.
+
 An independent reconstruction of the original cozy study village, preserving its Canvas world and artwork while rebuilding document editing, synchronization, identity/device handling and several game/tool interfaces. The original `../hackathon` project and data remain separate. This is the current **development candidate**; [verification](docs/VERIFICATION.md) distinguishes working tests, platform builds and remaining validation.
 
 ```sh
