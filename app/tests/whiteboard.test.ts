@@ -38,7 +38,7 @@ describe('whiteboard layers', () => {
 describe('infinite board, eraser and text notes', () => {
   it('keeps points far outside the old 768x432 frame', async () => {
     const { clampBoardPoint } = await import('../../packages/core/src/whiteboard/model');
-    expect(clampBoardPoint({ x: -5000.4, y: 9000.6 })).toEqual({ x: -5000, y: 9001 });
+    expect(clampBoardPoint({ x: -5000.4, y: 9000.6 })).toEqual({ x: -5000.4, y: 9000.6 });
     expect(clampBoardPoint({ x: 1e9, y: Number.NaN })).toEqual({ x: 20000, y: 0 });
   });
 

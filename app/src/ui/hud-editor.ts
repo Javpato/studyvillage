@@ -1,3 +1,4 @@
+import {layoutViewport,subscribeViewport} from '../input/browser-viewport';
 import { msg, t, setDisplayText, setDisplayAttribute, subscribeLanguage, type DisplayText } from '../i18n';
 import { HUD_IDS, currentHudProfile, defaultHud, loadHud, mobileKind, saveHudLayouts, type HudId, type HudLayout, type HudProfile } from '../input/hud-layout';
 export interface HudTarget { id:HudId; label:DisplayText; element:HTMLElement }
@@ -6,17 +7,18 @@ const button=(label:DisplayText,run:()=>void)=>{const b=element('button',label);
 export class MobileHudEditor {
  readonly root=element('dialog');
  private original=new Map<HTMLElement,string>();private profile:HudProfile=currentHudProfile();private layout:HudLayout=loadHud(this.profile);private draft:HudLayout|null=null;
+ private viewportGeometry=JSON.stringify(layoutViewport());
  private drafts=new Map<HudProfile,HudLayout>();
- private selected:HudId='movement';private preview=element('div');private fields=element('div');private error=element('p');private offLanguage:()=>void;
+ private selected:HudId='movement';private preview=element('div');private fields=element('div');private error=element('p');private offLanguage:()=>void;private offViewport:()=>void;
  constructor(private targets:HudTarget[],private release:()=>void,private availability:(mobile:boolean)=>void){
   this.root.className='sv-hud-editor sv-space-dialog';setDisplayAttribute(this.root,'aria-label',msg('Editor de controles'));
   for(const target of targets){this.original.set(target.element,target.element.style.cssText);for(const child of target.element.querySelectorAll<HTMLElement>('button'))this.original.set(child,child.style.cssText);target.element.dataset.hudWidget=target.id;}
-  this.root.addEventListener('cancel',event=>{event.preventDefault();this.cancel();});window.addEventListener('resize',this.resized);this.offLanguage=subscribeLanguage(()=>{if(this.root.open)this.render();});this.apply();
+  this.root.addEventListener('cancel',event=>{event.preventDefault();this.cancel();});this.offViewport=subscribeViewport(this.resized);this.offLanguage=subscribeLanguage(()=>{if(this.root.open)this.render();});this.apply();
  }
  get mobile():boolean{return mobileKind()!==null;}
  open():void{if(!this.mobile)return;this.release();this.profile=currentHudProfile();this.drafts.clear();this.draft=structuredClone(loadHud(this.profile));this.drafts.set(this.profile,this.draft);this.render();this.root.showModal();this.renderPreview();}
  private cancel():void{this.draft=null;this.drafts.clear();this.profile=currentHudProfile();this.layout=loadHud(this.profile);this.root.close();this.release();this.apply();}
- private resized=()=>{this.release();this.layout=loadHud(currentHudProfile());this.apply();if(this.root.open)this.render();else this.profile=currentHudProfile();};
+ private resized=()=>{const geometry=JSON.stringify(layoutViewport()),changed=geometry!==this.viewportGeometry;this.viewportGeometry=geometry;this.release();this.layout=loadHud(currentHudProfile());this.apply();if(this.root.open){if(changed)this.render();}else this.profile=currentHudProfile();};
  private apply():void{
   const mobile=this.mobile;document.documentElement.classList.toggle('sv-mobile-device',mobile);this.availability(mobile);
   for(const [element,style]of this.original)element.style.cssText=style;
@@ -25,13 +27,14 @@ export class MobileHudEditor {
    const value=this.layout[target.id],el=target.element;
    el.style.transition='none';el.style.position='fixed';el.style.margin='0';el.style.right='auto';el.style.bottom='auto';el.style.translate='-50% -50%';el.style.scale=String(value.scale);el.style.transformOrigin='center';
    const rect=el.getBoundingClientRect();const halfW=Math.max(22,rect.width/2),halfH=Math.max(22,rect.height/2);
-   const x=Math.max(halfW+8,Math.min(innerWidth-halfW-8,innerWidth*value.x/100)),y=Math.max(halfH+12,Math.min(innerHeight-halfH-12,innerHeight*value.y/100));
+   const {width,height}=layoutViewport();
+   const x=Math.max(halfW+8,Math.min(width-halfW-8,width*value.x/100)),y=Math.max(halfH+12,Math.min(height-halfH-12,height*value.y/100));
    el.style.left=`clamp(calc(env(safe-area-inset-left, 0px) + ${halfW+8}px), ${x}px, calc(100vw - env(safe-area-inset-right, 0px) - ${halfW+8}px))`;el.style.top=`clamp(calc(env(safe-area-inset-top, 0px) + ${halfH+12}px), ${y}px, calc(100dvh - env(safe-area-inset-bottom, 0px) - ${halfH+12}px))`;
    if(!value.visible)el.style.setProperty('display','none','important');
    if(value.color){el.style.setProperty('background',value.color,'important');for(const child of el.querySelectorAll<HTMLElement>('button'))child.style.setProperty('background',value.color,'important');}
   }
  }
- private previewViewport():{width:number;height:number}{const short=Math.min(innerWidth,innerHeight),long=Math.max(innerWidth,innerHeight);return this.profile.endsWith('portrait')?{width:short,height:long}:{width:long,height:short};}
+ private previewViewport():{width:number;height:number}{const {width,height}=layoutViewport(),short=Math.min(width,height),long=Math.max(width,height);return this.profile.endsWith('portrait')?{width:short,height:long}:{width:long,height:short};}
  private render():void{
   if(!this.draft)return;this.root.replaceChildren(element('h2',msg('Editar controles')),button(msg('Cancelar'),()=>this.cancel()));
   this.root.append(element('p',msg('Arrastra los controles de la vista previa o usa los ajustes. El menú permanece fijo arriba a la derecha.')));
@@ -40,7 +43,7 @@ export class MobileHudEditor {
   orientation.onchange=()=>{const prefix=this.profile.startsWith('tablet')?'tablet':'phone';this.profile=`${prefix}-${orientation.value}` as HudProfile;this.draft=this.drafts.get(this.profile)??structuredClone(loadHud(this.profile));this.drafts.set(this.profile,this.draft);this.render();};
   this.root.append(orientation,element('p',msg('Cada orientación tiene su propio diseño. Guardar conserva ambos; cancelar descarta los cambios.')));
   const viewport=this.previewViewport();
-  this.preview=element('div');this.preview.className='sv-hud-layout-preview';this.preview.classList.toggle('is-phone-portrait',this.profile==='phone-portrait');this.preview.style.aspectRatio=`${viewport.width}/${viewport.height}`;this.preview.style.width=`min(100%, ${Math.max(240,innerHeight*.42)*viewport.width/viewport.height}px)`;this.preview.style.maxHeight='none';this.preview.style.marginInline='auto';
+  this.preview=element('div');this.preview.className='sv-hud-layout-preview';this.preview.classList.toggle('is-phone-portrait',this.profile==='phone-portrait');this.preview.style.aspectRatio=`${viewport.width}/${viewport.height}`;this.preview.style.width=`min(100%, ${Math.max(240,layoutViewport().height*.42)*viewport.width/viewport.height}px)`;this.preview.style.maxHeight='none';this.preview.style.marginInline='auto';
   const menu=element('span',msg('Menú'));menu.className='sv-hud-preview-menu';this.preview.append(menu);
   this.fields=element('div');this.fields.className='sv-hud-layout-fields';
   const select=element('select');setDisplayAttribute(select,'aria-label',msg('Control para editar'));
@@ -72,5 +75,5 @@ export class MobileHudEditor {
    wrapper.onpointerup=event=>{if(wrapper.hasPointerCapture(event.pointerId))wrapper.releasePointerCapture(event.pointerId);this.renderFields();};this.preview.append(wrapper);
   }
  }
- dispose():void{window.removeEventListener('resize',this.resized);this.offLanguage();this.root.close();this.root.remove();}
+ dispose():void{this.offViewport();this.offLanguage();this.root.close();this.root.remove();}
 }

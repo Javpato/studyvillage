@@ -1,0 +1,31 @@
+/* Manipulation removes Safari's double-tap zoom while retaining native pan and pinch zoom. */
+html.sv-browser-gestures,html.sv-browser-gestures body {
+ touch-action:manipulation;
+ -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+ -webkit-tap-highlight-color:transparent;
+}
+html.sv-browser-gestures :is(button,[role=button],summary,label,select) {
+ -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+:where(html.sv-browser-gestures) :where(button,[role=button],summary,label,select) {touch-action:manipulation;}
+/* Drawing/game canvases own their gestures. Component-specific notebook policies can override this. */
+:where(html.sv-browser-gestures canvas) {touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+html.sv-browser-gestures :is(img,svg) {-webkit-user-drag:none;}
+html.sv-browser-gestures :is(input,textarea,[contenteditable]:not([contenteditable="false"]),pre,code,.sv-mailbox-note p,.nb-title,.nb-blocks,.sv-selectable,[data-sv-selectable]),
+html.sv-browser-gestures :is(.nb-title,.nb-blocks,.sv-selectable,[data-sv-selectable]) * {
+ -webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default;
+}
+/* Toolbar actions embedded in a copyable note remain game controls. */
+html.sv-browser-gestures :is(button,[role=button],summary),
+html.sv-browser-gestures :is(button,[role=button],summary) * {
+ -webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none;
+}
+/* Native top-layer dialogs use the currently visible rectangle, including keyboard/zoom pan.
+   Insets return to zero at rest; no transform or inverse scale is accumulated. */
+html.sv-browser-gestures dialog[open] {
+ position:fixed;inset:var(--sv-visual-top,0px) var(--sv-visual-right,0px) var(--sv-visual-bottom,0px) var(--sv-visual-left,0px);
+ margin:auto;box-sizing:border-box;max-width:calc(var(--sv-visual-width,100vw) - 24px);max-height:calc(var(--sv-visual-height,100dvh) - 24px);
+}
+html.sv-browser-gestures .sv-settings-body {max-height:max(80px,calc(var(--sv-visual-height,100dvh) - 240px));}
+html.sv-browser-gestures .sv-phone {inset:var(--sv-visual-top,0px) var(--sv-visual-right,0px) var(--sv-visual-bottom,0px) var(--sv-visual-left,0px);}
+html.sv-browser-gestures .sv-phone-screen {max-height:100%;}

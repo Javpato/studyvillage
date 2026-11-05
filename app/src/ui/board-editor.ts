@@ -59,7 +59,8 @@ export class BoardEditor {
   if(g.kind==='area'){for(const s of selectedByArea(this.ctx.strokes(),g.path,this.lasso))this.selected.add(s.id);this.renderToolbar();this.changed();}
   else if(this.preview){const changes=this.preview;this.preview=null;void this.apply(changes);}return true;
  }
- cancel():void{this.gesture=null;this.preview=null;if(this.editor){this.editor.remove();this.editor=null;}this.editing=null;this.textAt=null;this.changed();}
+ cancelGesture():void{this.gesture=null;this.preview=null;this.changed();}
+ cancel():void{this.cancelGesture();if(this.editor){this.editor.remove();this.editor=null;}this.editing=null;this.textAt=null;}
  deselect():boolean{if(this.editor){this.cancel();return true;}if(this.gesture||this.selected.size){this.cancel();this.selected.clear();this.renderToolbar();return true;}return false;}
  editAt(at:BoardPoint):boolean{const hit=[...this.ctx.strokes()].reverse().find(s=>s.tool==='text'&&!s.deleted&&contains(objectBounds(s),at,10/this.ctx.camera().zoom));if(!hit)return false;this.editText(hit.points[0],hit);return true;}
  editText(at:BoardPoint,existing?:BoardStroke):void{

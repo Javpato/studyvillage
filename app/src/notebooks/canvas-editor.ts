@@ -1,7 +1,7 @@
 import type { InkObject, InkPage, InkSample } from '../../../packages/documents/src/model';
 import { hitsInk } from '../../../packages/documents/src/model';
 import { eraseInk,moveInk,selectedByLasso,type PageRotation,type Point } from '../../../packages/documents/src/editing';
-import { PenInput } from '../../../packages/documents/src/pen';
+import { PenInput,PencilTouchGuard,pointerSamples } from '../../../packages/documents/src/pen';
 import { drawInk,drawPage } from '../../../packages/documents/src/render';
 import { msg,setDisplayAttribute } from '../i18n';
 
@@ -15,6 +15,8 @@ export class InkCanvasEditor {
  readonly preview=document.createElement('canvas');
  private surface=document.createElement('div');
  private pen=new PenInput();
+ private palms=new PencilTouchGuard();
+ private pencilOnly=false;
  private stroke:InkObject|null=null;
  private editing=false;
  private lasso:Point[]=[];
@@ -36,15 +38,17 @@ export class InkCanvasEditor {
   this.canvas.width=this.preview.width=768;this.canvas.height=this.preview.height=1024;this.preview.className='sv-ink-input';setDisplayAttribute(this.preview,'aria-label',msg('Página para escribir'));
   this.paper.append(this.canvas,this.preview);this.surface.append(this.paper);this.root.append(this.surface);this.layout();
   this.preview.addEventListener('pointerdown',e=>this.down(e));this.preview.addEventListener('pointermove',e=>this.move(e));this.preview.addEventListener('pointerup',e=>this.up(e));
-  this.preview.addEventListener('pointercancel',e=>{this.pointers.delete(e.pointerId);if(this.pen.accepts(e))this.cancel();this.touchBase=null;});
-  this.preview.addEventListener('lostpointercapture',e=>{if(this.pen.accepts(e))this.cancel();this.pointers.delete(e.pointerId);});
+  this.preview.addEventListener('pointercancel',e=>this.cancelPointer(e));
+  this.preview.addEventListener('lostpointercapture',e=>this.cancelPointer(e));
   document.addEventListener('visibilitychange',this.hidden);
   window.addEventListener('orientationchange',this.rotated);
  }
  get fingerDrawing(){return this.pen.fingerDrawing;}
+ get pencilMode(){return this.pencilOnly;}
+ set pencilMode(value:boolean){if(value===this.pencilOnly)return;this.cancel();this.pencilOnly=value;this.root.dataset.pencilMode=String(value);}
  get busy(){return this.pen.drawing||this.editing;}
  set fingerDrawing(value:boolean){this.cancel();this.pen.fingerDrawing=value;}
- private point(e:PointerEvent):InkSample{return this.pen.point(e,this.preview.getBoundingClientRect(),768,1024,this.rotation);}
+ private point(e:PointerEvent,rect=this.preview.getBoundingClientRect()):InkSample{return this.pen.point(e,rect,768,1024,this.rotation);}
  private allowed(ink:InkObject):boolean{return this.callbacks.canEdit?.(ink)??true;}
  setZoom(value:number,anchor?:Point):void {
   const old=this.zoom;this.zoom=Math.max(.25,Math.min(4,value));const rect=this.root.getBoundingClientRect();const x=anchor?anchor.x-rect.left:rect.width/2,y=anchor?anchor.y-rect.top:rect.height/2;
@@ -77,12 +81,19 @@ export class InkCanvasEditor {
  }
  private down(e:PointerEvent):void {
   if(e.pointerType==='mouse'&&e.button!==0)return;
-  const page=this.callbacks.page();if(!page)return;
+  let page=this.callbacks.page();if(!page)return;
   if(e.pointerType==='touch'){
-   // A palm can neither steal the pen nor pan the page under it.
-   if(this.pen.activeKind==='pen')return;
-   this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});this.preview.setPointerCapture(e.pointerId);
-   if(!this.pen.fingerDrawing||this.pointers.size>1){if(this.pen.activeKind==='touch')this.cancel(false);this.startTouch();e.preventDefault();return;}
+   e.preventDefault();this.preview.setPointerCapture(e.pointerId);
+   if(!this.palms.touchDown(e,this.pencilOnly))return;
+   this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(this.pencilOnly||!this.pen.fingerDrawing||this.pointers.size>1){if(this.pen.activeKind==='touch')this.cancel(false);this.startTouch();return;}
+  }
+  if(e.pointerType==='pen'){
+   // Safari may deliver a resting hand before Pencil contact. Roll back any finger
+   // edit first, then give the pen ownership without waiting for the hand to lift.
+   if(this.pen.activeKind==='touch'){this.cancel(false);page=this.callbacks.page();if(!page)return;}
+   if(this.pen.drawing)return;
+   this.palms.penDown();this.pointers.clear();this.touchBase=null;
   }
   if(!this.pen.begin(e))return;e.preventDefault();this.preview.setPointerCapture(e.pointerId);
   const point=this.point(e);this.stroke=null;this.moveStart=null;this.moving=[];
@@ -101,6 +112,7 @@ export class InkCanvasEditor {
   this.touchBase=center?{distance:points.length>1?Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y):0,zoom:this.zoom,center,left:this.root.scrollLeft,top:this.root.scrollTop}:null;
  }
  private move(e:PointerEvent):void {
+  if(e.pointerType==='touch'&&this.palms.ignores(e.pointerId)){e.preventDefault();return;}
   if(e.pointerType==='touch'&&this.pointers.has(e.pointerId)){
    this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
    if(this.touchBase&&!this.pen.accepts(e)){
@@ -110,34 +122,43 @@ export class InkCanvasEditor {
     const ratio=this.zoom/base.zoom,rect=this.root.getBoundingClientRect();this.root.scrollLeft=(base.left+base.center.x-rect.left)*ratio-(center.x-rect.left);this.root.scrollTop=(base.top+base.center.y-rect.top)*ratio-(center.y-rect.top);return;
    }
   }
-  if(!this.pen.accepts(e))return;e.preventDefault();const point=this.point(e),page=this.callbacks.page();if(!page)return;
-  if(this.tool==='erase'||this.tool==='partial-erase'){this.erase(point);return;}
+  if(!this.pen.accepts(e))return;e.preventDefault();const page=this.callbacks.page();if(!page)return;
+  const rect=this.preview.getBoundingClientRect(),samples=pointerSamples(e).map(sample=>this.point(sample,rect)),point=samples[samples.length-1];
+  if(this.tool==='erase'||this.tool==='partial-erase'){for(const sample of samples)this.erase(sample,false);this.paint();return;}
   if(this.tool==='select'){
    if(this.moveStart){const delta={x:point.x-this.moveStart.x,y:point.y-this.moveStart.y};const originals=new Map(this.moving.map(i=>[i.id,i]));page.ink=page.ink.map(i=>originals.has(i.id)?moveInk(originals.get(i.id)!,delta.x,delta.y):i);this.paint();}
-   else{this.lasso.push(point);this.paintOverlay();}return;
+   else{this.lasso.push(...samples);this.paintOverlay();}return;
   }
-  if(!this.stroke)return;const events=e.getCoalescedEvents?.();for(const sample of events?.length?events:[e])this.stroke.points.push(this.point(sample));
+  if(!this.stroke)return;this.stroke.points.push(...samples);
   if(this.stroke.tool==='pen'){
    const points=this.stroke.points.slice(Math.max(0,this.lastPreview-1));drawInk(this.preview.getContext('2d')!,{...this.stroke,points});this.lastPreview=this.stroke.points.length;
   }else this.paintOverlay();
  }
- private erase(point:Point):void {
+ private erase(point:Point,paint=true):void {
   const page=this.callbacks.page();if(!page)return;
-  page.ink=page.ink.flatMap(ink=>!this.allowed(ink)?[ink]:this.tool==='partial-erase'?eraseInk(ink,point,this.width+4):hitsInk(ink,point.x,point.y,this.width+5)?[]:[ink]);this.paint();
+  page.ink=page.ink.flatMap(ink=>!this.allowed(ink)?[ink]:this.tool==='partial-erase'?eraseInk(ink,point,this.width+4):hitsInk(ink,point.x,point.y,this.width+5)?[]:[ink]);if(paint)this.paint();
  }
  private up(e:PointerEvent):void {
-  this.pointers.delete(e.pointerId);this.startTouch();
+  if(e.pointerType==='touch'){this.palms.touchEnd(e.pointerId);this.pointers.delete(e.pointerId);this.startTouch();}
+  if(!this.pen.accepts(e))return;
+  // The final point can arrive only on pointer-up, especially on quick light marks.
+  this.move(e);
   if(!this.pen.finish(e.pointerId))return;
+  if(e.pointerType==='pen')this.palms.penUp(e.timeStamp);
   if(this.stroke){this.callbacks.page()?.ink.push(this.stroke);this.stroke=null;}
   if(this.tool==='select'&&!this.moveStart){for(const ink of this.callbacks.page()?.ink??[])if(this.allowed(ink)&&selectedByLasso(ink,this.lasso))this.selection.add(ink.id);}
   this.lasso=[];this.moveStart=null;this.moving=[];
   if(this.editing){this.editing=false;this.callbacks.commit();}this.paint();
  }
+ private cancelPointer(e:PointerEvent):void {
+  if(this.pen.accepts(e)){if(e.pointerType==='pen')this.palms.penUp(e.timeStamp);this.cancel(false);}
+  if(e.pointerType==='touch'){this.palms.touchEnd(e.pointerId);this.pointers.delete(e.pointerId);this.startTouch();}
+ }
  copySelection():void{this.clipboard=(this.callbacks.page()?.ink??[]).filter(i=>this.selection.has(i.id)).map(i=>structuredClone(i));}
  paste():void{const page=this.callbacks.page();if(!page||!this.clipboard.length)return;this.callbacks.before();const copies=this.clipboard.map(i=>({...moveInk(i,20,20),id:crypto.randomUUID()}));page.ink.push(...copies);this.selection=new Set(copies.map(i=>i.id));this.callbacks.commit();this.paint();}
  deleteSelection():void{const page=this.callbacks.page();if(!page||!this.selection.size)return;this.callbacks.before();page.ink=page.ink.filter(i=>!this.selection.has(i.id)||!this.allowed(i));this.selection.clear();this.callbacks.commit();this.paint();}
  cancel(clearTouches=true):void {
-  this.pen.cancel();this.stroke=null;this.lasso=[];this.moveStart=null;this.moving=[];if(clearTouches){this.pointers.clear();this.touchBase=null;}
+  this.pen.cancel();this.stroke=null;this.lasso=[];this.moveStart=null;this.moving=[];if(clearTouches){this.pointers.clear();this.touchBase=null;this.palms.reset();}
   if(this.editing){this.editing=false;this.callbacks.rollback();}this.paint();
  }
  dispose():void{this.cancel();document.removeEventListener('visibilitychange',this.hidden);window.removeEventListener('orientationchange',this.rotated);this.root.remove();}

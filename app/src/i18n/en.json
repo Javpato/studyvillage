@@ -2460,5 +2460,7 @@
   "Solicitud pendiente": "Pending request",
   "Cancelar solicitud": "Cancel request",
   "Solicitud de acceso pendiente": "Access request pending",
-  "Desbloquea tu identidad guardada para abrir el buzón.": "Unlock your saved identity to open the mailbox."
+  "Desbloquea tu identidad guardada para abrir el buzón.": "Unlock your saved identity to open the mailbox.",
+  "Modo Apple Pencil": "Apple Pencil mode",
+  "El lápiz escribe; los dedos mueven y amplían la página.": "The pencil writes; fingers move and zoom the page."
 }

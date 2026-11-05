@@ -1,8 +1,21 @@
 # Verification and handoff — 5 November 2026
 
-Current source/build version: **1.0.0-dev.1**, PWA cache **studyvillage-d7b40679476bb22e**. This is an independently runnable development candidate. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
+Current source/build version: **1.0.0-dev.1**, PWA cache **studyvillage-6fc387a41ee85d65**. This is an independently runnable development candidate. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
 
-## Camera travel, decoration, mailbox and access corrections
+## iPad Pencil, palm and browser gesture corrections
+
+Following the owner's iPadOS **17.7.10** feedback, notebook and room-board input now share an optional Apple Pencil mode: the pen writes immediately, fingers pan/pinch, and palm contacts cannot finish or redirect a pen stroke. Light-pressure starts, coalesced samples and final pointer-up samples are retained. Room-board coordinates now preserve thousandths instead of rounding to whole pixels. The mode persists locally, synchronizes across tabs and participates in full backups.
+
+- App/server TypeScript, web/PWA and server build pass. **439 application tests across 50 files** and **31 server tests across two files** pass. **2,464 ES/EN/FR strings** have matching keys and placeholders.
+- **14 focused production Chromium journeys** cover board/notebook Pencil handling, fingers, cancelled erasure, capture loss, text preservation, persistence, browser selection policy, viewport recovery and Werewolves lobby/start/stop. **10 production WebKit journeys** cover ink and browser gestures; one CDP-only native page-scale test is skipped there and passes in Chromium. These counts aggregate the applicable runs; the five board journeys were rerun on the final bundle after review fixes.
+- Six additional development Chromium game-control journeys verify stop-button phase/authority transitions, including a real temporary two-client village. The control is absent before a round and after it ends, and is only present for the authorized organizer during play.
+- Interface long-press selection/callouts and double-tap zoom are suppressed, while inputs, notes, code and mailbox letters remain intentionally copyable. Native pinch zoom remains enabled outside owned drawing/game surfaces. HUD layout uses stable layout dimensions; dialogs track the visual viewport and recover when zoom/pan settles.
+- Final review separated pointer-gesture cancellation from text-editor cancellation and retained touch capture when a drawing turns into a pinch. Regression cases verify that pending text is saved when starting a second note and that the first finger remains captured.
+- Initial automation exposed test setup issues: a Chromium-camera-only suite was mistakenly requested through WebKit, and a strict coordinate equality ignored WebKit's less-than-0.01-pixel layout rounding. The media suite passes in Chromium; the corrected subpixel assertions pass in both engines. No claim of WebKit fake-camera coverage is made.
+
+The pen tests use deterministic synthetic PointerEvents, with capture stubs (including a capture-release regression), on Linux Chromium/WebKit. They verify application ordering and persistence, not physical Pencil latency or Safari 17's native palm classification. **The updated build needs the owner's physical iPad/Pencil retest.** Close old Safari/PWA windows before reopening the live link to allow the waiting offline update to activate; clearing storage is unnecessary.
+
+## Previous camera travel, decoration, mailbox and access corrections
 
 Ordinary scene changes retain the camera track; private floor corridors now accept decoration. The garden supports actual catalogue dragging and a larger protected yard around the house. Settings is simpler, Diagnostics has Back, furniture can be renamed, and whiteboards rotate as a complete object. Indoor/outdoor mailboxes provide private notes with five active notes per author. Access requests remain pending until a decision or explicit cancellation and cannot be duplicated across devices.
 
@@ -82,7 +95,7 @@ Integration journeys ran on production snapshots; the final change after snapsho
 | `deliverables/macos-current/StudyVillage-macos-arm64.zip` | Current unsigned Apple Silicon app | Cross-built on Linux; Mac execution/Gatekeeper not tested |
 | `deliverables/android-current/StudyVillage-development.apk` | Debug APK, JDK21/SDK36 | APK assembled and bundled assets verified; device installation/media/stylus not tested |
 
-Keep the entire unpacked desktop folder. macOS builds on Linux lack restored code signing/asar integrity enforcement; they are not notarized releases. Electron 45 requires macOS 13+, and PDF.js's supported legacy Safari baseline is 18+; exact owner-device OS versions are unknown. See SETUP.md and its primary-source links. No native iOS app is included or required.
+Keep the entire unpacked desktop folder. macOS builds on Linux lack restored code signing/asar integrity enforcement; they are not notarized releases. Electron 45 requires macOS 13+, and PDF.js's supported legacy Safari baseline is 18+; the owner reports iPadOS 17.7.10; the Mac OS version is unknown. See SETUP.md and its primary-source links. No native iOS app is included or required.
 
 Reproduce packaging after `npm run build` using `node scripts/build-linux.mjs`, `node scripts/package-platform.mjs win32 x64`, and the corresponding `darwin x64`/`darwin arm64` commands. `npm run android:apk` builds/collects Android. `node scripts/verify-packages.mjs` compares bundles; `sh scripts/archive-current.sh` produces the current archives on Linux. Archives replace their prior current version instead of accumulating releases.
 
@@ -108,4 +121,4 @@ The software is prepared for these short physical checks: install the HTTPS PWA 
 
 The client is published at **https://javpato.github.io/studyvillage/** through the repository's GitHub Pages workflow. Deployment of commit `9666500` passed. A clean WebKit tablet-sized browser checked HTTP 200, HTTPS secure context, relative sprite/asset URLs under `/studyvillage/`, touch navigation into the house and garden, notebook drawing/save/reload with exported stroke verification, and the correctly scoped service worker. No page errors or failed app-asset requests were observed. This verifies the deployed URL, not physical iPad hardware.
 
-The owner's iPad reports iPadOS **17.7.10**. Its actual Safari/Pencil/media behavior is pending the owner's test; the PDF.js legacy Safari18+ support boundary still applies. The initial deployment probe incorrectly expected a save-status message after reopening an existing notebook; it was corrected to verify the persisted ink through an editable export, which passed.
+The owner's iPad reports iPadOS **17.7.10**. The owner reported Pencil/palm, long-press selection and zoom-layout problems during the first physical test; the correction above needs a new physical test. Media behavior remains unverified; the PDF.js legacy Safari18+ support boundary still applies. The initial deployment probe incorrectly expected a save-status message after reopening an existing notebook; it was corrected to verify the persisted ink through an editable export, which passed.

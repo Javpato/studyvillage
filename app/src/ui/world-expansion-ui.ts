@@ -1,4 +1,5 @@
 import {browserKeyValue} from '../../../packages/runtime/src/storage/key-value';
+import {ActivityStopControl} from './activity-stop-control';
 import {SpriteTransfer} from '../assets/sprite-transfer';
 import { msg, t, defaultText, setDisplayText, setDisplayAttribute, getLocale, formatDate, subscribeLanguage, type DisplayText } from '../i18n';
 import { GameCameraDock } from './game-camera-ui';
@@ -465,11 +466,12 @@ export class WorldExpansionUIController {
         ? [this.werewolvesRoom, this.werewolvesPanel] as const
         : kind === 'gartic' ? [this.garticRoom, this.garticPanel] as const : [apps.projectsRoom, apps.projectsPanel] as const;
       panel.mount(this.activityOverlay);
+      const stopControl=kind==='werewolves'||kind==='gartic'?new ActivityStopControl(this.activityOverlay,()=>{if(!room.canStop())return;if(kind==='gartic')this.garticBots.cancel();room.stop();}):null;
       // Each room/panel pair shares one view type; TypeScript cannot see that through the union.
-      const offView = (room as SharedRoom<unknown, unknown>).subscribe((view, error) => { (panel as { update(v: unknown, e: string | null): void }).update(view, error);if(kind==='werewolves'){const game=this.werewolvesRoom.current();if(game)this.callbacks.actions.setGameCameraPolicy?.({canSend:game.canBroadcastCamera,canReceive:game.canSeeCameras,audience:game.cameraAudience,epoch:game.cameraPhase});this.cameraDock.policy(game);const current=this.callbacks.getView();if(current)this.cameraDock.update(current);} });
+      const offView = (room as SharedRoom<unknown, unknown>).subscribe((view, error) => { (panel as { update(v: unknown, e: string | null): void }).update(view, error);stopControl?.update((view as {phase?:string}|null)?.phase,room.canStop());if(kind==='werewolves'){const game=this.werewolvesRoom.current();if(game)this.callbacks.actions.setGameCameraPolicy?.({canSend:game.canBroadcastCamera,canReceive:game.canSeeCameras,audience:game.cameraAudience,epoch:game.cameraPhase});this.cameraDock.policy(game);const current=this.callbacks.getView();if(current)this.cameraDock.update(current);} });
       // A language change redraws the open game in place; the round, drafts and drawings stay.
       const offLanguage = subscribeLanguage(() => (panel as { update(v: unknown, e: string | null): void }).update((room as SharedRoom<unknown, unknown>).current(), null));
-      this.activityUnsubscribe = () => { offView(); offLanguage(); };
+      this.activityUnsubscribe = () => { offView(); offLanguage(); stopControl?.dispose(); };
       room.refresh();
       if (kind === 'werewolves' || kind === 'gartic') {
         const joinVoice = document.createElement('button'); joinVoice.className = 'sv-button sv-button-small sv-game-voice';
@@ -479,16 +481,6 @@ export class WorldExpansionUIController {
         this.cameraDock.mount(this.activityOverlay);
         this.callbacks.actions.setCameraActivity(kind);
         const current = this.callbacks.getView(); if (current) this.cameraDock.update(current);
-      }
-      if ((kind === 'werewolves' || kind === 'gartic') && room.canStop()) {
-        const stop = btn(msg('Terminar partida'), 'sv-activity-stop');
-        let armed = false;
-        stop.addEventListener('click', () => {
-          if (!armed) { armed = true; setDisplayText(stop, msg('¿Terminar para todos?')); setTimeout(() => { armed = false; setDisplayText(stop, msg('Terminar partida')); }, 3000); return; }
-          if (kind === 'gartic') this.garticBots.cancel();
-          room.stop(); armed = false; setDisplayText(stop, msg('Terminar partida'));
-        });
-        this.activityOverlay.append(stop);
       }
       return;
     }

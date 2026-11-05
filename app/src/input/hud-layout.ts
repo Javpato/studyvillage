@@ -1,3 +1,4 @@
+import {layoutViewport} from './browser-viewport';
 import { z } from 'zod';
 export const HUD_IDS=['movement','interact','sprint','ptt','microphone','deafen','screen','camera','location'] as const;
 export type HudId=typeof HUD_IDS[number];
@@ -27,8 +28,8 @@ export function saveHudLayouts(layouts:Partial<Record<HudProfile,HudLayout>>):vo
 export function mobileKind(): 'phone'|'tablet'|null {
  const touch=navigator.maxTouchPoints>0||matchMedia('(pointer: coarse)').matches;
  if(!touch)return null;
- const short=Math.min(innerWidth,innerHeight);
+ const viewport=layoutViewport(),short=Math.min(viewport.width,viewport.height);
  if(!/Android|iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent)&&short>1024)return null;
  return short>=600?'tablet':'phone';
 }
-export function currentHudProfile():HudProfile{return `${mobileKind()??'phone'}-${innerWidth>innerHeight?'landscape':'portrait'}`;}
+export function currentHudProfile():HudProfile{const {width,height}=layoutViewport();return `${mobileKind()??'phone'}-${width>height?'landscape':'portrait'}`;}

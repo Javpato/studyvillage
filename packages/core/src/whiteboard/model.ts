@@ -6,7 +6,7 @@ export type BoardUiTool = BoardTool | 'eraser' | 'hand' | 'select';
 export const BOARD_COLORS = ['#315f51', '#df7e6c', '#3d78a2', '#c48b39', '#322f45'] as const;
 
 const EXTENT = LIMITS.boardExtent;
-const clampAxis = (value: number) => Math.round(Math.max(-EXTENT, Math.min(EXTENT, Number.isFinite(value) ? value : 0)));
+const clampAxis = (value: number) => Math.round(Math.max(-EXTENT, Math.min(EXTENT, Number.isFinite(value) ? value : 0)) * 1000) / 1000;
 
 /**
  * The board is unbounded in practice: points are world coordinates kept only

@@ -1,10 +1,10 @@
 {
   "date": "2026-11-05",
   "version": "1.0.0-dev.1",
-  "pwaCache": "studyvillage-d7b40679476bb22e",
+  "pwaCache": "studyvillage-6fc387a41ee85d65",
   "unit": {
-    "app": 427,
-    "files": 48,
+    "app": 439,
+    "files": 50,
     "server": 31,
     "serverFiles": 2,
     "passed": true
@@ -15,7 +15,7 @@
       "en",
       "fr"
     ],
-    "catalogueKeys": 2462,
+    "catalogueKeys": 2464,
     "coveragePassed": true
   },
   "previousRebuildBaseline": {
@@ -134,7 +134,24 @@
     "packagedLinuxSmoke": true,
     "packagesMatchedWebFiles": 154,
     "archivesVerified": 5,
-    "sha256Manifest": "deliverables/SHA256SUMS"
+    "sha256Manifest": "deliverables/SHA256SUMS",
+    "pwaCache": "studyvillage-d7b40679476bb22e",
+    "unit": {
+      "app": 427,
+      "files": 48,
+      "server": 31,
+      "serverFiles": 2,
+      "passed": true
+    },
+    "translations": {
+      "languages": [
+        "es",
+        "en",
+        "fr"
+      ],
+      "catalogueKeys": 2462,
+      "coveragePassed": true
+    }
   },
   "publicDeployment": {
     "url": "https://javpato.github.io/studyvillage/",
@@ -146,5 +163,19 @@
     "serviceWorkerScope": "/studyvillage/",
     "reportedPhysicalIPadOS": "17.7.10",
     "physicalIPadTest": "pending user test"
+  },
+  "ipadPencilCorrection": {
+    "productionChromium": 14,
+    "productionWebKit": 10,
+    "webkitSkippedCdpPageScale": 1,
+    "developmentActivityStopChromium": 6,
+    "finalBoardChromium": 5,
+    "finalBoardWebKit": 5,
+    "reportedIPadOS": "17.7.10",
+    "physicalPencilRetest": "pending owner retest",
+    "syntheticPointerCapture": true,
+    "preservedNativePinchZoom": true,
+    "previousPhysicalFeedback": "Palm/Pencil interference, text-selection callout and stale controls after browser zoom",
+    "fixtureCorrections": "Chromium-only fake-camera suite excluded from WebKit; subpixel comparisons allow <0.01 pixel engine geometry rounding."
   }
 }

@@ -1,3 +1,6 @@
+import {pointerSamples} from '../../../packages/documents/src/pen';
+import {layoutViewport} from '../input/browser-viewport';
+import {getPencilMode,setPencilMode,subscribePencilMode} from '../input/pencil-mode';
 import {loadEraserPreferences,saveEraserPreferences} from '../../../packages/runtime/src/storage/eraser-preferences';
 import { ConnectionPanel } from './connection-ui';
 import { VanityPanel } from './vanity-ui';
@@ -365,6 +368,13 @@ class StudyUI {
   private movePath: { x: number; y: number }[] = [];
   private activeBoardPointers = new Map<number, { clientX: number; clientY: number }>();
   private lastPinchDistance = 0;
+  private lastPinchCenter: {clientX:number;clientY:number}|null=null;
+  private boardPointer: {id:number;kind:string}|null=null;
+  private ignoredBoardTouches=new Set<number>();
+  private boardPenUntil=0;
+  private pencilMode=getPencilMode();
+  private pencilModeInput!: HTMLInputElement;
+  private offPencilMode:(()=>void)|null=null;
   private heading!: HTMLElement;
   private alerts!: HTMLElement;
   private villageCard!: HTMLElement;
@@ -576,6 +586,7 @@ class StudyUI {
   destroy(): void {
     this.speech.dispose(); this.notebooks.dispose(); this.focusClock.dispose();this.jukebox.dispose(); this.headCameras.dispose();
     this.offLanguage?.(); this.offLanguage = null;
+    this.offPencilMode?.();this.offPencilMode=null;this.cancelBoardGesture();
     this.boardEditor?.dispose();
     cancelAnimationFrame(this.raf); this.offAi?.();
     this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();
@@ -1270,6 +1281,7 @@ class StudyUI {
     this.boardCanvas.addEventListener('pointermove', this.onBoardPointerMove);
     this.boardCanvas.addEventListener('pointerup', this.onBoardPointerUp);
     this.boardCanvas.addEventListener('pointercancel', this.onBoardPointerUp);
+    this.boardCanvas.addEventListener('lostpointercapture', this.onBoardPointerUp);
     this.boardCanvas.addEventListener('pointerleave', () => { this.boardCursor = null; });
     this.boardCanvas.addEventListener('wheel', this.onBoardWheel, { passive: false });
     this.boardCanvas.addEventListener('auxclick', (event) => event.preventDefault());
@@ -1300,7 +1312,13 @@ class StudyUI {
       append(group, summary, content);
       return group;
     };
-    append(this.boardAdvancedPanel,
+    this.pencilModeInput=node('input');this.pencilModeInput.type='checkbox';this.pencilModeInput.checked=this.pencilMode;
+    setDisplayAttribute(this.pencilModeInput,'aria-label',msg('Modo Apple Pencil'));this.pencilModeInput.dataset.testid='board-pencil-mode';
+    this.pencilModeInput.onchange=()=>setPencilMode(this.pencilModeInput.checked);
+    const pencilModeLabel=node('label','sv-pencil-mode');pencilModeLabel.append(this.pencilModeInput,node('span','',msg('Modo Apple Pencil')));
+    const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe; los dedos mueven y amplían la página.')));
+    this.offPencilMode=subscribePencilMode(enabled=>{this.pencilMode=enabled;this.pencilModeInput.checked=enabled;this.cancelBoardGesture();});
+    append(this.boardAdvancedPanel,pencilOptions,
       category(msg('Formas'), extraTools),
       category(msg('Trazo y edición'), swatchRow, field(msg('Grosor'), this.boardWidth), eraserOptions, this.boardRedoButton, this.boardClearButton),
       category(msg('Vista'), zoom, hint),
@@ -1714,7 +1732,7 @@ class StudyUI {
     const boardScene = this.pane === 'board' ? this.boardId() : null;
     if (this.pane !== 'board') { this.eraserGesture = null; this.boardErasing = null; }
     if (this.lastBoardScene && this.lastBoardScene !== boardScene) { this.expansion.ollamaGateway.cancel('board'); this.expansion.ollamaGateway.cancel('boardVision'); }
-    if(this.lastBoardScene!==boardScene){this.boardEditor?.cancel();if(!boardScene){this.boardEditor?.deselect();this.actions.selectBoard(null);}}
+    if(this.lastBoardScene!==boardScene){this.cancelBoardGesture();this.boardEditor?.cancel();if(!boardScene){this.boardEditor?.deselect();this.actions.selectBoard(null);}}
     this.lastBoardScene = boardScene;
     if (this.pane !== 'board' && this.boardAdvancedPanel) {
       this.boardAdvancedPanel.hidden = true;
@@ -3174,133 +3192,113 @@ class StudyUI {
     if (!clicked) this.stageTaps.reset();
   };
 
+  /** The pen owns its draft. Other contacts can never finish it or turn it into a pinch. */
+  private cancelBoardGesture(clearTouches=true):void {
+    const id=this.boardPointer?.id;this.boardPointer=null;
+    this.boardDraft=null;this.richBoardDraft=null;this.boardPan=null;this.boardErasing=null;this.eraserGesture=null;
+    this.boardEditor?.cancelGesture();this.lastPinchDistance=0;this.lastPinchCenter=null;
+    if(clearTouches){this.activeBoardPointers.clear();this.ignoredBoardTouches.clear();}
+    if(clearTouches&&id!==undefined&&this.boardCanvas?.hasPointerCapture(id))this.boardCanvas.releasePointerCapture(id);
+    this.lastBoardRenderSig='';this.boardExtraFrames=2;
+  }
+  private captureBoardPointer(event:PointerEvent):void {try{this.boardCanvas.setPointerCapture(event.pointerId);}catch{/* A cancelled native contact may already have ended. */}}
+  private startBoardTouch():void {
+    const points=[...this.activeBoardPointers.values()];
+    this.lastPinchDistance=points.length>1?Math.hypot(points[0].clientX-points[1].clientX,points[0].clientY-points[1].clientY):0;
+    this.lastPinchCenter=points.length>1?{clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2}:null;
+    if(points.length===1&&(this.pencilMode||this.boardTool==='hand')){const [id,point]=[...this.activeBoardPointers][0];this.boardPan={pointerId:id,x:point.clientX,y:point.clientY};}
+  }
   private onBoardPointerDown = (event: PointerEvent): void => {
-    this.activeBoardPointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
-    if (this.activeBoardPointers.size >= 2) {
-      if (this.boardDraft && this.boardDraft.points.length <= 2) {
-        this.boardDraft = null;
-      }
-      this.eraserGesture = null; this.boardErasing = null;
-      const pts = Array.from(this.activeBoardPointers.values());
-      this.lastPinchDistance = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
-      return;
-    }
-    if(this.boardEditor.pointerDown(event,this.boardTool==='select'))return;
-    // Middle button, or the hand tool, pans. Panning never needs permission,
-    // so you can look around a friend's board you are not allowed to edit.
-    if (event.button === 1 || (this.boardTool === 'hand' && event.button === 0)) {
-      this.boardPan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-      this.boardCanvas.setPointerCapture(event.pointerId);
-      event.preventDefault();
-      return;
-    }
-    if (event.button !== 0) return;
-    if (!this.canDrawBoard()) return;
-    const point = clampBoardPoint(this.boardWorldPoint(event));
-    if (this.boardTool === 'eraser') {
-      this.boardErasing = event.pointerId;
-      this.boardCursor = this.canvasPoint(event, this.boardCanvas);
-      this.eraserGesture = new EraserGesture(this.allStrokes(this.boardId()),
-        s => !this.hiddenAuthors.has(s.author) && (s.author === this.view?.identity.fingerprint || this.moderatesBoard()),
-        this.eraserPrefs.mode, this.eraserRadius(), textBox);
-      this.boardCanvas.setPointerCapture(event.pointerId);
-      this.eraseAt(point);
-      event.preventDefault();
-      return;
-    }
-    if (boardAtCapacity(this.allStrokes(this.boardId()), this.boardId())) return;
-    if (this.richBoardTool) {
-      this.richBoardDraft = { kind: this.richBoardTool, start: point, current: point };
-      this.boardCanvas.setPointerCapture(event.pointerId);
-      event.preventDefault();
-      return;
-    }
-    if (this.boardTool === 'text') {
-      event.preventDefault();
-      this.openBoardText(point);
-      return;
-    }
-    const tool = this.boardTool;
-    if (tool === 'hand' || tool === 'select') return;
-    this.boardDraft = { points: [point], tool, color: this.boardColor.value, width: Number(this.boardWidth.value) };
-    this.boardCanvas.setPointerCapture(event.pointerId);
+    const kind=event.pointerType;
+    if(kind==='mouse'&&event.button!==0&&event.button!==1)return;
     event.preventDefault();
+    if(kind==='pen'){
+      if(this.boardPointer?.kind==='pen')return;
+      for(const id of this.activeBoardPointers.keys())this.ignoredBoardTouches.add(id);
+      this.cancelBoardGesture(false);this.activeBoardPointers.clear();
+    }else if(kind==='touch'){
+      if(this.boardPointer?.kind==='pen'||performance.now()<this.boardPenUntil||Math.max(event.width,event.height)>=40){this.ignoredBoardTouches.add(event.pointerId);this.captureBoardPointer(event);return;}
+      this.activeBoardPointers.set(event.pointerId,{clientX:event.clientX,clientY:event.clientY});this.captureBoardPointer(event);
+      if(this.activeBoardPointers.size>1){this.cancelBoardGesture(false);this.startBoardTouch();return;}
+      if(this.pencilMode){this.startBoardTouch();return;}
+    }
+    if(this.boardPointer)return;
+    this.boardPointer={id:event.pointerId,kind};this.captureBoardPointer(event);
+    if(this.boardEditor.pointerDown(event,this.boardTool==='select'))return;
+    if(event.button===1||this.boardTool==='hand'){
+      this.boardPan={pointerId:event.pointerId,x:event.clientX,y:event.clientY};this.captureBoardPointer(event);return;
+    }
+    if(event.button!==0||!this.canDrawBoard())return;
+    const point=clampBoardPoint(this.boardWorldPoint(event));
+    if(this.boardTool==='eraser'){
+      this.boardErasing=event.pointerId;this.boardCursor=this.canvasPoint(event,this.boardCanvas);
+      this.eraserGesture=new EraserGesture(this.allStrokes(this.boardId()),s=>!this.hiddenAuthors.has(s.author)&&(s.author===this.view?.identity.fingerprint||this.moderatesBoard()),this.eraserPrefs.mode,this.eraserRadius(),textBox);
+      this.captureBoardPointer(event);this.eraseAt(point);return;
+    }
+    if(boardAtCapacity(this.allStrokes(this.boardId()),this.boardId()))return;
+    if(this.richBoardTool){this.richBoardDraft={kind:this.richBoardTool,start:point,current:point};this.captureBoardPointer(event);return;}
+    if(this.boardTool==='text'){this.openBoardText(point);return;}
+    const tool=this.boardTool;if(tool==='select')return;
+    this.boardDraft={points:[point],tool,color:this.boardColor.value,width:Number(this.boardWidth.value)};
+    this.captureBoardPointer(event);this.boardExtraFrames=2;
   };
 
   private onBoardPointerMove = (event: PointerEvent): void => {
-    if(this.boardEditor.pointerMove(event))return;
-    if (this.activeBoardPointers.has(event.pointerId)) {
-      this.activeBoardPointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
-    }
-    if (this.activeBoardPointers.size >= 2) {
-      const pts = Array.from(this.activeBoardPointers.values());
-      const dist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
-      const midX = (pts[0].clientX + pts[1].clientX) / 2;
-      const midY = (pts[0].clientY + pts[1].clientY) / 2;
-      const localMid = this.canvasPoint({ clientX: midX, clientY: midY } as MouseEvent, this.boardCanvas);
-
-      if (this.lastPinchDistance > 8 && dist > 8) {
-        const factor = dist / this.lastPinchDistance;
-        this.setBoardCamera(zoomAt(this.boardCamera(), localMid.x, localMid.y, factor));
+    if(this.ignoredBoardTouches.has(event.pointerId))return;
+    if(event.pointerType==='touch'&&this.boardPointer?.kind==='pen'){event.preventDefault();return;}
+    if(this.activeBoardPointers.has(event.pointerId))this.activeBoardPointers.set(event.pointerId,{clientX:event.clientX,clientY:event.clientY});
+    if(event.pointerType==='touch'&&this.activeBoardPointers.size>=2){
+      event.preventDefault();const points=[...this.activeBoardPointers.values()];
+      const distance=Math.hypot(points[0].clientX-points[1].clientX,points[0].clientY-points[1].clientY);
+      const center={clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2};
+      if(this.lastPinchCenter){
+        const scale=768/Math.max(1,this.boardCanvas.getBoundingClientRect().width),anchor=this.canvasPoint(this.lastPinchCenter as MouseEvent,this.boardCanvas);
+        let camera=this.boardCamera();if(this.lastPinchDistance>8&&distance>8)camera=zoomAt(camera,anchor.x,anchor.y,distance/this.lastPinchDistance);
+        this.setBoardCamera(panBy(camera,(center.clientX-this.lastPinchCenter.clientX)*scale,(center.clientY-this.lastPinchCenter.clientY)*scale));
       }
-      this.lastPinchDistance = dist;
-      return;
+      this.lastPinchDistance=distance;this.lastPinchCenter=center;return;
     }
-
-    this.boardCursor = this.canvasPoint(event, this.boardCanvas);
-    if (this.boardPan && event.pointerId === this.boardPan.pointerId) {
-      const scale = 768 / (this.boardCanvas.clientWidth || 768);
-      this.setBoardCamera(panBy(this.boardCamera(), (event.clientX - this.boardPan.x) * scale, (event.clientY - this.boardPan.y) * scale));
-      this.boardPan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-      return;
+    this.boardCursor=this.canvasPoint(event,this.boardCanvas);
+    if(this.boardPan?.pointerId===event.pointerId){
+      event.preventDefault();const scale=768/Math.max(1,this.boardCanvas.getBoundingClientRect().width);
+      this.setBoardCamera(panBy(this.boardCamera(),(event.clientX-this.boardPan.x)*scale,(event.clientY-this.boardPan.y)*scale));
+      this.boardPan={pointerId:event.pointerId,x:event.clientX,y:event.clientY};return;
     }
-    if (this.boardErasing === event.pointerId) { this.eraseAt(clampBoardPoint(this.boardWorldPoint(event))); return; }
-    if (this.richBoardDraft) {
-      this.richBoardDraft.current = clampBoardPoint(this.boardWorldPoint(event));
-      this.boardExtraFrames = 2;
-      return;
+    if(this.boardPointer?.id!==event.pointerId)return;
+    event.preventDefault();if(this.boardEditor.pointerMove(event))return;
+    if(this.boardErasing===event.pointerId){this.eraseAt(clampBoardPoint(this.boardWorldPoint(event)));return;}
+    if(this.richBoardDraft){this.richBoardDraft.current=clampBoardPoint(this.boardWorldPoint(event));this.boardExtraFrames=2;return;}
+    if(!this.boardDraft)return;
+    const rect=this.boardCanvas.getBoundingClientRect(),camera=this.boardCamera();
+    for(const sample of pointerSamples(event)){
+      const point=clampBoardPoint(screenToWorld(camera,(sample.clientX-rect.left)*768/(rect.width||768),(sample.clientY-rect.top)*this.boardHeight/(rect.height||432))),points=this.boardDraft.points;
+      if(this.boardDraft.tool==='pen'){
+        const last=points.at(-1)!;if(points.length<LIMITS.strokePoints&&Math.hypot(point.x-last.x,point.y-last.y)>=.15/this.boardCamera().zoom)points.push(point);
+      }else points[1]=point;
     }
-    if (!this.boardDraft) return;
-    const point = clampBoardPoint(this.boardWorldPoint(event));
-    const points = this.boardDraft.points;
-    if (this.boardDraft.tool === 'pen') {
-      const last = points[points.length - 1];
-      const minStep = 2 / this.boardCamera().zoom;
-      if (points.length < LIMITS.strokePoints && Math.hypot(point.x - last.x, point.y - last.y) >= minStep) points.push(point);
-    } else points[1] = point;
+    this.boardExtraFrames=2;
   };
 
   private onBoardPointerUp = (event: PointerEvent): void => {
+    if(this.ignoredBoardTouches.delete(event.pointerId))return;
+    const owner=this.boardPointer?.id===event.pointerId;
+    if(owner&&event.type==='pointerup')this.onBoardPointerMove(event);
     this.activeBoardPointers.delete(event.pointerId);
-    if(this.boardEditor.pointerUp(event))return;
-    if (this.activeBoardPointers.size < 2) {
-      this.lastPinchDistance = 0;
+    if(!owner){if(this.boardPan?.pointerId===event.pointerId)this.boardPan=null;this.startBoardTouch();return;}
+    if(this.boardPointer?.kind==='pen')this.boardPenUntil=performance.now()+250;
+    this.boardPointer=null;
+    if(event.type!=='pointerup'){this.cancelBoardGesture(false);this.startBoardTouch();return;}
+    if(this.boardEditor.pointerUp(event)){this.startBoardTouch();return;}
+    if(this.boardCanvas.hasPointerCapture(event.pointerId))this.boardCanvas.releasePointerCapture(event.pointerId);
+    if(this.boardPan?.pointerId===event.pointerId){this.boardPan=null;this.startBoardTouch();return;}
+    if(this.boardErasing===event.pointerId){
+      const conflict=this.eraserGesture?.conflicts(this.allStrokes(this.boardId())),changes=this.eraserGesture?.changes()??[];
+      this.boardErasing=null;this.eraserGesture=null;
+      if(conflict)this.notify(t('El dibujo cambió durante el borrado. Vuelve a intentarlo.'));else if(changes.length)void this.boardEditor.apply(changes);
+      this.lastBoardRenderSig='';return;
     }
-    if (this.boardCanvas.hasPointerCapture(event.pointerId)) this.boardCanvas.releasePointerCapture(event.pointerId);
-    if (this.boardPan?.pointerId === event.pointerId) { this.boardPan = null; return; }
-    if (this.boardErasing === event.pointerId) {
-      if (event.type === 'pointerup') this.eraseAt(clampBoardPoint(this.boardWorldPoint(event)));
-      const conflict = this.eraserGesture?.conflicts(this.allStrokes(this.boardId()));
-      const changes = this.eraserGesture?.changes() ?? [];
-      this.boardErasing = null;
-      this.eraserGesture = null;
-      if (conflict) this.notify(t('El dibujo cambió durante el borrado. Vuelve a intentarlo.'));
-      else if (event.type === 'pointerup' && changes.length) void this.boardEditor.apply(changes);
-      this.lastBoardRenderSig = '';
-      return;
-    }
-    if (this.richBoardDraft && this.view) {
-      const rDraft = this.richBoardDraft;
-      this.richBoardDraft = null;
-      this.saveStroke({points:[rDraft.start,rDraft.current],tool:rDraft.kind,color:this.boardColor.value,width:Number(this.boardWidth.value)});
-      this.boardExtraFrames = 3;
-      this.refreshBoardControls();
-      return;
-    }
-    const draft = this.boardDraft;
-    if (!draft) return;
-    this.boardDraft = null;
-    this.saveStroke(draft);
+    if(this.richBoardDraft&&this.view){const draft=this.richBoardDraft;this.richBoardDraft=null;this.saveStroke({points:[draft.start,draft.current],tool:draft.kind,color:this.boardColor.value,width:Number(this.boardWidth.value)});this.boardExtraFrames=3;this.refreshBoardControls();return;}
+    const draft=this.boardDraft;this.boardDraft=null;if(draft)this.saveStroke(draft);
   };
 
   private onBoardWheel = (event: WheelEvent): void => {
@@ -3389,6 +3387,7 @@ class StudyUI {
   };
 
   private onBlur = (): void => {
+    this.cancelBoardGesture();
     this.keys.clear();
     this.touchSprint = false;
     this.dpadKeys.clear();
@@ -3669,17 +3668,18 @@ class StudyUI {
   /** On a phone held upright the scene is zoomed inside the screen window and follows the player. */
   private updatePortraitCamera(): void {
     const canvas = this.stageCanvas, wrap = this.stageWrap;
+    const {width:viewportWidth,height:viewportHeight}=layoutViewport();
     if (!canvas || !wrap) return;
     // Same condition as the portrait rules in game.css.
     const gardenBounds=this.garden.active?this.garden.viewportBounds():null;
     wrap.classList.toggle('sv-garden-stage',!!gardenBounds);
     if(gardenBounds){
       const top=wrap.getBoundingClientRect().top,tray=this.garden.trayBounds();
-      const ppu=Math.max(.1,Math.min((innerWidth-48)/gardenBounds.w,(Math.max(64,tray.top-top-12)-32)/gardenBounds.h,2.5));
+      const ppu=Math.max(.1,Math.min((viewportWidth-48)/gardenBounds.w,(Math.max(64,tray.top-top-12)-32)/gardenBounds.h,2.5));
       wrap.style.setProperty('--garden-width',`${gardenBounds.w*ppu+32}px`);
       wrap.style.setProperty('--garden-height',`${gardenBounds.h*ppu+32}px`);
     }else{wrap.style.removeProperty('--garden-width');wrap.style.removeProperty('--garden-height');}
-    const active = !!gardenBounds || document.documentElement.classList.contains('sv-mobile-device') && innerHeight > innerWidth && innerWidth < 600 && (this.pane === 'world' || this.pane === 'house');
+    const active = !!gardenBounds || document.documentElement.classList.contains('sv-mobile-device') && viewportHeight > viewportWidth && viewportWidth < 600 && (this.pane === 'world' || this.pane === 'house');
     if (!active) {
       if (this.portraitCameraSig) { this.portraitCameraSig = ''; canvas.style.removeProperty('width'); canvas.style.removeProperty('transform'); canvas.style.removeProperty('transform-origin'); }
       return;

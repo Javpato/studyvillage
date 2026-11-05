@@ -1,3 +1,4 @@
+import {layoutViewport,subscribeViewport} from '../input/browser-viewport';
 import {msg,setDisplayText,setDisplayAttribute,subscribeLanguage} from '../i18n';
 import {FocusClockModel,FOCUS_CLOCK_KEY,newFocusClockState,parseFocusClockState,durationFromFields,clockParts,formatClock,type FocusMode} from './focus-clock-model';
 import './study-desk.css';
@@ -7,7 +8,7 @@ const button=(text:string,run:()=>void,cls='sv-desk-button')=>{const b=element('
 export class FocusClock {
  readonly root=element('dialog','sv-desk-dialog sv-focus-clock');
  readonly hud=element('aside','sv-focus-hud');
- private model:FocusClockModel;private timer:ReturnType<typeof setInterval>;private unlanguage:()=>void;
+ private model:FocusClockModel;private timer:ReturnType<typeof setInterval>;private unlanguage:()=>void;private unviewport:()=>void;
  private face=element('output','sv-focus-face');private ring=element('div','sv-focus-dial');private phase=element('span','sv-desk-eyebrow');private status=element('p','sv-focus-status');private error=element('p','sv-desk-error');
  private start=button('Comenzar',()=>this.toggle(),'sv-desk-button sv-desk-primary');private fields:HTMLInputElement[]=[];private modes=new Map<FocusMode,HTMLButtonElement>();private presets=element('div','sv-focus-presets');
  private hudFace=element('span','sv-focus-hud-time');private hudPhase=element('span','sv-focus-hud-mode');private hudPlay=button('',()=>this.toggle(),'sv-desk-icon-button');private switches=new Set<HTMLInputElement>();
@@ -24,7 +25,7 @@ export class FocusClock {
   duration.append(fieldRow);this.error.setAttribute('role','status');setup.append(modes,duration,this.presets,this.error);
   const actions=element('div','sv-focus-actions');actions.append(this.start,button('Reiniciar',()=>{this.model.reset();this.valid=true;this.error.textContent='';this.syncFields();this.save();this.paint();}));setup.append(actions,this.visibilitySwitch());body.append(display,setup);this.root.append(header,body);this.root.addEventListener('close',()=>{if(!this.valid){this.valid=true;this.error.textContent='';this.syncFields();this.paint();}});
   this.buildHud();document.body.append(this.root,this.hud);this.syncFields();this.renderPresets();this.paint();this.placeHud();
-  this.timer=setInterval(()=>{if(this.model.tick())this.save();this.paint();},250);window.addEventListener('resize',this.resize);document.addEventListener('visibilitychange',this.visibility);this.unlanguage=subscribeLanguage(()=>this.paint());
+  this.timer=setInterval(()=>{if(this.model.tick())this.save();this.paint();},250);this.unviewport=subscribeViewport(this.resize);document.addEventListener('visibilitychange',this.visibility);this.unlanguage=subscribeLanguage(()=>this.paint());
  }
  private readFields():void{const value=durationFromFields(this.fields[0].value,this.fields[1].value,this.fields[2].value);this.valid=value!==null;for(const input of this.fields)input.setAttribute('aria-invalid',String(!this.valid));if(value===null)setDisplayText(this.error,msg('Elige entre 1 segundo y 23 horas, 59 minutos y 59 segundos.'));else{this.error.textContent='';this.model.setDuration(value);this.save();}this.paint();}
  private syncFields():void{clockParts(this.model.duration).forEach((value,i)=>{this.fields[i].value=value;this.fields[i].setAttribute('aria-invalid','false');});}
@@ -44,8 +45,8 @@ export class FocusClock {
   const open=button('',()=>this.open(),'sv-focus-hud-open');setDisplayAttribute(open,'aria-label',msg('Abrir reloj de concentración'));open.append(this.hudPhase,this.hudFace);
   const hide=button('×',()=>this.setHudVisible(false),'sv-desk-icon-button');setDisplayAttribute(hide,'aria-label',msg('Ocultar reloj flotante'));this.hud.append(handle,open,this.hudPlay,hide);
  }
- private positionHud(x:number,y:number):void{const width=this.hud.offsetWidth||264,height=this.hud.offsetHeight||66;const maxX=Math.max(12,innerWidth-width-12),maxY=Math.max(12,innerHeight-height-12);const left=Math.min(maxX,Math.max(12,x)),top=Math.min(maxY,Math.max(12,y));this.model.state.position={x:maxX===12?0:(left-12)/(maxX-12),y:maxY===12?0:(top-12)/(maxY-12)};this.hud.style.left=`${left}px`;this.hud.style.top=`${top}px`;}
- private placeHud():void{const width=this.hud.offsetWidth||264,height=this.hud.offsetHeight||66;this.positionHud(12+this.model.state.position.x*Math.max(0,innerWidth-width-24),12+this.model.state.position.y*Math.max(0,innerHeight-height-24));}
+ private positionHud(x:number,y:number):void{const width=this.hud.offsetWidth||264,height=this.hud.offsetHeight||66;const maxX=Math.max(12,layoutViewport().width-width-12),maxY=Math.max(12,layoutViewport().height-height-12);const left=Math.min(maxX,Math.max(12,x)),top=Math.min(maxY,Math.max(12,y));this.model.state.position={x:maxX===12?0:(left-12)/(maxX-12),y:maxY===12?0:(top-12)/(maxY-12)};this.hud.style.left=`${left}px`;this.hud.style.top=`${top}px`;}
+ private placeHud():void{const width=this.hud.offsetWidth||264,height=this.hud.offsetHeight||66;this.positionHud(12+this.model.state.position.x*Math.max(0,layoutViewport().width-width-24),12+this.model.state.position.y*Math.max(0,layoutViewport().height-height-24));}
  private paint():void{
   const {remaining,mode}=this.model.state;this.face.textContent=formatClock(remaining);this.hudFace.textContent=formatClock(remaining);setDisplayText(this.phase,msg(mode==='focus'?'Concentración':'Descanso'));setDisplayText(this.hudPhase,msg(mode==='focus'?'Concentración':'Descanso'));this.root.dataset.mode=mode;this.hud.dataset.running=String(this.model.running);
   this.ring.style.setProperty('--clock-progress',`${Math.max(0,Math.min(1,remaining/this.model.duration))*360}deg`);setDisplayText(this.status,msg(remaining===0?'Tiempo cumplido. Respira y estírate.':this.model.running?'Un paso cada vez.':remaining!==this.model.duration?'En pausa. Continúa cuando quieras.':'Tu siguiente paso empieza aquí.'));
@@ -53,5 +54,5 @@ export class FocusClock {
   for(const [value,b]of this.modes){b.setAttribute('aria-pressed',String(value===mode));b.disabled=this.model.running;}this.hud.hidden=!this.model.visible;this.hudPlay.textContent=this.model.running?'Ⅱ':'▶';setDisplayAttribute(this.hudPlay,'aria-label',msg(this.model.running?'Pausar reloj':'Continuar reloj'));for(const input of this.switches)input.checked=this.model.visible;
  }
  open():void{this.visibility();if(!this.root.open)this.root.showModal();}
- dispose():void{clearInterval(this.timer);this.unlanguage();window.removeEventListener('resize',this.resize);document.removeEventListener('visibilitychange',this.visibility);this.root.remove();this.hud.remove();}
+ dispose():void{clearInterval(this.timer);this.unlanguage();this.unviewport();document.removeEventListener('visibilitychange',this.visibility);this.root.remove();this.hud.remove();}
 }

@@ -12,7 +12,7 @@ for(const[device,width,height]of[['phone',390,844],['tablet',820,1180]]as const)
    const open=async()=>{await menu.click();await page.getByTestId('phone-hud-editor').click();};
    await open();const editor=page.getByRole('dialog',{name:'Editor de controles'});
    const preview=(await editor.locator('.sv-hud-layout-preview').boundingBox())!;expect(Math.abs(preview.width/preview.height-width/height)).toBeLessThan(.02);
-   await expect(editor.locator('.sv-hud-layout-preview')).toHaveCSS('background-size','10% 10%, 10% 10%');
+   await expect(editor.locator('.sv-hud-layout-preview')).toHaveCSS('background-size',/^10% 10%(?:, 10% 10%)?$/);
    await expect(menu).toHaveCSS('user-select','none');
    await editor.getByLabel('Control para editar').selectOption('interact');await editor.getByLabel('Mostrar en pantalla').uncheck();await editor.getByRole('button',{name:'Guardar controles',exact:true}).click();await expect(action).toBeHidden();await expect(menu).toBeVisible();
    await open();await editor.getByLabel('Control para editar').selectOption('interact');await expect(editor.getByLabel('Mostrar en pantalla')).not.toBeChecked();await editor.getByLabel('Mostrar en pantalla').check();

@@ -1,7 +1,10 @@
+import {installBrowserGestures} from './input/browser-gestures';
 import { t } from './i18n';
 import { loadSpriteCatalog } from './assets/sprite-catalog';
 import './style.css';
 import { mountDiagnostic } from './diagnostics/page';
+const disposeBrowserGestures=installBrowserGestures();
+import.meta.hot?.dispose(disposeBrowserGestures);
 const root = document.querySelector<HTMLDivElement>('#app')!;
 if (new URLSearchParams(location.search).get('diagnostic') === '1') {
   mountDiagnostic(root);

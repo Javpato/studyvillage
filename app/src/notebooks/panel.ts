@@ -4,6 +4,7 @@ import { msg, t, setDisplayText, setDisplayAttribute } from '../i18n';
 import { newNotebook,newPage,parseBackup,copyPage,hitsInk,type Notebook,type InkPage,type InkObject } from '../../../packages/documents/src/model';
 import { NotebookRepository } from '../../../packages/documents/src/repository';
 import { InkCanvasEditor,type InkTool } from './canvas-editor';
+import { setPencilMode,subscribePencilMode } from '../input/pencil-mode';
 import { drawInk,drawPage } from '../../../packages/documents/src/render';
 import { downloadLocal } from '../../../packages/runtime/src/local-bridge/files';
 import './style.css';
@@ -24,7 +25,7 @@ export class NotebookPanel {
   },view=>{this.sharedView=view;if(this.sharedMode&&!this.editor.busy)this.renderShared();});
  }
  syncSession():void {this.sharedClient?.sync();if(this.sharedMode&&this.sharedScope!==this.getScope()){this.cancel();this.sharedScope=this.getScope();this.sharedUndo=[];this.sharedRedo=[];this.renderShared();}}
- private gesturePage:string|null=null;private editor:InkCanvasEditor;
+ private gesturePage:string|null=null;private editor:InkCanvasEditor;private unsubscribePencil:()=>void=()=>{};
  private get canvas(){return this.editor.canvas;}
  private pdf=new PdfReader();private pdfBackground:HTMLCanvasElement|null=null;private pdfKey='';private paintGeneration=0;
  readonly root=el('dialog');private repo:NotebookRepository|null=null;private book:Notebook|null=null;private pageId='';private list=el('nav');private tools=el('div');private status=el('p');private title=el('input');private pageList=el('select');private history=new Map<string,InkPage[]>();private redo=new Map<string,InkPage[]>();private pending=Promise.resolve();private revision=new Map<string,number>();private generation=0;private failed=false;
@@ -56,7 +57,9 @@ export class NotebookPanel {
   this.tools.append(tabs,...[...this.optionTabs.values()].map(entry=>entry.panel));
   const ink=this.optionTabs.get('ink')!.panel,page=this.optionTabs.get('page')!.panel,files=this.optionTabs.get('files')!.panel;this.modeControls=this.optionTabs.get('share')!.panel;
   const width=el('input');width.type='range';width.min='1';width.max='30';width.value='3';setDisplayAttribute(width,'aria-label',msg('Grosor'));width.oninput=()=>this.editor.width=Number(width.value);ink.append(this.field('Grosor',width));
+  const pencil=el('input');pencil.type='checkbox';pencil.onchange=()=>setPencilMode(pencil.checked);const pencilLabel=el('label','Modo Apple Pencil');pencilLabel.className='sv-ink-toggle sv-ink-pencil-mode';pencilLabel.prepend(pencil);ink.append(pencilLabel,el('p','El lápiz escribe; los dedos mueven y amplían la página.'));
   const finger=el('input');finger.type='checkbox';finger.onchange=()=>{this.editor.fingerDrawing=finger.checked;};const fingerLabel=el('label','Dibujar con el dedo');fingerLabel.className='sv-ink-toggle';fingerLabel.prepend(finger);ink.append(fingerLabel,el('p','Sin activar esta opción, los dedos desplazan la página.'));
+  this.unsubscribePencil=subscribePencilMode(enabled=>{pencil.checked=enabled;finger.disabled=enabled;fingerLabel.setAttribute('aria-disabled',String(enabled));this.editor.pencilMode=enabled;});
   const selection=el('div');selection.className='sv-ink-action-list';selection.append(el('h4','Lazo'),button('Copiar selección',()=>this.editor.copySelection()),button('Pegar selección',()=>this.editor.paste()),button('Eliminar selección',()=>this.editor.deleteSelection()));ink.append(selection);
   setDisplayAttribute(this.background,'aria-label',msg('Papel'));for(const [key,name]of [['blank','Blanco'],['lined','Rayas'],['grid','Cuadrícula']]){const option=el('option',name);option.value=key;this.background.append(option);}this.background.onchange=()=>{const current=this.page();if(current){this.remember();current.background=this.background.value as InkPage['background'];this.changed();}};
   const zoom=this.zoomControl;setDisplayAttribute(zoom,'aria-label',msg('Zoom'));for(const n of [25,50,75,100,125,150,200,300,400]){const option=el('option');option.textContent=n+'%';option.value=String(n);zoom.append(option);}zoom.value='100';zoom.onchange=()=>this.editor.setZoom(Number(zoom.value)/100);
@@ -172,5 +175,5 @@ export class NotebookPanel {
  private async loadImage(page:InkPage,key:string):Promise<void>{const generation=++this.paintGeneration;try{const canvas=await this.imageSurface(page.image!);if(generation!==this.paintGeneration||this.page()?.id!==page.id)return;this.pdfKey=key;this.pdfBackground=canvas;this.paint();}catch{setDisplayText(this.status,msg('Copia no válida.'));}}
  private async importPdf(file:File){try{if(file.size>20*1024*1024)throw new Error('El PDF supera 20 MiB.');await this.pending;if(this.failed)return;const bytes=new Uint8Array(await file.arrayBuffer()),id=crypto.randomUUID();const pdf=await this.pdf.open(id,bytes);const book=newNotebook(file.name.slice(0,100));book.pages=Array.from({length:pdf.numPages},(_,i)=>({...newPage(),background:'blank',pdf:{attachment:id,page:i+1}}));await this.repo!.attach(id,bytes);this.select(book);this.changed();await this.pending;await this.refreshList();}catch(e){this.status.textContent=String(e);}}
  private async exportPdf(){if(!this.book||!this.repo)return;try{const book=structuredClone(this.book);const {PDFDocument}=await import('pdf-lib');const doc=await PDFDocument.create();for(const page of book.pages.filter(p=>!p.deleted)){const canvas=document.createElement('canvas');canvas.width=768;canvas.height=1024;const ctx=canvas.getContext('2d')!;drawPage(ctx,page);if(page.image){ctx.drawImage(await this.imageSurface(page.image),0,0);for(const ink of page.ink)drawInk(ctx,ink);ctx.fillStyle='#24402f';ctx.font='18px sans-serif';page.text.split('\n').forEach((line,i)=>ctx.fillText(line,32,48+i*26,704));}if(page.pdf){await this.pdf.paint(page.pdf.attachment,page.pdf.page,await this.repo.attachment(page.pdf.attachment),canvas);for(const ink of page.ink)drawInk(ctx,ink);ctx.fillStyle='#24402f';ctx.font='18px sans-serif';page.text.split('\n').forEach((line,i)=>ctx.fillText(line,32,48+i*26,704));}const png=await doc.embedPng(canvas.toDataURL());doc.addPage([768,1024]).drawImage(png,{x:0,y:0,width:768,height:1024});}downloadLocal(book.title+'.pdf',new Blob([(await doc.save()).slice().buffer],{type:'application/pdf'}));}catch(e){this.status.textContent=String(e);}}
- dispose(){this.sharedClient?.dispose();this.editor.dispose();void this.pdf.close();this.cancel();this.root.remove();void this.pending.finally(()=>this.repo?.close());}
+ dispose(){this.unsubscribePencil();this.sharedClient?.dispose();this.editor.dispose();void this.pdf.close();this.cancel();this.root.remove();void this.pending.finally(()=>this.repo?.close());}
 }

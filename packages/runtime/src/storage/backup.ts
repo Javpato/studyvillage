@@ -12,7 +12,7 @@ import { validateAssetPack } from '../../../../app/src/assets/custom-assets';
 import { validatePublicIdentity } from '../../../core/src/identity';
 
 const MAX_BACKUP=128*1024*1024;
-const baseKeys=['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1','whiteboards-v1','workspaces-v1','custom-assets-v1','avatar-sheet-v1','language','village-name','servers-v1','ollama-v2','review-v2','flashcard-progress-v1','role-sets','eraser-v1','hud-layout-v1','controls-v2','portrait-zoom-v1','environment-v1','interactive-objects-v1','network-v1','focus-clock-v1','npc-dialogue-v1'];
+const baseKeys=['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1','whiteboards-v1','workspaces-v1','custom-assets-v1','avatar-sheet-v1','language','village-name','servers-v1','ollama-v2','review-v2','flashcard-progress-v1','role-sets','eraser-v1','hud-layout-v1','controls-v2','portrait-zoom-v1','environment-v1','interactive-objects-v1','network-v1','focus-clock-v1','npc-dialogue-v1','apple-pencil-mode-v1'];
 const acceptedKey=(key:string)=>/^studyvillage-mailbox-v1:(?:own|[a-f0-9]{64})$/.test(key)||baseKeys.some(base=>key===`studyvillage-${base}`||(['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1'].includes(base)&&key.startsWith(`studyvillage-${base}:room:`)));
 const backupSchema=z.strictObject({format:z.literal('studyvillage-backup'),version:z.literal(1),createdAt:z.number().finite().nonnegative(),local:z.unknown(),values:z.record(z.string().max(512),z.string().max(8*1024*1024)),notebooks:z.unknown(),references:z.record(z.string().max(512),z.string().max(8*1024*1024)).optional()});
 export interface AppBackup {format:'studyvillage-backup';version:1;createdAt:number;local:LocalData;values:Record<string,string>;notebooks:NotebookSnapshot;references?:Record<string,string>}
@@ -28,6 +28,7 @@ function validateEntry(key:string,raw:string):void {
  if(key==='studyvillage-village-name'){if(raw.length>80)throw new AppError('invalid','Nombre fuera de límites.');return;}
  if(key==='studyvillage-avatar-sheet-v1'){if(!/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(raw)||raw.length>750000)throw new AppError('invalid','Sprite no válido.');return;}
  const value=JSON.parse(raw);boundedJson(value);
+ if(key==='studyvillage-apple-pencil-mode-v1'){z.boolean().parse(value);return;}
  if(key.startsWith('studyvillage-mailbox-v1:')){(key.endsWith(':own')?localMailboxSchema:mailboxNotesSchema).parse(value);return;}
  if(key.startsWith('studyvillage-secure-notes-v1'))z.object({notebooks:z.array(z.object({id:z.string().max(96),name:z.string().max(120),ownerId:z.string().max(128),createdAt:z.number()})).max(1000),notes:z.array(secureNoteSchema).max(10000)}).parse(value);
  else if(key.startsWith('studyvillage-flashcard-decks-v1'))z.array(flashcardDeckSchema).max(1000).parse(value);

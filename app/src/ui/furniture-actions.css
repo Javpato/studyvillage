@@ -5,3 +5,5 @@
 .sv-access-pending {position:fixed;top:80px;right:16px;z-index:60;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);box-sizing:border-box;padding:10px 12px;border:1px solid #bfa780;border-radius:12px;background:#fbf4e2;color:#344c3d;font-size:13px;box-shadow:0 4px 16px #0d191225;}
 .sv-access-pending[hidden]{display:none;}.sv-access-pending button{flex:none;}
 @media(max-width:600px){.sv-access-pending{left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 76px);max-width:none;gap:8px;font-size:12px;}.sv-access-pending span{flex:1;}}
+
+.sv-pencil-mode-option{padding:10px 12px;border:1px solid #cbbd9e;border-radius:10px;background:#fbf4e2;color:#344c3d}.sv-pencil-mode{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:650;cursor:pointer}.sv-pencil-mode input{width:21px;height:21px;accent-color:#46725a}.sv-pencil-mode-option p{margin:2px 0 6px;line-height:1.5}
