@@ -10,6 +10,10 @@ html.sv-browser-gestures :is(button,[role=button],summary,label,select) {
 :where(html.sv-browser-gestures) :where(button,[role=button],summary,label,select) {touch-action:manipulation;}
 /* Drawing/game canvases own their gestures. Component-specific notebook policies can override this. */
 :where(html.sv-browser-gestures canvas) {touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+/* Set before contact begins: changing touch-action during a stroke is too late. */
+html.sv-browser-gestures [data-sv-drawing-surface] {
+ touch-action:none;overscroll-behavior:contain;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
 html.sv-browser-gestures :is(img,svg) {-webkit-user-drag:none;}
 html.sv-browser-gestures :is(input,textarea,[contenteditable]:not([contenteditable="false"]),pre,code,.sv-mailbox-note p,.nb-title,.nb-blocks,.sv-selectable,[data-sv-selectable]),
 html.sv-browser-gestures :is(.nb-title,.nb-blocks,.sv-selectable,[data-sv-selectable]) * {

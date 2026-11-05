@@ -5,6 +5,7 @@ import { msg, t, setDisplayText, setDisplayAttribute } from '../i18n';
 function existingColor(stroke:BoardStroke|null,fallback:string):string{return stroke?.color??fallback;}
 import { DEFAULT_TEXT_STYLE, selectionBounds, objectBounds, contains, selectedByArea, moveObjects, scaleObjects, clipboardText, validateClipboard } from '../whiteboard/selection';
 import type { BoardCamera, BoardRect } from '../../../packages/core/src/whiteboard/model';
+import { NOTE_FONTS,ensureExcalifont } from '../whiteboard/fonts';
 interface Context {
  wrap:HTMLElement;canvas:HTMLCanvasElement;board():string;author():string;strokes():BoardStroke[];all():BoardStroke[];canEdit():boolean;
  /** True on the boards of my own house: I may change anyone's layer there. */ moderate():boolean;
@@ -20,7 +21,7 @@ export class BoardEditor {
  selected=new Set<string>();private board='';private gesture:Gesture|null=null;private preview:BoardStroke[]|null=null;private lasso=false;private active=false;private busy=false;
  private histories=new Map<string,{undo:Command[];redo:Command[]}>();private editor:HTMLTextAreaElement|null=null;private editing:BoardStroke|null=null;private textAt:BoardPoint|null=null;
  private clipboardOffset=0;private paintVersion=0;private textTool=false;private textColor='#315f51';private formatOpen=false;
- constructor(private ctx:Context){this.root.className='sv-board-context';ctx.wrap.append(this.root);this.renderToolbar();}
+ constructor(private ctx:Context){this.root.className='sv-board-context';ctx.wrap.append(this.root);this.renderToolbar();void ensureExcalifont().then(()=>this.changed()).catch(()=>{/* Choosing Excalifont retries and reports a load failure. */});}
  setActive(active:boolean,textTool=false):void{if(this.active!==active||this.textTool!==textTool){this.active=active;this.textTool=textTool;this.renderToolbar();}}
  get version():number{return this.paintVersion;}
  private changed():void{this.paintVersion++;this.ctx.changed();}
@@ -60,14 +61,14 @@ export class BoardEditor {
   else if(this.preview){const changes=this.preview;this.preview=null;void this.apply(changes);}return true;
  }
  cancelGesture():void{this.gesture=null;this.preview=null;this.changed();}
- cancel():void{this.cancelGesture();if(this.editor){this.editor.remove();this.editor=null;}this.editing=null;this.textAt=null;}
+ cancel():void{this.cancelGesture();const input=this.editor;this.editor=null;this.editing=null;this.textAt=null;input?.remove();}
  deselect():boolean{if(this.editor){this.cancel();return true;}if(this.gesture||this.selected.size){this.cancel();this.selected.clear();this.renderToolbar();return true;}return false;}
  editAt(at:BoardPoint):boolean{const hit=[...this.ctx.strokes()].reverse().find(s=>s.tool==='text'&&!s.deleted&&contains(objectBounds(s),at,10/this.ctx.camera().zoom));if(!hit)return false;this.editText(hit.points[0],hit);return true;}
  editText(at:BoardPoint,existing?:BoardStroke):void{
   try{this.owned(existing?[existing]:[]);}catch(e){this.ctx.notify(errorMessage(e));return;}this.commitText();this.editing=existing?structuredClone(existing):null;this.textAt=at;const input=element('textarea');input.className='sv-board-text';input.maxLength=LIMITS.boardText;input.setAttribute('aria-label',t('Texto para la pizarra'));input.placeholder=t('Escribe… ($x^2$ para fórmulas)');input.value=existing?.text??'';input.rows=Math.min(8,input.value.split('\n').length);if(existing?.textStyle)Object.assign(this.style,existing.textStyle);
   input.onkeydown=e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();this.cancel();}else if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this.commitText();}};input.onblur=()=>this.commitText();input.oninput=()=>{input.rows=Math.min(8,input.value.split('\n').length);};this.editor=input;this.ctx.wrap.append(input);this.positionText();input.focus();
  }
- positionText():void{if(!this.editor||!this.textAt)return;const c=this.ctx.camera(),s=this.ctx.canvas.clientWidth/768;Object.assign(this.editor.style,{left:`${(this.textAt.x-c.x)*c.zoom*s}px`,top:`${(this.textAt.y-c.y)*c.zoom*s}px`,fontSize:`${this.style.fontSize*c.zoom*s}px`,fontFamily:this.style.fontFamily==='serif'?'Georgia,serif':this.style.fontFamily==='mono'?'monospace':'inherit',fontWeight:this.style.bold?'700':'400',fontStyle:this.style.italic?'italic':'normal',textDecoration:this.style.underline?'underline':'none',color:existingColor(this.editing,this.textColor),textAlign:this.style.align,width:this.style.boxWidth?`${this.style.boxWidth*c.zoom*s}px`:'min(420px,80%)'});}
+ positionText():void{if(!this.editor||!this.textAt)return;const c=this.ctx.camera(),s=this.ctx.canvas.clientWidth/768;Object.assign(this.editor.style,{left:`${(this.textAt.x-c.x)*c.zoom*s}px`,top:`${(this.textAt.y-c.y)*c.zoom*s}px`,fontSize:`${this.style.fontSize*c.zoom*s}px`,fontFamily:NOTE_FONTS[this.style.fontFamily],fontWeight:this.style.bold?'700':'400',fontStyle:this.style.italic?'italic':'normal',textDecoration:this.style.underline?'underline':'none',color:existingColor(this.editing,this.textColor),textAlign:this.style.align,width:this.style.boxWidth?`${this.style.boxWidth*c.zoom*s}px`:'min(420px,80%)'});}
  commitText():void{const input=this.editor,at=this.textAt,existing=this.editing;if(!input||!at)return;this.editor=null;this.textAt=null;this.editing=null;const text=input.value.trimEnd();input.remove();if(!text.trim())return;const stroke:BoardStroke={...(existing??{}),id:existing?.id??crypto.randomUUID(),boardId:this.ctx.board(),author:this.ctx.author(),seq:existing?.seq??0,color:existing?.color??this.textColor,width:existing?.width??4,tool:'text',points:[at],text,textStyle:{...this.style},deleted:false};void this.apply([stroke]).then(ok=>{if(ok){this.selected=new Set([stroke.id]);this.renderToolbar();}});}
  async copy(cut=false):Promise<void>{const objects=this.selectedObjects();if(!objects.length)return;if(cut)try{this.owned(objects);}catch(e){this.ctx.notify(errorMessage(e));return;}
   const bounds=selectionBounds(objects)!;const normalized=moveObjects(objects,-bounds.x,-bounds.y);const data=JSON.stringify({kind:'studyvillage-selection',version:1,objects:normalized});if(data.length>60000){this.ctx.notify(t('La selección es demasiado grande. Selecciona una zona más pequeña.'));return;}internalClipboard=data;this.clipboardOffset=0;
@@ -100,9 +101,9 @@ export class BoardEditor {
   const base:BoardTextStyle={...DEFAULT_TEXT_STYLE,...(stroke?stroke.textStyle??{fontSize:10+stroke.width*3}:this.style)};
   const format=element('details');format.open=this.formatOpen;format.ontoggle=()=>{this.formatOpen=format.open;};format.append(element('summary','Formato'));
   const form=element('div');form.className='sv-board-format';
-  const labelled=<T extends HTMLElement>(label:string,control:T):HTMLLabelElement=>{const l=element('label');const span=element('span',label);l.append(span,control);return l;};
+  const labelled=<T extends HTMLElement>(label:string,control:T):HTMLLabelElement=>{const l=element('label');const span=element('span',label);setDisplayAttribute(control,'aria-label',msg(label));l.append(span,control);return l;};
   const size=element('input');size.type='number';size.min='8';size.max='160';size.value=String(Math.round(base.fontSize));
-  const family=element('select');for(const [v,label]of [['sans','Sans'],['serif','Serif'],['mono','Monoespaciada']]){const o=element('option',label);o.value=v;family.append(o);}family.value=base.fontFamily;
+  const family=element('select');for(const [v,label]of [['sans','Sans'],['serif','Serif'],['mono','Monoespaciada'],['excalifont','Excalifont (Excalidraw)']]){const o=element('option',label);o.value=v;family.append(o);}family.value=base.fontFamily;
   const align=element('select');for(const [v,label]of [['left','Izquierda'],['center','Centro'],['right','Derecha']]){const o=element('option',label);o.value=v;align.append(o);}align.value=base.align;
   const color=element('input');color.type='color';color.value=stroke?.color??this.textColor;
   const wrap=element('select');for(const [v,label]of [['auto','Sin ajuste'],['box','Ajustar al ancho']]){const o=element('option',label);o.value=v;wrap.append(o);}wrap.value=base.boxWidth?'box':'auto';
@@ -110,7 +111,8 @@ export class BoardEditor {
   const flags={bold:base.bold,italic:base.italic,underline:!!base.underline};
   const toggle=(label:string,key:keyof typeof flags)=>{const b=button(label,()=>{flags[key]=!flags[key];b.setAttribute('aria-pressed',String(flags[key]));});b.setAttribute('aria-pressed',String(flags[key]));return b;};
   const styleRow=element('div');styleRow.className='sv-board-format-row';styleRow.append(toggle('Negrita','bold'),toggle('Cursiva','italic'),toggle('Subrayado','underline'));
-  const applyButton=button(stroke?'Aplicar formato':'Usar para el texto nuevo',()=>{
+  const applyButton=button(stroke?'Aplicar formato':'Usar para el texto nuevo',async()=>{
+   if(family.value==='excalifont')try{await ensureExcalifont();}catch{this.ctx.notify(t('No se pudo cargar la fuente. Vuelve a intentarlo.'));return;}
    const fontSize=Number(size.value),boxWidth=Number(width.value);
    if(!Number.isFinite(fontSize)||fontSize<8||fontSize>160||wrap.value==='box'&&(!Number.isFinite(boxWidth)||boxWidth<24||boxWidth>4000)){this.ctx.notify(t('Revisa el tamaño y el ancho del texto.'));return;}
    const textStyle:BoardTextStyle={fontSize,fontFamily:family.value as BoardTextStyle['fontFamily'],align:align.value as BoardTextStyle['align'],bold:flags.bold,italic:flags.italic,underline:flags.underline,...(wrap.value==='box'?{boxWidth}:{})};

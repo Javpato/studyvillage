@@ -4,6 +4,12 @@ import { browserKeyValue } from '../../../packages/runtime/src/storage/key-value
 export const PENCIL_MODE_KEY='studyvillage-apple-pencil-mode-v1';
 const listeners=new Set<(enabled:boolean)=>void>();
 let fallback=false,sessionOverride:boolean|null=null;
+let penDetected=false;
+/** Like Excalidraw, detect once per session; a later manual opt-out is respected. */
+export function detectPencil(pointerType:string):void {
+ if(pointerType!=='pen'||penDetected)return;
+ penDetected=true;if(!getPencilMode())setPencilMode(true);
+}
 function display(enabled:boolean):void{if(typeof document!=='undefined')document.documentElement.dataset.pencilMode=String(enabled);}
 export function getPencilMode():boolean {
  if(sessionOverride!==null){display(sessionOverride);return sessionOverride;}

@@ -13,8 +13,14 @@ export function pointerSamples<T extends PointerSample>(event:T&{getCoalescedEve
 export class PencilTouchGuard {
  private contacts=new Set<number>();private ignored=new Set<number>();private penActive=false;private lastPenUp=-Infinity;
  touchDown(event:Pick<PointerSample,'pointerId'|'timeStamp'>&{width?:number;height?:number},pencilMode:boolean):boolean {
+  // A fresh down proves any earlier contact with this recycled id has ended.
+  this.ignored.delete(event.pointerId);
   this.contacts.add(event.pointerId);
   if(this.penActive||event.timeStamp-this.lastPenUp<250||(pencilMode&&Math.max(event.width??0,event.height??0)>=40))this.ignored.add(event.pointerId);
+  return !this.ignored.has(event.pointerId);
+ }
+ touchMove(event:{pointerId:number;width?:number;height?:number},pencilMode:boolean):boolean {
+  if(this.contacts.has(event.pointerId)&&pencilMode&&Math.max(event.width??0,event.height??0)>=40)this.ignored.add(event.pointerId);
   return !this.ignored.has(event.pointerId);
  }
  touchEnd(id:number):void{this.contacts.delete(id);this.ignored.delete(id);}

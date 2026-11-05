@@ -1,6 +1,8 @@
-import {pointerSamples} from '../../../packages/documents/src/pen';
+import {PencilTouchGuard,pointerSamples} from '../../../packages/documents/src/pen';
+import {boardFontGeneration} from '../whiteboard/fonts';
+import {installDrawingSurface} from '../input/drawing-surface';
 import {layoutViewport} from '../input/browser-viewport';
-import {getPencilMode,setPencilMode,subscribePencilMode} from '../input/pencil-mode';
+import {detectPencil,getPencilMode,setPencilMode,subscribePencilMode} from '../input/pencil-mode';
 import {loadEraserPreferences,saveEraserPreferences} from '../../../packages/runtime/src/storage/eraser-preferences';
 import { ConnectionPanel } from './connection-ui';
 import { VanityPanel } from './vanity-ui';
@@ -370,8 +372,10 @@ class StudyUI {
   private lastPinchDistance = 0;
   private lastPinchCenter: {clientX:number;clientY:number}|null=null;
   private boardPointer: {id:number;kind:string}|null=null;
-  private ignoredBoardTouches=new Set<number>();
-  private boardPenUntil=0;
+  private boardPalms=new PencilTouchGuard();
+  private stopBoardSurface:(()=>void)|null=null;
+  private boardHidden=()=>{if(document.hidden)this.cancelBoardGesture();};
+  private boardRotated=()=>this.cancelBoardGesture();
   private pencilMode=getPencilMode();
   private pencilModeInput!: HTMLInputElement;
   private offPencilMode:(()=>void)|null=null;
@@ -587,6 +591,9 @@ class StudyUI {
     this.speech.dispose(); this.notebooks.dispose(); this.focusClock.dispose();this.jukebox.dispose(); this.headCameras.dispose();
     this.offLanguage?.(); this.offLanguage = null;
     this.offPencilMode?.();this.offPencilMode=null;this.cancelBoardGesture();
+    this.stopBoardSurface?.();
+    window.removeEventListener('pointerup',this.onBoardPointerUp);window.removeEventListener('pointercancel',this.onBoardPointerUp);
+    document.removeEventListener('visibilitychange',this.boardHidden);window.removeEventListener('orientationchange',this.boardRotated);
     this.boardEditor?.dispose();
     cancelAnimationFrame(this.raf); this.offAi?.();
     this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();
@@ -1279,8 +1286,10 @@ class StudyUI {
     setDisplayAttribute(this.boardCanvas, 'aria-label', msg('Pizarra para dibujar'));
     this.boardCanvas.addEventListener('pointerdown', this.onBoardPointerDown);
     this.boardCanvas.addEventListener('pointermove', this.onBoardPointerMove);
-    this.boardCanvas.addEventListener('pointerup', this.onBoardPointerUp);
-    this.boardCanvas.addEventListener('pointercancel', this.onBoardPointerUp);
+    this.stopBoardSurface=installDrawingSurface(this.boardCanvas);
+    window.addEventListener('pointerup', this.onBoardPointerUp);
+    window.addEventListener('pointercancel', this.onBoardPointerUp);
+    document.addEventListener('visibilitychange',this.boardHidden);window.addEventListener('orientationchange',this.boardRotated);
     this.boardCanvas.addEventListener('lostpointercapture', this.onBoardPointerUp);
     this.boardCanvas.addEventListener('pointerleave', () => { this.boardCursor = null; });
     this.boardCanvas.addEventListener('wheel', this.onBoardWheel, { passive: false });
@@ -1316,8 +1325,8 @@ class StudyUI {
     setDisplayAttribute(this.pencilModeInput,'aria-label',msg('Modo Apple Pencil'));this.pencilModeInput.dataset.testid='board-pencil-mode';
     this.pencilModeInput.onchange=()=>setPencilMode(this.pencilModeInput.checked);
     const pencilModeLabel=node('label','sv-pencil-mode');pencilModeLabel.append(this.pencilModeInput,node('span','',msg('Modo Apple Pencil')));
-    const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe; los dedos mueven y amplían la página.')));
-    this.offPencilMode=subscribePencilMode(enabled=>{this.pencilMode=enabled;this.pencilModeInput.checked=enabled;this.cancelBoardGesture();});
+    const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe; dos dedos desplazan la página. Usa Zoom para ampliar.')));
+    this.offPencilMode=subscribePencilMode(enabled=>{this.pencilMode=enabled;this.pencilModeInput.checked=enabled;this.cancelBoardGesture(false);this.startBoardTouch();});
     append(this.boardAdvancedPanel,pencilOptions,
       category(msg('Formas'), extraTools),
       category(msg('Trazo y edición'), swatchRow, field(msg('Grosor'), this.boardWidth), eraserOptions, this.boardRedoButton, this.boardClearButton),
@@ -3194,30 +3203,33 @@ class StudyUI {
 
   /** The pen owns its draft. Other contacts can never finish it or turn it into a pinch. */
   private cancelBoardGesture(clearTouches=true):void {
+    if(this.boardPointer?.kind==='pen')this.boardPalms.penUp(performance.now());
     const id=this.boardPointer?.id;this.boardPointer=null;
     this.boardDraft=null;this.richBoardDraft=null;this.boardPan=null;this.boardErasing=null;this.eraserGesture=null;
     this.boardEditor?.cancelGesture();this.lastPinchDistance=0;this.lastPinchCenter=null;
-    if(clearTouches){this.activeBoardPointers.clear();this.ignoredBoardTouches.clear();}
+    if(clearTouches){this.activeBoardPointers.clear();this.boardPalms.reset();}
     if(clearTouches&&id!==undefined&&this.boardCanvas?.hasPointerCapture(id))this.boardCanvas.releasePointerCapture(id);
     this.lastBoardRenderSig='';this.boardExtraFrames=2;
   }
   private captureBoardPointer(event:PointerEvent):void {try{this.boardCanvas.setPointerCapture(event.pointerId);}catch{/* A cancelled native contact may already have ended. */}}
   private startBoardTouch():void {
     const points=[...this.activeBoardPointers.values()];
-    this.lastPinchDistance=points.length>1?Math.hypot(points[0].clientX-points[1].clientX,points[0].clientY-points[1].clientY):0;
-    this.lastPinchCenter=points.length>1?{clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2}:null;
-    if(points.length===1&&(this.pencilMode||this.boardTool==='hand')){const [id,point]=[...this.activeBoardPointers][0];this.boardPan={pointerId:id,x:point.clientX,y:point.clientY};}
+    this.lastPinchDistance=points.length===2?Math.hypot(points[0].clientX-points[1].clientX,points[0].clientY-points[1].clientY):0;
+    this.lastPinchCenter=points.length===2?{clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2}:null;
+    this.boardPan=null;
+    if(points.length===1&&!this.pencilMode&&this.boardTool==='hand'){const [id,point]=[...this.activeBoardPointers][0];this.boardPan={pointerId:id,x:point.clientX,y:point.clientY};}
   }
   private onBoardPointerDown = (event: PointerEvent): void => {
     const kind=event.pointerType;
     if(kind==='mouse'&&event.button!==0&&event.button!==1)return;
     event.preventDefault();
     if(kind==='pen'){
-      if(this.boardPointer?.kind==='pen')return;
-      for(const id of this.activeBoardPointers.keys())this.ignoredBoardTouches.add(id);
+      detectPencil(kind);
+      // Recover from a missing pointerup without keeping an orphaned draft owner.
       this.cancelBoardGesture(false);this.activeBoardPointers.clear();
+      this.boardPalms.penDown();
     }else if(kind==='touch'){
-      if(this.boardPointer?.kind==='pen'||performance.now()<this.boardPenUntil||Math.max(event.width,event.height)>=40){this.ignoredBoardTouches.add(event.pointerId);this.captureBoardPointer(event);return;}
+      if(!this.boardPalms.touchDown(event,this.pencilMode)){this.captureBoardPointer(event);return;}
       this.activeBoardPointers.set(event.pointerId,{clientX:event.clientX,clientY:event.clientY});this.captureBoardPointer(event);
       if(this.activeBoardPointers.size>1){this.cancelBoardGesture(false);this.startBoardTouch();return;}
       if(this.pencilMode){this.startBoardTouch();return;}
@@ -3244,16 +3256,16 @@ class StudyUI {
   };
 
   private onBoardPointerMove = (event: PointerEvent): void => {
-    if(this.ignoredBoardTouches.has(event.pointerId))return;
+    if(event.pointerType==='touch'&&!this.boardPalms.touchMove(event,this.pencilMode)){event.preventDefault();if(this.activeBoardPointers.delete(event.pointerId))this.startBoardTouch();return;}
     if(event.pointerType==='touch'&&this.boardPointer?.kind==='pen'){event.preventDefault();return;}
     if(this.activeBoardPointers.has(event.pointerId))this.activeBoardPointers.set(event.pointerId,{clientX:event.clientX,clientY:event.clientY});
-    if(event.pointerType==='touch'&&this.activeBoardPointers.size>=2){
+    if(event.pointerType==='touch'&&this.activeBoardPointers.size===2){
       event.preventDefault();const points=[...this.activeBoardPointers.values()];
       const distance=Math.hypot(points[0].clientX-points[1].clientX,points[0].clientY-points[1].clientY);
       const center={clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2};
       if(this.lastPinchCenter){
         const scale=768/Math.max(1,this.boardCanvas.getBoundingClientRect().width),anchor=this.canvasPoint(this.lastPinchCenter as MouseEvent,this.boardCanvas);
-        let camera=this.boardCamera();if(this.lastPinchDistance>8&&distance>8)camera=zoomAt(camera,anchor.x,anchor.y,distance/this.lastPinchDistance);
+        let camera=this.boardCamera();if(!(this.pencilMode&&this.boardTool==='pen')&&this.lastPinchDistance>8&&distance>8)camera=zoomAt(camera,anchor.x,anchor.y,distance/this.lastPinchDistance);
         this.setBoardCamera(panBy(camera,(center.clientX-this.lastPinchCenter.clientX)*scale,(center.clientY-this.lastPinchCenter.clientY)*scale));
       }
       this.lastPinchDistance=distance;this.lastPinchCenter=center;return;
@@ -3280,12 +3292,15 @@ class StudyUI {
   };
 
   private onBoardPointerUp = (event: PointerEvent): void => {
-    if(this.ignoredBoardTouches.delete(event.pointerId))return;
-    const owner=this.boardPointer?.id===event.pointerId;
+    if(event.pointerType==='touch'){
+      const ignored=this.boardPalms.ignores(event.pointerId);this.boardPalms.touchEnd(event.pointerId);
+      if(ignored){if(this.activeBoardPointers.delete(event.pointerId))this.startBoardTouch();return;}
+    }
+    const owner=this.boardPointer?.id===event.pointerId&&this.boardPointer.kind===event.pointerType;
     if(owner&&event.type==='pointerup')this.onBoardPointerMove(event);
-    this.activeBoardPointers.delete(event.pointerId);
-    if(!owner){if(this.boardPan?.pointerId===event.pointerId)this.boardPan=null;this.startBoardTouch();return;}
-    if(this.boardPointer?.kind==='pen')this.boardPenUntil=performance.now()+250;
+    const tracked=this.activeBoardPointers.delete(event.pointerId);
+    if(!owner){if(tracked)this.startBoardTouch();return;}
+    if(this.boardPointer?.kind==='pen')this.boardPalms.penUp(event.timeStamp);
     this.boardPointer=null;
     if(event.type!=='pointerup'){this.cancelBoardGesture(false);this.startBoardTouch();return;}
     if(this.boardEditor.pointerUp(event)){this.startBoardTouch();return;}
@@ -3604,7 +3619,7 @@ class StudyUI {
       const richShapes = this.expansion.boardRegistry.getRichElements(boardId);
       const cam = this.boardCamera();
       const cursor = this.boardTool === 'eraser' ? this.boardCursor : null;
-      const boardSig = JSON.stringify([boardId, this.boardEditor.version, visible, richShapes.map((s) => s.id), this.boardDraft, this.richBoardDraft, cam, cursor, getMathGeneration()]);
+      const boardSig = JSON.stringify([boardId, this.boardEditor.version, visible, richShapes.map((s) => s.id), this.boardDraft, this.richBoardDraft, cam, cursor, getMathGeneration(), boardFontGeneration()]);
       if (boardSig !== this.lastBoardRenderSig) {
         this.lastBoardRenderSig = boardSig;
         this.boardExtraFrames = 2;
