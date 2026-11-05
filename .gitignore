@@ -1,0 +1,16 @@
+node_modules/
+app/dist/
+server/dist/
+deliverables/
+test-results/
+playwright-report/
+server/data/
+*.keystore
+*.jks
+.env*
+android/.gradle/
+android/**/build/
+data/
+android/local.properties
+android/app/src/main/assets/
+app/.cert/

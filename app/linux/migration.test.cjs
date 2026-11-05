@@ -1,0 +1,24 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {mkdtempSync,mkdirSync,rmSync,readFileSync,writeFileSync,existsSync}=require('node:fs');
+const path=require('node:path');
+const {tmpdir}=require('node:os');
+const {spawnSync}=require('node:child_process');
+const {createHash}=require('node:crypto');
+const {DatabaseSync}=require('node:sqlite');
+const root=path.resolve(__dirname,'../..'),electron=require('electron');
+const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
+test('explicit legacy profile export preserves source, Unicode settings and unknown references; repeat export refuses overwrite',t=>{
+ const temp=mkdtempSync(path.join(tmpdir(),'studyvillage-migration-test-'));t.after(()=>rmSync(temp,{recursive:true,force:true}));
+ const profile=path.join(temp,'synthetic-profile');mkdirSync(path.join(profile,'localstorage'),{recursive:true});
+ const main=path.join(profile,'studyvillage.sqlite3'),legacy=path.join(profile,'localstorage/tauri_localhost_0.localstorage');
+ const local={schemaVersion:1,profile:{displayName:'Synthetic Élise',color:'#336699'},house:null,friendCode:'synthetic-code',contacts:[],encryptedIdentity:null,editor:'Étude — original private text',projectLinks:{}};
+ const db=new DatabaseSync(main);db.exec('CREATE TABLE local_state(id INTEGER PRIMARY KEY,document TEXT NOT NULL); PRAGMA user_version=1;');db.prepare('INSERT INTO local_state VALUES(1,?)').run(JSON.stringify(local));db.close();
+ const webkit=new DatabaseSync(legacy);webkit.exec('CREATE TABLE ItemTable(key TEXT UNIQUE,value BLOB)');const put=webkit.prepare('INSERT INTO ItemTable VALUES(?,?)');put.run('studyvillage-language',Buffer.from('fr','utf16le'));put.run('studyvillage-village-name',Buffer.from('La palmeraie 🪴','utf16le'));put.run('studyvillage-unmapped-reference',Buffer.from('Keep this reference intact','utf16le'));webkit.close();
+ const before=[hash(main),hash(legacy)],output=path.join(temp,'export.json');
+ const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;if(!env.CHROME_DEVEL_SANDBOX&&existsSync('/opt/google/chrome/chrome-sandbox'))env.CHROME_DEVEL_SANDBOX='/opt/google/chrome/chrome-sandbox';
+ const run=()=>spawnSync(electron,[path.join(root,'scripts/export-legacy-profile.cjs'),profile,output],{env,encoding:'utf8',timeout:20000});
+ const first=run();assert.equal(first.status,0,first.stderr);const backup=JSON.parse(readFileSync(output,'utf8'));assert.deepEqual(backup.local,local);assert.equal(backup.values['studyvillage-language'],'fr');assert.equal(backup.values['studyvillage-village-name'],'La palmeraie 🪴');assert.equal(backup.references['studyvillage-unmapped-reference'],'Keep this reference intact');assert.deepEqual([hash(main),hash(legacy)],before);
+ const exported=hash(output);const second=run();assert.equal(second.status,1);assert.match(second.stderr,/already exists/);assert.equal(hash(output),exported);assert.deepEqual([hash(main),hash(legacy)],before);
+ mkdirSync(path.join(profile,'chromium'));writeFileSync(path.join(profile,'chromium/SingletonLock'),'locked');const locked=spawnSync(electron,[path.join(root,'scripts/export-legacy-profile.cjs'),profile,path.join(temp,'locked.json')],{env,encoding:'utf8',timeout:20000});assert.equal(locked.status,1);assert.match(locked.stderr,/Close the original app/);assert.equal(existsSync(path.join(temp,'locked.json')),false);
+});

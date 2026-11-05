@@ -1,0 +1,111 @@
+/* The camera moves through the board; the document stays still. */
+.sv-main > .sv-board-pane { display:flex;flex-direction:column;gap:10px;overflow:hidden;padding:84px 18px 18px;min-height:0; }
+.sv-board-pane .sv-board-primary { flex:none;padding:0;min-height:44px; }
+.sv-board-pane .sv-board-wrap { flex:1;min-height:0;width:100%;position:relative;overflow:hidden;margin:0;touch-action:none; }
+.sv-board-pane .sv-board-wrap .sv-canvas { display:block;width:100%;height:100%;max-height:none;touch-action:none; }
+.sv-board-pane .sv-board-options-panel { position:absolute;z-index:35;top:144px;right:18px;width:min(540px,calc(100% - 36px));max-height:calc(100% - 166px);overflow:auto;margin:0;box-shadow:0 12px 35px #44302330;padding:4px 18px;overscroll-behavior:contain; }
+.sv-board-pane .sv-board-readonly { flex:none;margin:0; }
+.is-board-focused .sv-hud-place .sv-subtle { display:none; }
+.sv-settings-dialog { width:min(860px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:0!important;overflow:hidden!important;box-shadow:0 24px 80px #241c1440;border:2px solid #c3a77e!important; }
+.sv-settings-dialog > .sv-inline { padding:20px 26px;background:var(--paper-soft);border-bottom:1px solid var(--paper-line); }
+.sv-settings-dialog h2 { margin:0;font-size:1.6rem; }
+.sv-settings-tabs { display:flex;gap:8px;padding:14px 24px;background:var(--paper);overflow:auto; }
+.sv-settings-tab { flex:1;min-height:44px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--text-muted);font:inherit;font-weight:650;padding:10px 14px;cursor:pointer; }
+.sv-settings-tab[aria-selected=true] { background:var(--paper-soft);border-color:var(--paper-line);color:var(--wood-dark);box-shadow:0 2px 0 #c7ae85; }
+.sv-settings-body { overflow:auto;max-height:calc(100dvh - 240px);padding:4px 26px 28px;overscroll-behavior:contain; }
+.sv-settings-section { display:flex;flex-direction:column;gap:18px; }
+.sv-settings-section h3 { margin:8px 0;font-size:1.1rem; }
+.sv-settings-section .sv-field-label { font:650 .88rem var(--font-ui);letter-spacing:normal; }
+.sv-settings-section .sv-profile-form { display:grid;grid-template-columns:1fr auto;align-items:end; }
+.sv-settings-section .sv-profile-form button { grid-column:1/-1;justify-self:start; }
+.sv-settings-section .sv-world-expansion-bar { padding:0;background:transparent;border:0;box-shadow:none; }
+.sv-settings-section .sv-env-row { display:grid!important;grid-template-columns:1fr 1fr;gap:18px!important;width:100%; }
+.sv-settings-section .sv-env-row > h3 { grid-column:1/-1; }
+.sv-settings-section .sv-env-row > .sv-field-label { display:none; }
+.sv-settings-section .sv-env-row > label,.sv-settings-section .sv-env-row > select { padding:16px;border:1px solid var(--paper-line);border-radius:14px;background:#fffdf3;min-width:0; }
+.sv-env-choice { display:flex;flex-wrap:wrap;gap:8px; }
+.sv-env-choice button { flex:1;min-width:80px;min-height:68px;border:1px solid var(--paper-line);border-radius:12px;background:#fffdf3;color:var(--text-warm);font:inherit;cursor:pointer;padding:10px; }
+.sv-env-choice button[aria-pressed=true] { background:#e6eddb;border-color:#93ad83;box-shadow:0 3px 0 #adc09a; }
+.sv-settings-section input[type=range] { accent-color:var(--wood-mid); }
+.sv-settings-section input[type=checkbox] { accent-color:var(--accent-leaf);width:18px;height:18px; }
+.sv-settings-section > p { line-height:1.7;color:var(--text-muted); }
+.sv-error { padding:12px 16px;border:1px solid #dfb6a5;border-radius:12px;background:#fff0e7;color:#8b4836;line-height:1.5;white-space:normal;overflow-wrap:anywhere; }
+@media(max-width:740px) {
+ .sv-main > .sv-board-pane { padding:76px 10px 12px; }
+ .sv-board-pane .sv-board-options-panel { top:142px;right:10px;width:calc(100% - 20px);max-height:calc(100% - 160px); }
+ .sv-settings-dialog { width:calc(100vw - 20px);max-height:calc(100dvh - 20px); }
+ .sv-settings-dialog > .sv-inline { padding:16px; }
+ .sv-settings-tabs { padding:12px;gap:2px; }
+ .sv-settings-tab { padding:10px 7px;font-size:.85rem; }
+ .sv-settings-body { padding:4px 16px 22px;max-height:calc(100dvh - 205px); }
+ .sv-settings-section .sv-env-row { grid-template-columns:1fr; }
+}
+@media(forced-colors:active) { * { scrollbar-color:auto; } .sv-settings-tab[aria-selected=true],.sv-study-workspace button { border:1px solid ButtonText; } }
+.sv-env-group { grid-column:1/-1; }
+.sv-visually-hidden { position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important; }
+.sv-settings-section .sv-env-row > details { grid-column:1/-1;border-top:1px solid var(--paper-line);padding-top:16px; }
+.sv-env-choice button { white-space:normal;line-height:1.5; }
+@media(max-width:740px) { .sv-env-choice { display:grid;grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.sv-board-primary .sv-board-more { flex:none;width:58px;max-width:58px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.sv-settings-dialog .sv-input,.sv-settings-dialog .sv-select { min-height:44px;padding:11px 13px;border:1px solid var(--paper-line);border-radius:10px;background:#fffdf3;box-shadow:0 2px 0 #d7bf9520;clip-path:none;font:inherit;color:var(--text-warm); }
+.sv-settings-dialog .sv-button { min-height:44px;padding:10px 16px;border:1px solid var(--paper-line);border-radius:10px;clip-path:none;background:var(--paper-soft);box-shadow:0 2px 0 #c9b28b;font:650 .9rem var(--font-ui);color:var(--text-warm); }
+.sv-settings-dialog .sv-color-input { min-height:44px;width:44px;clip-path:none;border:1px solid var(--paper-line);border-radius:10px;padding:5px; }
+
+.sv-space-dialog { width: min(800px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; padding: 22px; border: 2px solid #7d6247; border-radius: 16px; background: #faf2df; color: #3d352b; }
+.sv-space-dialog::backdrop { background: #172a2390; }
+.sv-space-dialog nav { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0; }
+.sv-space-dialog label { display:grid; gap:5px; margin:10px 0; }
+.sv-space-dialog textarea { min-height:140px; resize:vertical; }
+.sv-space-floor { padding:14px; margin:14px 0; border:1px solid #d5c2a3; border-radius:10px; background:#fffaf0; }
+.sv-space-floor .sv-inline { flex-wrap:wrap; margin:8px 0; }
+.sv-space-floor .sv-input { max-width:100%; }
+
+/* House management follows the phone's soft, warm controls. */
+.sv-house-spaces{width:min(840px,calc(100vw - 24px));padding:24px;border:1px solid #e2dacb;border-radius:26px;background:#f8f5ed;color:#38483e;font-family:system-ui,sans-serif;box-shadow:0 24px 90px #172a2340}
+.sv-house-spaces::backdrop{background:#172a237a;backdrop-filter:blur(5px)}
+.sv-house-spaces .sv-button{min-height:44px;padding:10px 16px;border:1px solid #dce3d9;border-radius:13px;clip-path:none;background:#edf1e8;color:#385447;font:650 .85rem/1.3 system-ui,sans-serif;box-shadow:0 2px 3px #223c2410;text-transform:none;letter-spacing:normal;cursor:pointer;transition:background .15s,box-shadow .15s,transform .12s}
+.sv-house-spaces .sv-button:hover{background:#e0eadb;box-shadow:0 3px 8px #223c241a}
+.sv-house-spaces .sv-button:active{transform:translateY(1px);box-shadow:none}
+.sv-house-spaces :is(button,input,select,summary):focus-visible{outline:3px solid #8cbaa0;outline-offset:3px}
+.sv-house-spaces :disabled{opacity:.55;cursor:wait}
+.sv-spaces-header,.sv-space-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sv-spaces-header{justify-content:space-between;flex-wrap:nowrap}
+.sv-spaces-header span{font-size:.68rem;font-weight:750;letter-spacing:.14em;color:#66806e}
+.sv-house-spaces h2{font:750 clamp(1.2rem,4vw,1.7rem)/1.25 system-ui,sans-serif;margin:5px 0}
+.sv-house-spaces :is(h3,h4){font-family:system-ui,sans-serif;margin:0;font-size:1.05rem}
+.sv-house-spaces p{font-size:.85rem;line-height:1.6;color:#647065}
+.sv-spaces-intro{max-width:600px;margin:14px 0 18px}
+.sv-space-status{margin:0;overflow-wrap:anywhere}.sv-space-status:not(:empty){padding:12px 14px;background:#e5efdf;border-radius:12px;margin-bottom:16px}.sv-space-status.is-error{background:#f7e3df;color:#893c32}
+.sv-space-home,.sv-house-spaces .sv-space-floor{padding:18px;border:1px solid #e1e4d8;border-radius:19px;background:#fffdf7;margin:0 0 18px}
+.sv-space-heading>h3,.sv-space-heading>small{flex:1}
+.sv-space-number{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:#e9eddd;color:#6b7b56;font-weight:750;font-size:.85rem;flex-shrink:0}
+.sv-house-spaces .sv-input{min-width:0;min-height:44px;border:1px solid #e2e4db;border-radius:11px;padding:10px 12px;background:#f9faf5;color:#38483e;font:500 .95rem system-ui,sans-serif;box-sizing:border-box;clip-path:none}
+.sv-house-spaces .sv-space-title{font-weight:700;flex:1;width:100%;background:transparent;border-color:transparent}
+.sv-house-spaces .sv-space-title:hover{border-color:#e2e4db}
+.sv-space-heading>.sv-space-title{width:120px}
+.sv-space-mode{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;font-size:.85rem;font-weight:600}
+.sv-space-rooms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.sv-space-room{display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:15px;border:1px solid #e0e5da;border-radius:16px;background:#f8faf3;min-width:0}
+.sv-house-spaces .sv-space-primary{background:#48765d;color:#fff;border-color:#48765d}.sv-house-spaces .sv-space-primary:hover{background:#3c654e}
+.sv-house-spaces .sv-space-danger{background:transparent;border-color:transparent;color:#9a6157;box-shadow:none;font-size:.78rem}.sv-house-spaces .sv-space-danger:hover{background:#f8e9e3}
+.sv-space-access{min-width:0;border-top:1px solid #e4e7dd;padding-top:10px;margin-top:8px}
+.sv-space-access summary{padding:10px 4px;min-height:44px;box-sizing:border-box;font-size:.82rem;font-weight:650;cursor:pointer;color:#46644f;border-radius:8px}
+.sv-space-access summary:hover{background:#edf2e6}
+.sv-space-access>p{font-size:.76rem;margin:7px 0 12px}
+.sv-space-friend{display:flex;align-items:center;gap:10px;padding:9px 8px;min-height:52px;box-sizing:border-box;border-radius:10px;cursor:pointer}.sv-space-friend:hover{background:#ebf0e3}
+.sv-space-friend input{width:19px;height:19px;accent-color:#48765d;flex-shrink:0}
+.sv-space-avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:11px;color:#fff;font-size:.85rem;flex-shrink:0}
+.sv-space-friend>span:last-child{display:flex;flex-direction:column;min-width:0;gap:3px}.sv-space-friend strong{font-size:.85rem;overflow-wrap:anywhere}.sv-space-friend small{font: .65rem ui-monospace,monospace;color:#728071}
+@media(max-width:600px){.sv-house-spaces{padding:18px 14px;border-radius:22px;max-height:calc(100dvh - 16px);width:calc(100vw - 16px)}.sv-space-rooms{grid-template-columns:1fr}.sv-space-home,.sv-house-spaces .sv-space-floor{padding:14px}.sv-space-heading{gap:8px}.sv-space-heading>.sv-button:not(.sv-space-danger){flex-grow:1}.sv-space-heading>.sv-space-title{flex-basis:calc(100% - 56px)}.sv-space-mode{align-items:flex-start;flex-direction:column}.sv-space-mode select{width:100%}.sv-spaces-header .sv-space-close{padding:10px 12px}}
+/* Outrank the legacy app-wide label/input styles inside this panel. */
+.sv-house-spaces .sv-space-friend{display:flex;flex-direction:row;align-items:center;font-family:inherit;gap:10px}
+.sv-house-spaces .sv-space-mode{display:flex;font-family:inherit}
+.sv-house-spaces.sv-space-dialog .sv-input{border:1px solid #e2e4db;background:#f9faf5;box-shadow:none;font-family:inherit;outline:none}
+.sv-house-spaces.sv-space-dialog .sv-space-title{border-color:transparent;background:transparent}
+.sv-house-spaces.sv-space-dialog .sv-input:focus-visible{outline:3px solid #8cbaa0;outline-offset:2px}
+.sv-house-spaces.sv-space-dialog .sv-space-title:hover{border-color:#d5dfd0}
+.sv-house-spaces .sv-space-friend :is(strong,small){font-family:inherit}
+.sv-house-spaces .sv-space-mode{white-space:nowrap}
+.sv-house-spaces .sv-space-mode select{flex:1;width:auto}
+.sv-house-spaces.sv-space-dialog .sv-space-title{border-color:#e5e9dd;background:#f8faf3}
+@media(max-width:600px){.sv-house-spaces .sv-space-mode select{width:100%}}

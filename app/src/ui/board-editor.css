@@ -1,0 +1,24 @@
+.sv-board-context { position:absolute;z-index:28;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;max-width:calc(100% - 24px);padding:8px;border:1px solid #b6bdab;border-radius:14px;background:#fffdf4;box-shadow:0 5px 20px #33261722; }
+.sv-board-context button,.sv-board-context select { min-height:42px;min-width:42px;border:1px solid #d7bf95!important;border-radius:8px!important;padding:8px 10px!important;background:#fff8e9!important;font:inherit;white-space:nowrap;cursor:pointer; }
+.sv-board-context details { position:relative; }
+.sv-board-context summary { cursor:pointer;padding:12px;font-size:.86rem; }
+.sv-board-context details[open] { position:relative; }
+.sv-board-context details > div,.sv-board-context details > button { background:#fff8e9; }
+.sv-board-context .sv-board-format { position:absolute;bottom:50px;right:0;width:280px;max-height:55dvh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:#fff8e9;border:1px solid #d7bf95;border-radius:12px;box-shadow:0 8px 25px #44302330; }
+.sv-board-format input,.sv-board-format select { width:100%;min-width:0; }
+.sv-board-context button[aria-pressed=true] { background:#e5edda!important; }
+.sv-board-context details:not(:has(.sv-board-format))[open] { background:#fff8e9; }
+.sv-board-primary .sv-segment { flex-wrap:nowrap; }
+@media(max-width:740px) { .sv-board-context { bottom:12px;flex-wrap:wrap;justify-content:center;width:calc(100% - 24px); } .sv-board-context button,.sv-board-context select { font-size:11px;min-height:40px;padding:6px!important; } .sv-board-primary .sv-segment-button { padding:7px!important;font-size:10px!important; } }
+.sv-board-format label { display:grid;gap:3px;font-size:.78rem; }
+.sv-board-format .sv-board-format-row { grid-column:1/-1;display:flex;gap:6px; }
+.sv-board-format .sv-board-format-row button { flex:1; }
+.sv-board-format > button { grid-column:1/-1; }
+.sv-board-context details > summary { min-height:42px;display:flex;align-items:center; }
+/* Phones: one toolbar row, so «Más» and its panel never overlap; the tools scroll sideways. */
+@media(max-width:740px) {
+  .sv-board-primary { flex-wrap:nowrap!important;min-width:0; }
+  .sv-board-primary .sv-segment { flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch; }
+  .sv-board-primary .sv-segment::-webkit-scrollbar { display:none; }
+  .sv-board-primary .sv-segment-button { flex:none; }
+}

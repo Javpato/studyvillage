@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-05",
+  "version": "1.0.0-dev.1",
+  "pwaCache": "studyvillage-d7b40679476bb22e",
+  "unit": {
+    "app": 427,
+    "files": 48,
+    "server": 31,
+    "serverFiles": 2,
+    "passed": true
+  },
+  "translations": {
+    "languages": [
+      "es",
+      "en",
+      "fr"
+    ],
+    "catalogueKeys": 2462,
+    "coveragePassed": true
+  },
+  "previousRebuildBaseline": {
+    "date": "2026-11-04",
+    "pwaCache": "studyvillage-2ced48526f57938a",
+    "version": "1.0.0-dev.1",
+    "unit": {
+      "app": 264,
+      "server": 27,
+      "desktop": 5,
+      "passed": true
+    },
+    "translations": {
+      "languages": [
+        "es",
+        "en",
+        "fr"
+      ],
+      "catalogueKeys": 2292,
+      "coveragePassed": true
+    },
+    "productionBrowserJourneys": {
+      "webkitGeneral": 8,
+      "webkitFinalInk": 3,
+      "liveP2p": 5,
+      "persistentServer": 4,
+      "legacyBoardsAndRooms": 11,
+      "settingsNoticesTouchHud": 15,
+      "desktopMockOllamaAndBrowserDenial": 3
+    },
+    "bundledWebFilesMatchedPerPlatform": 152,
+    "spriteManifestEntries": 117,
+    "platforms": {
+      "linux": "built and runtime smoke tested",
+      "windows": "built, execution untested",
+      "macIntel": "built, execution untested",
+      "macArm64": "built, execution untested",
+      "android": "debug APK built, device untested",
+      "iOS": "HTTPS PWA prepared, physical Safari/Pencil untested"
+    },
+    "network": "Same-machine real PeerJS/WebRTC and local authenticated coturn relay; external NAT not tested",
+    "audit": {
+      "runtimeFindings": 0,
+      "buildToolModerateFindings": 5
+    },
+    "note": "Counts describe separate focused checks; overlapping journeys are not summed. See VERIFICATION.md for snapshot boundaries and limitations."
+  },
+  "previousInterfaceCorrection": {
+    "pwaCache": "studyvillage-9b6ff1e6b7936dcc",
+    "unit": {
+      "app": 272,
+      "files": 39,
+      "server": 27,
+      "passed": true
+    },
+    "translations": {
+      "languages": [
+        "es",
+        "en",
+        "fr"
+      ],
+      "catalogueKeys": 2406,
+      "coveragePassed": true
+    },
+    "productionChromium": 20,
+    "productionWebKit": 4,
+    "notebookChromium": 11,
+    "notebookWebKit": 10,
+    "studyToolsAdditionalWebKit": 4,
+    "sourceCameraPolicy": 1,
+    "packagedLinuxSmoke": true,
+    "physicalMobileVerified": false,
+    "packagesMatchedWebFiles": 154,
+    "initialProductionFixtureFailure": "Source-module test required Vite; passed on dev.",
+    "initialPreviewFailure": "Server stopped after two cases; restarted and applicable cases passed.",
+    "date": "2026-11-04"
+  },
+  "previousDialogueLinksCorrection": {
+    "pwaCache": "studyvillage-6b36ee14bd7845c5",
+    "unit": {
+      "app": 307,
+      "files": 42,
+      "server": 27,
+      "passed": true
+    },
+    "translations": {
+      "languages": [
+        "es",
+        "en",
+        "fr"
+      ],
+      "catalogueKeys": 2425,
+      "coveragePassed": true
+    },
+    "productionChromium": 11,
+    "packagedLinuxSmoke": true,
+    "packagesMatchedWebFiles": 154,
+    "physicalMobileVerified": false,
+    "developmentInterference": "Concurrent Vite HMR invalidated early UI runs; stable production reruns passed.",
+    "productionWebKit": 8,
+    "archivesVerified": 5,
+    "sha256Manifest": "deliverables/SHA256SUMS"
+  },
+  "sceneDecorationAccessCorrection": {
+    "productionChromium": 15,
+    "additionalLiveAccessChromium": 4,
+    "liveCameraTravel": 3,
+    "cameraRetestedAfterAccessChanges": 2,
+    "serverProtocol": 7,
+    "physicalMobileVerified": false,
+    "p2pMailboxCompanionReplication": false,
+    "initialProductionMessageMismatch": "One journey ran against the pre-message-fix bundle; the final translated unlock message passed after rebuilding.",
+    "initialNetworkTestTiming": "Two direct client fixtures requested the next room before the prior access acknowledgement. They now wait for pendingAccess to clear, matching the UI contract.",
+    "productionWebKit": 14,
+    "webkitSkippedCdpTouch": 1,
+    "packagedLinuxSmoke": true,
+    "packagesMatchedWebFiles": 154,
+    "archivesVerified": 5,
+    "sha256Manifest": "deliverables/SHA256SUMS"
+  }
+}

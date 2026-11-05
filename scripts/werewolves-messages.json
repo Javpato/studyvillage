@@ -1,0 +1,992 @@
+[
+  [
+    "Ladrón",
+    "Thief",
+    "Voleur"
+  ],
+  [
+    "Ladrones",
+    "Thieves",
+    "Voleurs"
+  ],
+  [
+    "Anciano",
+    "Elder",
+    "Ancien"
+  ],
+  [
+    "Ancianos",
+    "Elders",
+    "Anciens"
+  ],
+  [
+    "Inocente del pueblo",
+    "Village Idiot",
+    "Idiot du village"
+  ],
+  [
+    "Inocentes del pueblo",
+    "Village Idiots",
+    "Idiots du village"
+  ],
+  [
+    "Chivo expiatorio",
+    "Scapegoat",
+    "Bouc émissaire"
+  ],
+  [
+    "Chivos expiatorios",
+    "Scapegoats",
+    "Boucs émissaires"
+  ],
+  [
+    "Flautista",
+    "Pied Piper",
+    "Joueur de flûte"
+  ],
+  [
+    "Flautistas",
+    "Pied Pipers",
+    "Joueurs de flûte"
+  ],
+  [
+    "Lobo blanco",
+    "White Werewolf",
+    "Loup-Garou Blanc"
+  ],
+  [
+    "Lobos blancos",
+    "White Werewolves",
+    "Loups-Garous Blancs"
+  ],
+  [
+    "Cuervo",
+    "Raven",
+    "Corbeau"
+  ],
+  [
+    "Cuervos",
+    "Ravens",
+    "Corbeaux"
+  ],
+  [
+    "Pirómano",
+    "Arsonist",
+    "Pyromane"
+  ],
+  [
+    "Pirómanos",
+    "Arsonists",
+    "Pyromanes"
+  ],
+  [
+    "Aldeano conocido",
+    "Revealed Villager",
+    "Villageois-Villageois"
+  ],
+  [
+    "Aldeanos conocidos",
+    "Revealed Villagers",
+    "Villageois-Villageois"
+  ],
+  [
+    "Hermana",
+    "Sister",
+    "Sœur"
+  ],
+  [
+    "Hermanas",
+    "Sisters",
+    "Sœurs"
+  ],
+  [
+    "Hermano",
+    "Brother",
+    "Frère"
+  ],
+  [
+    "Hermanos",
+    "Brothers",
+    "Frères"
+  ],
+  [
+    "Zorro",
+    "Fox",
+    "Renard"
+  ],
+  [
+    "Zorros",
+    "Foxes",
+    "Renards"
+  ],
+  [
+    "Domador de osos",
+    "Bear Tamer",
+    "Montreur d’ours"
+  ],
+  [
+    "Domadores de osos",
+    "Bear Tamers",
+    "Montreurs d’ours"
+  ],
+  [
+    "Juez tartamudo",
+    "Stuttering Judge",
+    "Juge Bègue"
+  ],
+  [
+    "Jueces tartamudos",
+    "Stuttering Judges",
+    "Juges Bègues"
+  ],
+  [
+    "Caballero oxidado",
+    "Rusty Knight",
+    "Chevalier à l’Épée Rouillée"
+  ],
+  [
+    "Caballeros oxidados",
+    "Rusty Knights",
+    "Chevaliers à l’Épée Rouillée"
+  ],
+  [
+    "Comediante",
+    "Actor",
+    "Comédien"
+  ],
+  [
+    "Comediantes",
+    "Actors",
+    "Comédiens"
+  ],
+  [
+    "Sirvienta devota",
+    "Devoted Maid",
+    "Servante Dévouée"
+  ],
+  [
+    "Sirvientas devotas",
+    "Devoted Maids",
+    "Servantes Dévouées"
+  ],
+  [
+    "Niño salvaje",
+    "Wild Child",
+    "Enfant Sauvage"
+  ],
+  [
+    "Niños salvajes",
+    "Wild Children",
+    "Enfants Sauvages"
+  ],
+  [
+    "Perro lobo",
+    "Wolf-Hound",
+    "Chien-Loup"
+  ],
+  [
+    "Perros lobo",
+    "Wolf-Hounds",
+    "Chiens-Loups"
+  ],
+  [
+    "Ángel",
+    "Angel",
+    "Ange"
+  ],
+  [
+    "Ángeles",
+    "Angels",
+    "Anges"
+  ],
+  [
+    "Sectario",
+    "Cultist",
+    "Abominable Sectaire"
+  ],
+  [
+    "Sectarios",
+    "Cultists",
+    "Abominables Sectaires"
+  ],
+  [
+    "Gran lobo feroz",
+    "Big Bad Wolf",
+    "Grand-Méchant-Loup"
+  ],
+  [
+    "Grandes lobos feroces",
+    "Big Bad Wolves",
+    "Grands-Méchants-Loups"
+  ],
+  [
+    "Padre de los lobos",
+    "Wolf Father",
+    "Infect Père des Loups"
+  ],
+  [
+    "Padres de los lobos",
+    "Wolf Fathers",
+    "Infects Pères des Loups"
+  ],
+  [
+    "Médium",
+    "Spirit Medium",
+    "Médium"
+  ],
+  [
+    "Médiums",
+    "Spirit Mediums",
+    "Médiums"
+  ],
+  [
+    "Granja",
+    "Farm",
+    "Ferme"
+  ],
+  [
+    "Iglesia",
+    "Church",
+    "Église"
+  ],
+  [
+    "Curandero",
+    "Healer’s Hut",
+    "Masure du Rebouteux"
+  ],
+  [
+    "Escuela",
+    "School",
+    "École"
+  ],
+  [
+    "Alguacil",
+    "Bailiff’s House",
+    "Maison du Bailli"
+  ],
+  [
+    "Mansión",
+    "Manor",
+    "Manoir"
+  ],
+  [
+    "Panadería",
+    "Bakery",
+    "Boulangerie"
+  ],
+  [
+    "Taberna",
+    "Tavern",
+    "Taverne"
+  ],
+  [
+    "Barbería",
+    "Barber Shop",
+    "Échoppe du Barbier"
+  ],
+  [
+    "Paz por un día",
+    "A Day of Peace",
+    "Une journée de paix"
+  ],
+  [
+    "Sonambulismo",
+    "Sleepwalking",
+    "Somnambulisme"
+  ],
+  [
+    "Cosecha",
+    "Harvest",
+    "Moisson"
+  ],
+  [
+    "Hierbas medicinales",
+    "Medicinal Herbs",
+    "Herbes médicinales"
+  ],
+  [
+    "Doble consejo",
+    "Double Council",
+    "Double conseil"
+  ],
+  [
+    "Turno: Ladrón",
+    "Turn: Thief",
+    "Tour : Voleur"
+  ],
+  [
+    "Turno: Flautista",
+    "Turn: Pied Piper",
+    "Tour : Joueur de flûte"
+  ],
+  [
+    "Turno: Lobo blanco",
+    "Turn: White Werewolf",
+    "Tour : Loup-Garou Blanc"
+  ],
+  [
+    "Turno: Cuervo",
+    "Turn: Raven",
+    "Tour : Corbeau"
+  ],
+  [
+    "Turno: Pirómano",
+    "Turn: Arsonist",
+    "Tour : Pyromane"
+  ],
+  [
+    "Turno: Hermana",
+    "Turn: Sister",
+    "Tour : Sœur"
+  ],
+  [
+    "Turno: Hermano",
+    "Turn: Brother",
+    "Tour : Frère"
+  ],
+  [
+    "Turno: Zorro",
+    "Turn: Fox",
+    "Tour : Renard"
+  ],
+  [
+    "Turno: Comediante",
+    "Turn: Actor",
+    "Tour : Comédien"
+  ],
+  [
+    "Turno: Niño salvaje",
+    "Turn: Wild Child",
+    "Tour : Enfant Sauvage"
+  ],
+  [
+    "Turno: Perro lobo",
+    "Turn: Wolf-Hound",
+    "Tour : Chien-Loup"
+  ],
+  [
+    "Turno: Gran lobo feroz",
+    "Turn: Big Bad Wolf",
+    "Tour : Grand-Méchant-Loup"
+  ],
+  [
+    "Turno: Padre de los lobos",
+    "Turn: Wolf Father",
+    "Tour : Infect Père des Loups"
+  ],
+  [
+    "Turno: Médium",
+    "Turn: Spirit Medium",
+    "Tour : Médium"
+  ],
+  [
+    "La primera noche puedes tomar una de las dos cartas sobrantes. Si ambas son lobos, debes cambiar.",
+    "On the first night you may take one of the two spare cards. If both are wolves, you must switch.",
+    "La première nuit, tu peux prendre une des deux cartes restantes. Si les deux sont des loups, tu dois changer."
+  ],
+  [
+    "Resistes el primer ataque de los lobos. Si la aldea, la bruja o el cazador te mata, la aldea pierde sus poderes.",
+    "You survive the first wolf attack. If the village, witch or hunter kills you, the village loses its powers.",
+    "Tu survis à la première attaque des loups. Si le village, la sorcière ou le chasseur te tue, le village perd ses pouvoirs."
+  ],
+  [
+    "Si te condenan en una votación, sobrevives y revelas tu carta, pero pierdes el voto.",
+    "If a vote condemns you, you survive and reveal your card, but lose your vote.",
+    "Si le vote te condamne, tu survis et révèles ta carte, mais tu perds ton droit de vote."
+  ],
+  [
+    "Muere si la votación acaba en empate. Antes de irse elige quién podrá votar al día siguiente.",
+    "You die if the vote is tied. Before leaving, choose who may vote the next day.",
+    "Tu meurs en cas d’égalité au vote. Avant de partir, choisis qui pourra voter le lendemain."
+  ],
+  [
+    "Cada noche encanta a dos personas. Ganas si todos los demás supervivientes están encantados.",
+    "Charm two people each night. You win when every other survivor is charmed.",
+    "Charme deux personnes chaque nuit. Tu gagnes si tous les autres survivants sont charmés."
+  ],
+  [
+    "Despierta con la manada. Cada dos noches puedes eliminar a otro lobo. Ganas si quedas solo.",
+    "Wake with the pack. Every second night you may eliminate another wolf. You win by surviving alone.",
+    "Réveille-toi avec la meute. Une nuit sur deux, tu peux éliminer un autre loup. Tu gagnes si tu restes seul."
+  ],
+  [
+    "Cada noche marca una casa: su habitante recibe dos votos extra al día siguiente.",
+    "Mark a house each night: its occupant receives two extra votes the next day.",
+    "Chaque nuit, marque une maison : son occupant reçoit deux voix supplémentaires le lendemain."
+  ],
+  [
+    "Una vez quema una casa. Si los lobos la atacan esa noche, salvas al habitante y muere el lobo más cercano por la derecha.",
+    "Once per game, burn a house. If the wolves attack it that night, you save the occupant and the nearest wolf to their right dies.",
+    "Une fois par partie, brûle une maison. Si les loups l’attaquent cette nuit-là, tu sauves son occupant et le loup le plus proche à sa droite meurt."
+  ],
+  [
+    "Tu carta de aldeano es pública desde el reparto.",
+    "Your villager card is public from the deal.",
+    "Ta carte de villageois est publique dès la distribution."
+  ],
+  [
+    "Las dos hermanas se reconocen la primera noche y pueden confiar en ese vínculo.",
+    "The two sisters recognize each other on the first night and can rely on that bond.",
+    "Les deux sœurs se reconnaissent la première nuit et peuvent compter sur ce lien."
+  ],
+  [
+    "Los tres hermanos se reconocen la primera noche.",
+    "The three brothers recognize each other on the first night.",
+    "Les trois frères se reconnaissent la première nuit."
+  ],
+  [
+    "Elige a alguien: sabes si él o sus dos vecinos vivos incluyen un lobo. Un resultado negativo agota tu poder.",
+    "Choose someone: learn whether they or their two living neighbours include a wolf. A negative result exhausts your power.",
+    "Choisis quelqu’un : tu apprends si cette personne ou l’un de ses deux voisins vivants est un loup. Un résultat négatif épuise ton pouvoir."
+  ],
+  [
+    "Al amanecer el oso gruñe si tienes un lobo entre tus dos vecinos vivos, o si estás infectado.",
+    "At dawn, the bear growls if either of your living neighbours is a wolf, or if you are infected.",
+    "À l’aube, l’ours grogne si l’un de tes deux voisins vivants est un loup, ou si tu es infecté."
+  ],
+  [
+    "Una vez puedes pedir una segunda votación inmediatamente después de la primera.",
+    "Once per game, request a second vote immediately after the first.",
+    "Une fois par partie, tu peux demander un second vote immédiatement après le premier."
+  ],
+  [
+    "Si te devoran, contagias al primer lobo vivo a tu izquierda: morirá al comenzar la siguiente noche.",
+    "If the wolves eat you, infect the first living wolf to your left: they die at the start of the next night.",
+    "Si les loups te dévorent, tu contamines le premier loup vivant à ta gauche : il mourra au début de la nuit suivante."
+  ],
+  [
+    "Cada noche puedes usar una carta del repertorio. Cada carta se usa una sola vez y dura hasta la noche siguiente.",
+    "Each night you may use a repertoire card. Each card is single-use and lasts until the following night.",
+    "Chaque nuit, tu peux utiliser une carte du répertoire. Chaque carte ne sert qu’une fois et dure jusqu’à la nuit suivante."
+  ],
+  [
+    "Antes de revelar al condenado puedes tomar su papel. No puedes hacerlo si estás enamorada.",
+    "Before the condemned player’s card is revealed, you may take their role. You cannot do this if you are in love.",
+    "Avant de révéler la carte du condamné, tu peux prendre son rôle. Tu ne peux pas le faire si tu es amoureuse."
+  ],
+  [
+    "La primera noche eliges un modelo. Si muere, te conviertes en lobo.",
+    "Choose a role model on the first night. If they die, you become a wolf.",
+    "La première nuit, choisis un modèle. S’il meurt, tu deviens un loup."
+  ],
+  [
+    "La primera noche eliges definitivamente entre la aldea y la manada.",
+    "On the first night, choose permanently between the village and the pack.",
+    "La première nuit, choisis définitivement entre le village et la meute."
+  ],
+  [
+    "La partida empieza de día. Si mueres durante el primer turno, ganas; después eres aldeano.",
+    "The game starts in daytime. You win if you die during the first turn; afterwards you become a villager.",
+    "La partie commence de jour. Tu gagnes si tu meurs pendant le premier tour ; ensuite, tu deviens villageois."
+  ],
+  [
+    "La mesa se divide en dos grupos alternos. Ganas si no queda nadie vivo del otro grupo.",
+    "The table is split into two alternating groups. You win when nobody in the other group is alive.",
+    "La table est divisée en deux groupes alternés. Tu gagnes lorsqu’il ne reste aucun survivant dans l’autre groupe."
+  ],
+  [
+    "Mientras no haya muerto ningún lobo, niño salvaje o perro lobo, puedes atacar a una segunda víctima cada noche.",
+    "While no wolf, wild child or wolf-hound has died, you may attack a second victim each night.",
+    "Tant qu’aucun loup, enfant sauvage ou chien-loup n’est mort, tu peux attaquer une seconde victime chaque nuit."
+  ],
+  [
+    "Una vez puedes infectar a la víctima de la manada: se une a vosotros y conserva sus poderes.",
+    "Once per game, infect the pack’s victim: they join you and keep their powers.",
+    "Une fois par partie, infecte la victime de la meute : elle vous rejoint et conserve ses pouvoirs."
+  ],
+  [
+    "Una vez por noche puedes gastar una consulta de espiritismo y publicar una respuesta verificada de los difuntos.",
+    "Once per night, spend a spirit consultation to publish a verified answer from the dead.",
+    "Une fois par nuit, dépense une consultation de spiritisme pour publier une réponse vérifiée des défunts."
+  ],
+  [
+    "¿El primer difunto era lobo?",
+    "Was the first dead player a wolf?",
+    "Le premier défunt était-il un loup ?"
+  ],
+  [
+    "¿Sigue viva la vidente?",
+    "Is the seer still alive?",
+    "La voyante est-elle encore en vie ?"
+  ],
+  [
+    "¿Quedan al menos dos lobos?",
+    "Are at least two wolves still alive?",
+    "Reste-t-il au moins deux loups ?"
+  ],
+  [
+    "¿Hay un lobo junto a la médium?",
+    "Is a wolf next to the spirit medium?",
+    "Y a-t-il un loup à côté de la médium ?"
+  ],
+  [
+    "Aceptar edificio",
+    "Accept building",
+    "Accepter le bâtiment"
+  ],
+  [
+    "Ahora perteneces a la manada.",
+    "You now belong to the pack.",
+    "Tu appartiens désormais à la meute."
+  ],
+  [
+    "Ajustes de partida",
+    "Game settings",
+    "Réglages de la partie"
+  ],
+  [
+    "Asignar edificio vacío",
+    "Offer vacant building",
+    "Proposer un bâtiment vacant"
+  ],
+  [
+    "Cinco eventos adaptados. La médium usa preguntas de espiritismo digitales.",
+    "Five adapted events. The medium uses digital spirit questions.",
+    "Cinq événements adaptés. La médium utilise des questions de spiritisme numériques."
+  ],
+  [
+    "Confirmar poder",
+    "Confirm power",
+    "Confirmer le pouvoir"
+  ],
+  [
+    "Confirmar votantes",
+    "Confirm voters",
+    "Confirmer les votants"
+  ],
+  [
+    "Conservar mi carta",
+    "Keep my card",
+    "Garder ma carte"
+  ],
+  [
+    "Edificios y oficios",
+    "Buildings and occupations",
+    "Bâtiments et métiers"
+  ],
+  [
+    "El alcalde elige a su sucesor.",
+    "The mayor chooses a successor.",
+    "Le capitaine choisit son successeur."
+  ],
+  [
+    "El chivo expiatorio decide quién podrá votar mañana.",
+    "The scapegoat decides who may vote tomorrow.",
+    "Le bouc émissaire choisit qui pourra voter demain."
+  ],
+  [
+    "El inocente es indultado, pero pierde su voto.",
+    "The village idiot is pardoned, but loses their vote.",
+    "L’idiot du village est gracié, mais perd son droit de vote."
+  ],
+  [
+    "El oso gruñe: hay un lobo cerca.",
+    "The bear growls: a wolf is nearby.",
+    "L’ours grogne : un loup est à proximité."
+  ],
+  [
+    "El panadero se despierta brevemente",
+    "The baker wakes briefly",
+    "Le boulanger se réveille brièvement"
+  ],
+  [
+    "Elegir poder",
+    "Choose power",
+    "Choisir un pouvoir"
+  ],
+  [
+    "Esperando la última decisión…",
+    "Waiting for the final decision…",
+    "En attente de la dernière décision…"
+  ],
+  [
+    "Esperando posibles intervenciones…",
+    "Waiting for possible interventions…",
+    "En attente d’éventuelles interventions…"
+  ],
+  [
+    "Espiritismo: {question} — {answer}.",
+    "Spirit consultation: {question} — {answer}.",
+    "Spiritisme : {question} — {answer}."
+  ],
+  [
+    "Evento: {event}.",
+    "Event: {event}.",
+    "Événement : {event}."
+  ],
+  [
+    "Eventos seleccionados",
+    "Selected events",
+    "Événements sélectionnés"
+  ],
+  [
+    "Has sido eliminado. Puedes hablar, pero tu cámara permanece apagada.",
+    "You have been eliminated. You may speak, but your camera stays off.",
+    "Tu as été éliminé. Tu peux parler, mais ta caméra reste éteinte."
+  ],
+  [
+    "Hay un lobo entre: {names}.",
+    "There is a wolf among: {names}.",
+    "Il y a un loup parmi : {names}."
+  ],
+  [
+    "Impedir estos votos",
+    "Block these votes",
+    "Empêcher ces votes"
+  ],
+  [
+    "Indultar al condenado",
+    "Pardon the condemned player",
+    "Gracier le condamné"
+  ],
+  [
+    "Infectar a la víctima",
+    "Infect the victim",
+    "Infecter la victime"
+  ],
+  [
+    "La aldea elimina a {name} con {votes} votos.",
+    "The village eliminates {name} with {votes} votes.",
+    "Le village élimine {name} avec {votes} voix."
+  ],
+  [
+    "La aldea ha perdido sus poderes al matar al anciano.",
+    "The village lost its powers by killing the elder.",
+    "Le village a perdu ses pouvoirs en tuant l’ancien."
+  ],
+  [
+    "La casa de {name} se ha quemado.",
+    "The house of {name} has burned down.",
+    "La maison de {name} a brûlé."
+  ],
+  [
+    "La sirvienta o la mansión pueden intervenir antes de revelar la carta.",
+    "The maid or the manor may intervene before the card is revealed.",
+    "La servante ou le châtelain peuvent intervenir avant de révéler la carte."
+  ],
+  [
+    "La vidente ha visto: {role}.",
+    "The seer has seen: {role}.",
+    "La voyante a vu : {role}."
+  ],
+  [
+    "Las hermanas se eligen de dos en dos y los hermanos de tres en tres.",
+    "Select sisters in pairs and brothers in groups of three.",
+    "Les sœurs se choisissent par deux et les frères par trois."
+  ],
+  [
+    "No hay lobos entre: {names}. Tu olfato se ha agotado.",
+    "There are no wolves among: {names}. Your sense of smell is exhausted.",
+    "Il n’y a aucun loup parmi : {names}. Ton flair est épuisé."
+  ],
+  [
+    "No puedes votar en este consejo.",
+    "You cannot vote in this council.",
+    "Tu ne peux pas voter lors de ce conseil."
+  ],
+  [
+    "No quedan supervivientes.",
+    "There are no survivors.",
+    "Il ne reste aucun survivant."
+  ],
+  [
+    "Nombrar a {name}",
+    "Appoint {name}",
+    "Désigner {name}"
+  ],
+  [
+    "Nombrar pregonero",
+    "Appoint town crier",
+    "Nommer le garde champêtre"
+  ],
+  [
+    "Pedir una segunda votación",
+    "Request a second vote",
+    "Demander un second vote"
+  ],
+  [
+    "Personas encantadas: {names}.",
+    "Charmed people: {names}.",
+    "Personnes charmées : {names}."
+  ],
+  [
+    "Restaurar poder del edificio",
+    "Restore building power",
+    "Rétablir le pouvoir du bâtiment"
+  ],
+  [
+    "Se necesitan entre 4 y 24 jugadores.",
+    "You need between 4 and 24 players.",
+    "Il faut entre 4 et 24 joueurs."
+  ],
+  [
+    "Seguir sin edificio",
+    "Remain without a building",
+    "Rester vagabond"
+  ],
+  [
+    "Segundos de debate",
+    "Discussion seconds",
+    "Durée du débat en secondes"
+  ],
+  [
+    "Segundos por poder",
+    "Seconds per power",
+    "Secondes par pouvoir"
+  ],
+  [
+    "Sucesión del alcalde",
+    "Mayor succession",
+    "Succession du capitaine"
+  ],
+  [
+    "Te ofrecen: {building}.",
+    "You have been offered: {building}.",
+    "On te propose : {building}."
+  ],
+  [
+    "Tomar la carta del condenado",
+    "Take the condemned player’s card",
+    "Prendre la carte du condamné"
+  ],
+  [
+    "Tu edificio: {building}.",
+    "Your building: {building}.",
+    "Ton bâtiment : {building}."
+  ],
+  [
+    "Tu grupo: {names}.",
+    "Your group: {names}.",
+    "Ton groupe : {names}."
+  ],
+  [
+    "Tu modelo: {name}.",
+    "Your role model: {name}.",
+    "Ton modèle : {name}."
+  ],
+  [
+    "Usar la navaja",
+    "Use the razor",
+    "Utiliser le rasoir"
+  ],
+  [
+    "Victoria individual",
+    "Individual victory",
+    "Victoire individuelle"
+  ],
+  [
+    "Vota a {name}",
+    "Votes for {name}",
+    "Vote pour {name}"
+  ],
+  [
+    "¡Gana el flautista!",
+    "The pied piper wins!",
+    "Le joueur de flûte gagne !"
+  ],
+  [
+    "¡Gana el lobo blanco!",
+    "The white werewolf wins!",
+    "Le Loup-Garou Blanc gagne !"
+  ],
+  [
+    "¡Gana el sectario!",
+    "The cultist wins!",
+    "L’Abominable Sectaire gagne !"
+  ],
+  [
+    "¡Gana el ángel!",
+    "The angel wins!",
+    "L’ange gagne !"
+  ],
+  [
+    "Última decisión",
+    "Final decision",
+    "Dernière décision"
+  ],
+  [
+    "Última oportunidad",
+    "Last chance",
+    "Dernière chance"
+  ],
+  [
+    "Confesar",
+    "Hear confession",
+    "Confesser"
+  ],
+  [
+    "Pensando…",
+    "Thinking…",
+    "Réflexion…"
+  ],
+  [
+    "nadie",
+    "nobody",
+    "personne"
+  ],
+  [
+    "{n} voto",
+    "{n} vote",
+    "{n} voix"
+  ],
+  [
+    "{n} votos",
+    "{n} votes",
+    "{n} voix"
+  ],
+  [
+    "Ajustar página",
+    "Fit page",
+    "Adapter la page"
+  ],
+  [
+    "Salvar",
+    "Save",
+    "Sauver"
+  ],
+  [
+    "Envenenar a {name}",
+    "Poison {name}",
+    "Empoisonner {name}"
+  ],
+  [
+    " y ",
+    " and ",
+    " et "
+  ],
+  [
+    "Sí",
+    "Yes",
+    "Oui"
+  ],
+  [
+    "En la mesa",
+    "At the table",
+    "À la table"
+  ],
+  [
+    "Pulsa una carta para añadirla o retirarla. Las cartas elegidas brillan.",
+    "Click a card to add or remove it. Selected cards glow.",
+    "Clique sur une carte pour l’ajouter ou la retirer. Les cartes choisies brillent."
+  ],
+  [
+    "Buscar personaje",
+    "Find a character",
+    "Chercher un personnage"
+  ],
+  [
+    "Filtrar personajes",
+    "Filter characters",
+    "Filtrer les personnages"
+  ],
+  [
+    "Todas",
+    "All",
+    "Toutes"
+  ],
+  [
+    "Elegida",
+    "Selected",
+    "Choisie"
+  ],
+  [
+    "Añadir carta",
+    "Add card",
+    "Ajouter"
+  ],
+  [
+    "Automático",
+    "Automatic",
+    "Automatique"
+  ],
+  [
+    "No hay personajes con ese nombre.",
+    "No characters match that name.",
+    "Aucun personnage ne correspond à ce nom."
+  ],
+  [
+    "Guardar este set",
+    "Save this set",
+    "Enregistrer cette sélection"
+  ],
+  [
+    "Su voto cuenta doble y decide quién le sucede.",
+    "Their vote counts twice and they choose their successor.",
+    "Sa voix compte double et il choisit son successeur."
+  ],
+  [
+    "Los edificios añaden poderes públicos a las cartas. Se reparten al comenzar.",
+    "Buildings add public powers to character cards. They are assigned at the start.",
+    "Les bâtiments ajoutent des pouvoirs publics aux cartes. Ils sont attribués au début."
+  ],
+  [
+    "Qué hace cada edificio",
+    "What each building does",
+    "Le rôle de chaque bâtiment"
+  ],
+  [
+    "Solo los granjeros eligen al alcalde, desde el segundo día. La sucesión también queda entre granjeros.",
+    "Only farmers elect the mayor, starting on day two. The successor must also be a farmer.",
+    "Seuls les fermiers élisent le capitaine, à partir du deuxième jour. Son successeur doit aussi être fermier."
+  ],
+  [
+    "Una vez, descubre en privado la carta de otra persona.",
+    "Once per game, privately discover another person’s card.",
+    "Une fois par partie, découvre secrètement la carte d’une autre personne."
+  ],
+  [
+    "Una vez, devuelve un poder de edificio que ya se haya usado.",
+    "Once per game, restore a building power that has already been used.",
+    "Une fois par partie, rétablis un pouvoir de bâtiment déjà utilisé."
+  ],
+  [
+    "Impide hasta dos votos por día. No puedes votar ni impedir el voto de alguien sin casa.",
+    "Block up to two votes a day. You cannot vote or block someone who has no house.",
+    "Empêche jusqu’à deux votes par jour. Tu ne peux pas voter ni empêcher le vote d’une personne sans maison."
+  ],
+  [
+    "Ofrece casas vacías a personas sin edificio. Cada persona decide si acepta.",
+    "Offer vacant houses to people without a building. Each person decides whether to accept.",
+    "Propose les maisons vacantes aux personnes sans bâtiment. Chacune décide si elle accepte."
+  ],
+  [
+    "Una vez, perdona al condenado antes de que revele su carta. También puedes salvarte.",
+    "Once per game, pardon the condemned player before their card is revealed. You can also save yourself.",
+    "Une fois par partie, gracie le condamné avant de révéler sa carte. Tu peux aussi te sauver."
+  ],
+  [
+    "Después del turno de los lobos, puedes mirar las cámaras durante tres segundos.",
+    "After the wolves’ turn, you may watch the cameras for three seconds.",
+    "Après le tour des loups, tu peux regarder les caméras pendant trois secondes."
+  ],
+  [
+    "Los lobos y los votos normales no te atacan. Pierdes la inmunidad si votas al condenado.",
+    "Wolves and ordinary votes cannot target you. You lose this immunity if you vote for the condemned player.",
+    "Les loups et les votes ordinaires ne peuvent pas te viser. Tu perds cette immunité si tu votes contre le condamné."
+  ],
+  [
+    "Una vez, elimina a alguien con casa. Si no es lobo, tú también mueres.",
+    "Once per game, eliminate someone with a house. If they are not a wolf, you die too.",
+    "Une fois par partie, élimine quelqu’un qui a une maison. Si ce n’est pas un loup, tu meurs aussi."
+  ],
+  [
+    "Elegir persona",
+    "Choose a person",
+    "Choisir une personne"
+  ],
+  [
+    "Todavía no hay un objetivo para este poder.",
+    "There is no target for this power yet.",
+    "Il n’y a pas encore de cible pour ce pouvoir."
+  ],
+  [
+    "Edificio disponible",
+    "Available building",
+    "Bâtiment disponible"
+  ],
+  [
+    "Hace falta una casa vacía y alguien sin edificio para ofrecer alojamiento.",
+    "You need a vacant house and someone without a building to offer accommodation.",
+    "Il faut une maison vacante et une personne sans bâtiment pour proposer un logement."
+  ]
+]

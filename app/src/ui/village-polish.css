@@ -1,0 +1,40 @@
+/* Quiet paper, moss and timber; shared by the village's everyday tools. */
+:root { --sv-paper:#fbf4e2;--sv-ink:#344c3d;--sv-edge:#c7ae87;--sv-leaf:#4a7255; }
+html,body,#app { overflow-x:hidden; }
+* { scrollbar-width:thin;scrollbar-color:#a58b64 transparent; }
+*::-webkit-scrollbar { width:8px;height:8px; }
+*::-webkit-scrollbar-track,*::-webkit-scrollbar-corner { background:transparent; }
+*::-webkit-scrollbar-thumb { background:#a58b64;border:2px solid #f3e8d2;border-radius:10px; }
+.sv-button { min-height:40px;padding:8px 15px;clip-path:none;border:1px solid #bfa780;border-radius:9px;background:#f7edd6;box-shadow:0 2px 0 #a28b64,inset 0 1px #fffaf0;font-size:12px;line-height:1.35;white-space:normal; }
+.sv-button:hover:not(:disabled) { box-shadow:0 3px 0 #a28b64,inset 0 1px #fffaf0; }
+.sv-button-primary { background:#496e50;color:#fff7df;border-color:#34563c;box-shadow:0 2px 0 #2d4b34,inset 0 1px #789273; }
+.sv-button-outline { background:transparent;box-shadow:none; }
+.sv-button-small { min-height:36px;padding:6px 11px; }
+.sv-input,.sv-select { min-height:40px;border:1px solid #c5b08d;border-radius:8px;clip-path:none;box-shadow:inset 0 2px 0 #5c46200a;background-color:#fff9ec;font:inherit;font-size:13px;padding:8px 11px; }
+textarea.sv-input { height:auto;resize:vertical;line-height:1.6; }
+.sv-field-label { text-transform:none;letter-spacing:normal;font-size:12px; }
+button:focus-visible,summary:focus-visible { outline:3px solid #c99758;outline-offset:3px; }
+.sv-hud-place .sv-subtle { display:none; }
+.sv-hud-toast { border-radius:12px;box-shadow:0 3px 12px #273b291a;max-width:min(440px,calc(100vw - 36px));font-size:12px; }
+.sv-wardrobe-preview,.sv-wardrobe-item canvas { image-rendering:pixelated; }
+.sv-wardrobe-preview { object-fit:contain; }
+.sv-sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+.sv-garden-tray { position:fixed;z-index:55;bottom:18px;left:50%;transform:translateX(-50%);width:min(720px,calc(100vw - 28px));padding:14px 18px;background:#fbf4e2f5;color:#344c3d;border:2px solid #b99a70;border-radius:18px;box-shadow:0 8px 28px #213c3630; }
+.sv-garden-tray[hidden] { display:none; }
+.sv-garden-tray header,.sv-garden-actions { display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap; }
+.sv-garden-tray h2 { font-size:17px;margin:0; }
+.sv-garden-tray p { font-size:12px;margin:8px 0;color:#697457; }
+.sv-garden-catalog { display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin:12px 0; }
+.sv-garden-catalog button { padding:4px;border:1px solid transparent;border-radius:9px;background:transparent;cursor:pointer;min-width:0; }
+.sv-garden-catalog button[aria-pressed=true] { background:#e3e9d2;border-color:#638358;box-shadow:0 2px #a4b390; }
+.sv-garden-catalog img { width:100%;max-width:44px;image-rendering:pixelated;display:block; }
+.sv-garden-actions { justify-content:flex-end; }
+@media(max-width:600px) { .sv-garden-catalog { grid-template-columns:repeat(6,minmax(0,1fr)); } .sv-garden-tray { bottom:10px;padding:10px 14px; } .sv-garden-catalog img { max-width:36px;margin:auto; } .sv-settings-tabs { flex-wrap:wrap;overflow-x:hidden; } .sv-settings-tab { flex:1 1 25%; } }
+@media(prefers-reduced-motion:reduce) { .sv-button { transition:none; } }
+
+.sv-main > .sv-board-pane.is-display-board .sv-board-wrap { flex:0 1 auto;aspect-ratio:16/9;width:min(100%,calc((100dvh - 220px)*16/9));height:auto;align-self:center;border:7px solid #ac8761;border-radius:7px;box-shadow:0 5px 0 #786245; }
+.sv-board-pane.is-display-board .sv-board-wrap .sv-canvas { width:100%;height:100%; }
+
+@media(max-width:680px) { .sv-wardrobe-tabs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;gap:6px; }.sv-wardrobe-tabs button { padding:8px 4px;min-width:0; } }
+
+.sv-board-pane.is-display-board [data-board-tool=hand],.sv-board-pane.is-display-board .sv-board-options-panel details:has(.sv-zoom) { display:none; }

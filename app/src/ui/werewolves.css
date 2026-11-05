@@ -1,0 +1,131 @@
+/* The campfire cabinet. Scoped to Werewolves so other activities keep their own UI. */
+body .sv-activity[data-kind=werewolves] {
+  --ww-night:#101e1a;--ww-surface:#192d26;--ww-raised:#233b31;--ww-edge:#40574a;
+  --ww-gold:#dec48c;--ww-bright:#f0eee2;--ww-soft:#a9b9ac;
+  background:var(--ww-night);box-sizing:border-box;overflow-x:hidden;
+  padding:12px;gap:12px;
+}
+body .sv-activity[data-kind=werewolves] *,body .sv-activity[data-kind=werewolves] *::before,body .sv-activity[data-kind=werewolves] *::after{box-sizing:border-box}
+body .sv-activity[data-kind=werewolves] :is(.ww,.ww-body,.ww-lobby-main,.ww-side,.ww-card-contents,.sv-role-catalog,.ww-table,.sv-game-camera){min-width:0;scrollbar-width:thin;scrollbar-color:#6d8066 #14271f}
+body .sv-activity[data-kind=werewolves] ::-webkit-scrollbar{width:8px;height:8px}
+body .sv-activity[data-kind=werewolves] ::-webkit-scrollbar-track{background:#14271f;border-radius:8px}
+body .sv-activity[data-kind=werewolves] ::-webkit-scrollbar-thumb{background:#6d8066;border:2px solid #14271f;border-radius:8px}
+body .sv-activity[data-kind=werewolves] .ww{
+  --ww-bg:var(--ww-night);--ww-ink:var(--ww-bright);--ww-dim:var(--ww-soft);--ww-card:var(--ww-surface);--ww-line:var(--ww-edge);--ww-accent:#ad8e4d;
+  border:1px solid var(--ww-edge);border-radius:20px;background:radial-gradient(ellipse at 0 0,#2d413326,transparent 60%),var(--ww-night);
+}
+body .sv-activity[data-kind=werewolves] .ww-head{padding:18px 22px;border-bottom:1px solid var(--ww-edge);gap:13px;background:#ffffff02}
+body .sv-activity[data-kind=werewolves] .ww-titles h2{font-size:1.3rem;letter-spacing:-.025em;color:var(--ww-bright)}
+body .sv-activity[data-kind=werewolves] .ww-titles p{font-size:.8rem;line-height:1.45;color:var(--ww-soft);margin-top:5px}
+body .sv-activity[data-kind=werewolves] .ww-phase-icon{width:46px;height:46px;border:1px solid #8e7951;background:#d3b47812;border-radius:13px;flex-shrink:0}
+body .sv-activity[data-kind=werewolves] .ww-icon-btn{width:38px;height:38px;border:1px solid var(--ww-edge);color:var(--ww-soft);background:#22382e;flex-shrink:0}
+body .sv-activity[data-kind=werewolves] .ww-icon-btn:hover{color:var(--ww-bright);border-color:var(--ww-gold)}
+body .sv-activity[data-kind=werewolves] .ww-body{padding:18px;gap:16px;overflow-x:hidden}
+body .sv-activity[data-kind=werewolves] .ww[data-phase=lobby] .ww-body.ww-lobby{display:grid;grid-template-columns:minmax(0,1fr) 258px;grid-auto-rows:max-content;align-content:start;align-items:start;overflow-y:auto}
+body .sv-activity[data-kind=werewolves] .ww-lobby-main{display:flex;flex-direction:column;gap:20px;min-height:min-content}
+body .sv-activity[data-kind=werewolves] .ww-side{gap:14px}
+body .sv-activity[data-kind=werewolves] :is(.ww-card,.ww-action,.ww-log){background:var(--ww-surface);border:1px solid var(--ww-edge);border-radius:15px;box-shadow:0 3px 10px #0000000d;padding:16px}
+body .sv-activity[data-kind=werewolves] .ww-log:empty{display:none}
+body .sv-activity[data-kind=werewolves] .ww-section-label{margin:0 0 12px;color:var(--ww-soft);font-size:.73rem;letter-spacing:.12em;text-transform:uppercase;font-weight:750}
+body .sv-activity[data-kind=werewolves] .ww-table{border:1px dashed #49614f;background:#cbbd8310;padding:14px;gap:12px;border-radius:18px;grid-template-columns:repeat(auto-fill,minmax(115px,1fr))}
+body .sv-activity[data-kind=werewolves] .ww-seat{padding:12px 8px;background:#1d352a;border:1px solid #52634e;border-radius:14px;box-shadow:0 3px 0 #0002;gap:7px}
+body .sv-activity[data-kind=werewolves] .ww-seat.is-me{border:2px solid #bd9d58;background:#d3b47810}
+body .sv-activity[data-kind=werewolves] .ww-seat.is-empty{border-style:dashed;background:transparent;box-shadow:none}
+body .sv-activity[data-kind=werewolves] .ww-avatar{width:48px;height:48px;border-width:2px;font-size:1.25rem}
+body .sv-activity[data-kind=werewolves] .ww-seat-name{font-size:.8rem}
+body .sv-activity[data-kind=werewolves] .ww-seat-status{font-size:.7rem}
+body .sv-activity[data-kind=werewolves] .ww-role-badge{width:25px;height:25px;border:1px solid #67775c;border-radius:7px;right:-6px;bottom:-5px}
+body .sv-activity[data-kind=werewolves] .sv-role-setup{padding:0;flex-basis:auto;overflow:hidden;background:#162b23}
+body .sv-activity[data-kind=werewolves] :is(.sv-role-setup,.ww-settings)>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px;color:var(--ww-bright);font-size:.95rem;font-weight:750;border-radius:14px;transition:background .18s}
+body .sv-activity[data-kind=werewolves] :is(.sv-role-setup,.ww-settings)>summary::-webkit-details-marker{display:none}
+body .sv-activity[data-kind=werewolves] :is(.sv-role-setup,.ww-settings)>summary::after{content:'+';color:var(--ww-gold);font-size:20px;font-weight:400}
+body .sv-activity[data-kind=werewolves] :is(.sv-role-setup,.ww-settings)[open]>summary::after{content:'−'}
+body .sv-activity[data-kind=werewolves] :is(.sv-role-setup,.ww-settings)>summary:hover{background:#e4ce8710}
+body .sv-activity[data-kind=werewolves] :is(.sv-role-setup,.ww-settings)[open]>summary{border-bottom:1px solid var(--ww-edge);border-radius:14px 14px 0 0}
+body .sv-activity[data-kind=werewolves] .ww-summary-title{display:flex;align-items:center;gap:10px;flex:1}
+body .sv-activity[data-kind=werewolves] .ww-summary-title>svg{color:var(--ww-gold);flex-shrink:0}
+body .sv-activity[data-kind=werewolves] .ww-summary-count{min-width:28px;text-align:center;border:1px solid #89794e;color:var(--ww-gold);padding:3px 7px;border-radius:8px;font-size:.75rem}
+body .sv-activity[data-kind=werewolves] .ww-card-contents{padding:16px;max-height:calc(100dvh - 252px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+body .sv-activity[data-kind=werewolves] .ww-card-intro{color:var(--ww-soft);font-size:.82rem;margin:0 0 14px;line-height:1.5}
+body .sv-activity[data-kind=werewolves] .ww-deck-tools{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+body .sv-activity[data-kind=werewolves] .ww-deck-tools>*{min-width:0;flex:1 1 140px}
+body .sv-activity[data-kind=werewolves] :is(input:not([type=checkbox]),select){max-width:100%;min-height:39px;background:#10251b;color:var(--ww-bright);border:1px solid #50664e;border-radius:9px;padding:8px 10px;font:inherit;font-size:.8rem;color-scheme:dark;box-shadow:inset 0 1px 3px #0002}
+body .sv-activity[data-kind=werewolves] input::placeholder{color:#91a38f}
+body .sv-activity[data-kind=werewolves] :is(button,input,select,summary):focus-visible{outline:2px solid #dec48c;outline-offset:3px}
+body .sv-activity[data-kind=werewolves] .ww-role-filters{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 16px}
+body .sv-activity[data-kind=werewolves] .ww-filter{padding:7px 10px;min-height:34px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--ww-soft);font:600 .72rem/1.2 var(--font-ui);cursor:pointer}
+body .sv-activity[data-kind=werewolves] .ww-filter[aria-pressed=true]{background:#dac38317;border-color:#7f7047;color:#e5ce93}
+body .sv-activity[data-kind=werewolves] .sv-role-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(154px,1fr));gap:12px;margin:0 0 16px;perspective:1100px;align-items:stretch}
+body .sv-activity[data-kind=werewolves] .sv-role-card{display:flex;flex-direction:column;min-width:0;padding:15px 13px 12px;border:1px solid #50624c!important;border-radius:12px;background:linear-gradient(145deg,#294232,#1c3326);box-shadow:0 4px 10px #0002;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s;transform-style:preserve-3d;transform-origin:center 60%}
+body .sv-activity[data-kind=werewolves] .sv-role-card[hidden]{display:none!important}
+body .sv-activity[data-kind=werewolves] .sv-role-card:hover:not(.is-readonly){border-color:#c6af72!important;box-shadow:0 5px 18px #0003}
+body .sv-activity[data-kind=werewolves] .sv-role-card.is-chosen{border-color:#d9bc74!important;background:linear-gradient(145deg,#4a5030,#293b25);box-shadow:0 0 0 1px #d6b86b20,0 0 20px #d3b56a17,inset 0 1px 0 #e8d38e24}
+body .sv-activity[data-kind=werewolves] .sv-role-card.is-readonly{cursor:default}
+body .sv-activity[data-kind=werewolves] .sv-role-card.is-flipping{animation:ww-card-turn .64s cubic-bezier(.2,.75,.28,1) both}
+@keyframes ww-card-turn{0%{transform:rotateY(-180deg) scale(.94);filter:brightness(.75)}45%{transform:rotateY(18deg) translateY(-5px) scale(1.025);filter:brightness(1.25)}75%{transform:rotateY(-5deg) translateY(-2px)}100%{transform:rotateY(0) translateY(0) scale(1);filter:brightness(1)}}
+body .sv-activity[data-kind=werewolves] .sv-role-pick{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:11px;padding:2px 0 10px;width:100%;min-height:91px;background:transparent;border:0;border-radius:8px;color:var(--ww-bright);font:750 .85rem/1.25 var(--font-ui);text-align:center;cursor:inherit;box-shadow:none}
+body .sv-activity[data-kind=werewolves] .sv-role-pick:disabled{opacity:1;color:var(--ww-soft)}
+body .sv-activity[data-kind=werewolves] .sv-role-pick>svg{filter:drop-shadow(0 3px 0 #0002);flex-shrink:0}
+body .sv-activity[data-kind=werewolves] .ww-role-description{font-size:.73rem;line-height:1.45;color:#c2cdbb;margin:2px 0 14px;flex:1;overflow-wrap:anywhere}
+body .sv-activity[data-kind=werewolves] .ww-role-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #ffffff12;padding-top:10px}
+body .sv-activity[data-kind=werewolves] .ww-role-foot input{width:52px;min-height:32px;padding:5px 7px;font-size:.75rem}
+body .sv-activity[data-kind=werewolves] .ww-role-status{font-size:.66rem;font-weight:650;color:var(--ww-soft)}
+body .sv-activity[data-kind=werewolves] .is-chosen .ww-role-status{color:#e0c780}
+body .sv-activity[data-kind=werewolves] .is-chosen .ww-role-status::before{content:'✓ ';font-weight:800}
+body .sv-activity[data-kind=werewolves] .ww-save-deck{border-top:1px solid var(--ww-edge);padding-top:13px;margin-top:14px}
+body .sv-activity[data-kind=werewolves] .ww-save-deck>summary{font-size:.78rem;color:var(--ww-gold);cursor:pointer;padding:4px 0}
+body .sv-activity[data-kind=werewolves] .ww-settings{padding:0}
+body .sv-activity[data-kind=werewolves] .ww-settings-content{padding:4px 15px 15px}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch{display:flex;gap:11px;align-items:flex-start;margin:16px 0;cursor:pointer}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch>span{display:grid;gap:5px;min-width:0}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch strong{font-size:.8rem;color:var(--ww-bright)}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch small{font-size:.72rem;color:var(--ww-soft);line-height:1.45}
+body .sv-activity[data-kind=werewolves] input[type=checkbox]{accent-color:var(--ww-gold);width:18px;height:18px;flex-shrink:0}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch input{appearance:none;-webkit-appearance:none;position:relative;width:35px;height:21px;margin:1px 0 0;border:1px solid #6b7c5f;border-radius:20px;background:#10251b;cursor:pointer}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch input::before{content:'';position:absolute;top:3px;left:3px;width:13px;height:13px;border-radius:50%;background:#8c9e84;transition:transform .18s,background .18s}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch input:checked{background:#59613b;border-color:#d2b76e}
+body .sv-activity[data-kind=werewolves] .ww-setting-switch input:checked::before{transform:translateX(14px);background:#e4ca86}
+body .sv-activity[data-kind=werewolves] .ww-setting-timers{display:grid;gap:12px;border-top:1px solid var(--ww-edge);padding-top:16px}
+body .sv-activity[data-kind=werewolves] .ww-setting-timers label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.76rem;color:var(--ww-soft)}
+body .sv-activity[data-kind=werewolves] .ww-setting-timers input{width:68px;flex-shrink:0}
+body .sv-activity[data-kind=werewolves] .ww-building-guide{padding:10px 0;border-block:1px solid #40574a88}
+body .sv-activity[data-kind=werewolves] .ww-building-guide>summary{font-size:.76rem;color:var(--ww-gold);cursor:pointer}
+body .sv-activity[data-kind=werewolves] .ww-building-guide dl{max-height:260px;overflow:auto;scrollbar-width:thin;scrollbar-color:#6d8066 #14271f;margin:14px 0 0;padding-right:7px}
+body .sv-activity[data-kind=werewolves] .ww-building-guide dt{font-size:.78rem;color:#e2cf9b;font-weight:750;margin:14px 0 4px}
+body .sv-activity[data-kind=werewolves] .ww-building-guide dt:first-child{margin-top:0}
+body .sv-activity[data-kind=werewolves] .ww-building-guide dd{margin:0;font-size:.72rem;line-height:1.5;color:var(--ww-soft)}
+body .sv-activity[data-kind=werewolves] .ww-building-note{border-left:2px solid #c4a56b;padding:2px 0 2px 10px}
+body .sv-activity[data-kind=werewolves] .ww-building-note strong{font-size:.82rem;color:var(--ww-gold)}
+body .sv-activity[data-kind=werewolves] .ww-building-note p{font-size:.76rem;line-height:1.5;color:var(--ww-soft);margin-top:5px}
+body .sv-activity[data-kind=werewolves] .ww-action{gap:11px}
+body .sv-activity[data-kind=werewolves] .ww-action>p{font-size:.81rem;color:var(--ww-soft);line-height:1.5}
+body .sv-activity[data-kind=werewolves] .ww-btn{background:linear-gradient(#2b4536,#243c2f);border:1px solid #5d7257;color:var(--ww-bright);border-radius:10px;padding:11px 13px;min-height:42px;font-size:.79rem;box-shadow:inset 0 1px #ffffff08,0 2px 0 #0003;cursor:pointer}
+body .sv-activity[data-kind=werewolves] .ww-btn:hover:not(:disabled){background:#354e3b;border-color:#c2ad72}
+body .sv-activity[data-kind=werewolves] .ww-btn-primary{color:#211f13;background:linear-gradient(#e3cd91,#c3a96a);border-color:#e7d197;box-shadow:inset 0 1px #fff6,0 3px 0 #756439}
+body .sv-activity[data-kind=werewolves] .ww-btn-primary:hover:not(:disabled){background:#ecdaa5;border-color:#f0dfb2}
+body .sv-activity[data-kind=werewolves] button:disabled{cursor:default}
+body .sv-activity[data-kind=werewolves] .ww-btn:disabled{background:#25372b;color:#788773;border-color:#3b4e3d;box-shadow:none}
+body .sv-activity[data-kind=werewolves]>.sv-game-camera{background:#14271f;border:1px solid var(--ww-edge);border-radius:18px;padding:13px;overflow-x:hidden}
+body .sv-activity[data-kind=werewolves] .sv-game-camera-toggle{background:#294331;border-color:#667954;color:var(--ww-bright);border-radius:10px;min-height:40px;font-size:.8rem;box-shadow:0 2px 0 #0003}
+body .sv-activity[data-kind=werewolves] .sv-game-camera-toggle.is-on{background:#3b5131;border-color:#a7ad73}
+body .sv-activity[data-kind=werewolves] .sv-game-camera-gallery{gap:10px;min-width:0}
+body .sv-activity[data-kind=werewolves] .sv-game-camera-tile{border-radius:13px;border-color:#62715c;min-width:0;max-width:100%}
+body .sv-activity[data-kind=werewolves] :is(.sv-activity-stop,.sv-game-voice){position:static;min-width:0;max-width:100%;min-height:42px;justify-self:stretch;margin:0;border-radius:11px;background:linear-gradient(#263b2e,#192c22)!important;color:#dedcc6!important;border:1px solid #52654e;box-shadow:inset 0 1px #ffffff08,0 2px 0 #0003;clip-path:none;padding:10px 16px;font:650 .78rem/1.35 var(--font-ui);white-space:normal}
+body .sv-activity[data-kind=werewolves] .sv-activity-stop:hover{background:#45342a!important;border-color:#9f7857}
+body .sv-activity[data-kind=werewolves] .sv-game-voice:hover{background:#354d35!important;border-color:#9cab73}
+body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby]){display:grid;grid-template-columns:minmax(0,1fr) 212px;grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
+body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.ww{grid-column:1;grid-row:1;height:100%}
+body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.sv-game-camera{grid-column:2;grid-row:1;display:flex;flex-direction:column;max-height:none;width:100%;min-height:0}
+body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby]) .sv-game-camera-gallery{display:grid;grid-template-columns:minmax(0,1fr);align-content:start;overflow-y:auto;overflow-x:hidden;max-height:none;flex:1}
+body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.sv-activity-stop{grid-column:1;grid-row:2}
+body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.sv-game-voice{grid-column:2;grid-row:2}
+@media(max-width:1100px){body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby]){grid-template-columns:minmax(0,1fr) 174px}body .sv-activity[data-kind=werewolves] .ww[data-phase=lobby] .ww-body.ww-lobby{grid-template-columns:minmax(0,1fr) 224px;padding:12px;gap:12px}body .sv-activity[data-kind=werewolves] .sv-role-catalog{grid-template-columns:repeat(auto-fit,minmax(142px,1fr))}}
+@media(max-width:850px){body .sv-activity[data-kind=werewolves] .ww[data-phase=lobby] .ww-body.ww-lobby{grid-template-columns:minmax(0,1fr)}body .sv-activity[data-kind=werewolves] .ww-card-contents{max-height:54dvh}body .sv-activity[data-kind=werewolves] .ww[data-phase=lobby] .ww-side{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));align-items:start}}
+@media(max-width:600px){body .sv-activity[data-kind=werewolves]{padding:6px;gap:6px}body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby]){grid-template-columns:minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr) auto auto}body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.ww{grid-column:1 / -1;grid-row:1}body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.sv-game-camera{grid-column:1 / -1;grid-row:2;flex-direction:row;align-items:center;gap:12px;padding:8px;max-height:140px}body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby]) .sv-game-camera-gallery{display:flex;flex-direction:row;overflow-x:auto;max-height:116px;flex:1;scrollbar-width:thin}body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby]) .sv-game-camera-tile{width:104px;min-width:104px}body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.sv-activity-stop{grid-column:1;grid-row:3}body .sv-activity[data-kind=werewolves]:has(.ww[data-phase=lobby])>.sv-game-voice{grid-column:2;grid-row:3;max-width:170px}body .sv-activity[data-kind=werewolves] .ww-head{padding:13px 12px;gap:10px}body .sv-activity[data-kind=werewolves] .ww-titles h2{font-size:1.05rem}body .sv-activity[data-kind=werewolves] .ww-titles p{font-size:.72rem}body .sv-activity[data-kind=werewolves] .ww-card-contents{padding:12px;max-height:49dvh}body .sv-activity[data-kind=werewolves] .sv-role-catalog{gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}body .sv-activity[data-kind=werewolves] .sv-role-card{padding:13px 10px 10px}body .sv-activity[data-kind=werewolves] .sv-role-pick{font-size:.78rem}body .sv-activity[data-kind=werewolves] .ww-role-description{font-size:.7rem}body .sv-activity[data-kind=werewolves] .ww-role-foot input{width:43px}body .sv-activity[data-kind=werewolves] .ww-role-status{font-size:.62rem}body .sv-activity[data-kind=werewolves] .ww-summary-title{font-size:.85rem}}
+body .sv-activity[data-kind=werewolves]:has(.ww:not([data-phase=lobby]))>.sv-game-camera{align-items:stretch}
+body .sv-activity[data-kind=werewolves]:has(.ww:not([data-phase=lobby])) .sv-game-camera-gallery{width:100%}
+@media(max-width:800px){
+ body .sv-activity[data-kind=werewolves]:has(.ww:not([data-phase=lobby])) .sv-game-camera-gallery{grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));grid-auto-rows:minmax(100px,1fr);align-content:stretch}
+ body .sv-activity[data-kind=werewolves]:has(.ww:not([data-phase=lobby])) .sv-game-camera-tile{width:100%;height:100%;min-height:100px;aspect-ratio:auto}
+}
+@media(prefers-reduced-motion:reduce){body .sv-activity[data-kind=werewolves] .sv-role-card.is-flipping{animation:none}body .sv-activity[data-kind=werewolves] *{scroll-behavior:auto!important;transition:none!important}}

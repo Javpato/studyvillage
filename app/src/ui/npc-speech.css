@@ -1,0 +1,9 @@
+.sv-npc-bubble { position:fixed;z-index:45;box-sizing:border-box;width:240px;padding:9px 12px 5px;border:1px solid rgba(94,116,82,var(--speech-opacity,.9));border-radius:11px;background:rgba(255,249,233,var(--speech-opacity,.9));box-shadow:0 3px 8px #1b332722;color:#30493b;font:600 var(--speech-font,14px)/1.4 system-ui;pointer-events:auto; }
+.sv-npc-bubble[hidden] { display:none; }
+.sv-npc-bubble::after { content:'';position:absolute;left:var(--speech-tip,50%);bottom:-7px;width:10px;height:10px;background:rgba(255,249,233,var(--speech-opacity,.9));border-right:1px solid #64755780;border-bottom:1px solid #64755780;transform:translateX(-50%) rotate(45deg);pointer-events:none; }
+.sv-npc-bubble-text { white-space:pre-line;min-height:calc(var(--speech-font,14px)*1.4*var(--speech-lines,2));cursor:pointer; }
+.sv-npc-bubble footer { display:flex;align-items:center;gap:5px;margin-top:3px;min-height:28px; }
+.sv-npc-bubble button { border:0;background:transparent;color:#3f6247;font:700 12px system-ui;cursor:pointer;min-height:28px;padding:5px 8px;border-radius:6px; }
+.sv-npc-bubble button:hover { background:#64855318; }.sv-npc-bubble button:focus-visible { outline:2px solid #668958;outline-offset:1px; }
+.sv-npc-next { margin-left:auto; }.sv-npc-bubble .sv-npc-close { font-size:20px;min-width:30px;padding:0 4px; }.sv-npc-page { font-size:10px;font-weight:500;color:#637157; }
+.sv-npc-settings { border-top:1px solid #d7bf95;padding-top:12px; }.sv-npc-settings summary { cursor:pointer;font-weight:650;padding:8px 0; }.sv-npc-settings>label { display:flex;align-items:center;gap:14px;justify-content:space-between;margin:12px 0; }.sv-npc-settings select { font:inherit;max-width:58%;padding:8px;border:1px solid #c5b08d;border-radius:8px;background:#fff9ec;color:#344c3d; }.sv-npc-settings input[type=range] { max-width:45%;accent-color:#4a7255; }.sv-npc-settings p { font-size:12px;line-height:1.5;color:#68765d; }.sv-npc-settings p:empty { display:none; }

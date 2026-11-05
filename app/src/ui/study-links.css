@@ -1,0 +1,8 @@
+/* References are local navigation, not shared copies of the note's contents. */
+.sv-study-workspace .sv-deck-note-link,.sv-study-workspace .sv-note-deck-links{display:flex;align-items:center;flex-wrap:wrap;gap:7px 10px;max-width:100%;padding:10px 0;color:#6b7968;font-size:12px;line-height:1.5}
+.sv-study-workspace .sv-deck-note-link{width:min(720px,100%);margin:0 auto 12px}.sv-study-workspace .sv-note-deck-links{margin:-5px 0 24px;border-bottom:1px solid #dfe5d8;padding-bottom:14px}
+.sv-study-workspace .sv-study-link-label{display:inline-flex;align-items:center;gap:6px;flex:none;font-size:11px;font-weight:550;color:#71816b}.sv-study-link-label svg{flex:none}
+.sv-study-workspace .sv-study-reference{display:inline-flex;align-items:center;max-width:100%;min-height:36px;border:1px solid #d8e2ce;border-radius:9px;background:#f2f6ec;padding:7px 11px;color:#496148;font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:normal;overflow-wrap:anywhere;box-shadow:none;cursor:pointer}
+.sv-study-workspace .sv-study-reference:hover{border-color:#a9be99;background:#e8f0df}.sv-study-workspace .sv-study-reference:focus-visible{outline:3px solid #94ae81;outline-offset:2px}.sv-study-reference-missing{color:#899182;font-size:11px;font-style:italic}
+.sv-study-library .sv-deck-note-link{margin:0;padding:0;justify-content:center}.sv-study-library .sv-deck-note-link .sv-study-link-label{font-size:10px}
+@media(max-width:700px){.sv-study-workspace .sv-study-reference{min-height:44px}.sv-study-workspace .sv-note-deck-links{margin-bottom:18px}}

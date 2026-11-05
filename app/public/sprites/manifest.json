@@ -1,0 +1,597 @@
+{
+  "oak": {
+    "file": "oak.png",
+    "width": 64,
+    "height": 64
+  },
+  "palm": {
+    "file": "palm.png",
+    "width": 64,
+    "height": 64
+  },
+  "cherry": {
+    "file": "cherry.png",
+    "width": 64,
+    "height": 64
+  },
+  "flowerbed": {
+    "file": "flowerbed.png",
+    "width": 64,
+    "height": 64
+  },
+  "lantern": {
+    "file": "lantern.png",
+    "width": 64,
+    "height": 64
+  },
+  "fountain": {
+    "file": "fountain.png",
+    "width": 64,
+    "height": 64
+  },
+  "picnic": {
+    "file": "picnic.png",
+    "width": 64,
+    "height": 64
+  },
+  "hammock": {
+    "file": "hammock.png",
+    "width": 64,
+    "height": 64
+  },
+  "mailbox": {
+    "file": "mailbox.png",
+    "width": 64,
+    "height": 64
+  },
+  "birdbath": {
+    "file": "birdbath.png",
+    "width": 64,
+    "height": 64
+  },
+  "mushrooms": {
+    "file": "mushrooms.png",
+    "width": 64,
+    "height": 64
+  },
+  "stonepath": {
+    "file": "stonepath.png",
+    "width": 64,
+    "height": 64
+  },
+  "inkdesk": {
+    "file": "inkdesk.png",
+    "width": 64,
+    "height": 64
+  },
+  "guide": {
+    "file": "guide.png",
+    "width": 64,
+    "height": 64
+  },
+  "sketchboard": {
+    "file": "sketchboard.png",
+    "width": 64,
+    "height": 64
+  },
+  "clock": {
+    "file": "clock.png",
+    "width": 64,
+    "height": 64
+  },
+  "desk": {
+    "file": "desk.png",
+    "width": 69,
+    "height": 39
+  },
+  "bookshelf": {
+    "file": "bookshelf.png",
+    "width": 45,
+    "height": 60
+  },
+  "board": {
+    "file": "board.png",
+    "width": 66,
+    "height": 28
+  },
+  "plant": {
+    "file": "plant.png",
+    "width": 27,
+    "height": 27
+  },
+  "table": {
+    "file": "table.png",
+    "width": 58,
+    "height": 42
+  },
+  "frame": {
+    "file": "frame.png",
+    "width": 34,
+    "height": 22
+  },
+  "cabinet": {
+    "file": "cabinet.png",
+    "width": 48,
+    "height": 45
+  },
+  "flashcards": {
+    "file": "flashcards.png",
+    "width": 52,
+    "height": 36
+  },
+  "role-werewolf": {
+    "file": "role-werewolf.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-seer": {
+    "file": "role-seer.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-guard": {
+    "file": "role-guard.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-witch": {
+    "file": "role-witch.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-villager": {
+    "file": "role-villager.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-cupid": {
+    "file": "role-cupid.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-hunter": {
+    "file": "role-hunter.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-girl": {
+    "file": "role-girl.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-unknown": {
+    "file": "role-unknown.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-dead": {
+    "file": "role-dead.png",
+    "width": 64,
+    "height": 64
+  },
+  "role-bot": {
+    "file": "role-bot.png",
+    "width": 64,
+    "height": 64
+  },
+  "jukebox": {
+    "file": "jukebox.png",
+    "width": 64,
+    "height": 64
+  },
+  "world-tree-0": {
+    "file": "world-tree-0.png",
+    "width": 64,
+    "height": 64
+  },
+  "world-tree-1": {
+    "file": "world-tree-1.png",
+    "width": 64,
+    "height": 64
+  },
+  "world-tree-2": {
+    "file": "world-tree-2.png",
+    "width": 64,
+    "height": 64
+  },
+  "street-lamp": {
+    "file": "street-lamp.png",
+    "width": 24,
+    "height": 48
+  },
+  "terrain-residential": {
+    "file": "terrain-residential.png",
+    "width": 768,
+    "height": 432
+  },
+  "terrain-community": {
+    "file": "terrain-community.png",
+    "width": 768,
+    "height": 432
+  },
+  "terrain-study": {
+    "file": "terrain-study.png",
+    "width": 768,
+    "height": 432
+  },
+  "house-exterior-mint": {
+    "file": "house-exterior-mint.png",
+    "width": 640,
+    "height": 160
+  },
+  "house-interior-mint": {
+    "file": "house-interior-mint.png",
+    "width": 768,
+    "height": 432
+  },
+  "house-exterior-peach": {
+    "file": "house-exterior-peach.png",
+    "width": 640,
+    "height": 160
+  },
+  "house-interior-peach": {
+    "file": "house-interior-peach.png",
+    "width": 768,
+    "height": 432
+  },
+  "community-campfire-werewolves": {
+    "file": "community-campfire-werewolves.png",
+    "width": 84,
+    "height": 68
+  },
+  "community-drawing-table-gartic": {
+    "file": "community-drawing-table-gartic.png",
+    "width": 82,
+    "height": 54
+  },
+  "community-shared-board": {
+    "file": "community-shared-board.png",
+    "width": 104,
+    "height": 38
+  },
+  "community-project-station": {
+    "file": "community-project-station.png",
+    "width": 78,
+    "height": 48
+  },
+  "study-board-main": {
+    "file": "study-board-main.png",
+    "width": 98,
+    "height": 34
+  },
+  "study-board-secondary": {
+    "file": "study-board-secondary.png",
+    "width": 98,
+    "height": 34
+  },
+  "study-notes-archive": {
+    "file": "study-notes-archive.png",
+    "width": 76,
+    "height": 58
+  },
+  "study-flashcard-podium": {
+    "file": "study-flashcard-podium.png",
+    "width": 100,
+    "height": 58
+  },
+  "study-ollama-console": {
+    "file": "study-ollama-console.png",
+    "width": 76,
+    "height": 54
+  },
+  "study-project-workbench": {
+    "file": "study-project-workbench.png",
+    "width": 84,
+    "height": 50
+  },
+  "study-quiet-desk": {
+    "file": "study-quiet-desk.png",
+    "width": 84,
+    "height": 50
+  },
+  "icon-world": {
+    "file": "icon-world.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-house": {
+    "file": "icon-house.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-contacts": {
+    "file": "icon-contacts.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-mic": {
+    "file": "icon-mic.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-micOff": {
+    "file": "icon-micoff.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-headphones": {
+    "file": "icon-headphones.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-screen": {
+    "file": "icon-screen.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-code": {
+    "file": "icon-code.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-notes": {
+    "file": "icon-notes.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-cards": {
+    "file": "icon-cards.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-gear": {
+    "file": "icon-gear.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-door": {
+    "file": "icon-door.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-brush": {
+    "file": "icon-brush.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-board": {
+    "file": "icon-board.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-chat": {
+    "file": "icon-chat.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-phone": {
+    "file": "icon-phone.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-close": {
+    "file": "icon-close.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-back": {
+    "file": "icon-back.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-link": {
+    "file": "icon-link.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-plus": {
+    "file": "icon-plus.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-check": {
+    "file": "icon-check.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-trash": {
+    "file": "icon-trash.png",
+    "width": 48,
+    "height": 48
+  },
+  "icon-search": {
+    "file": "icon-search.png",
+    "width": 48,
+    "height": 48
+  },
+  "study-notebook": {
+    "file": "study-notebook.png",
+    "width": 96,
+    "height": 96
+  },
+  "study-cards": {
+    "file": "study-cards.png",
+    "width": 96,
+    "height": 96
+  },
+  "study-quiz": {
+    "file": "study-quiz.png",
+    "width": 96,
+    "height": 96
+  },
+  "study-create": {
+    "file": "study-create.png",
+    "width": 96,
+    "height": 96
+  },
+  "study-review": {
+    "file": "study-review.png",
+    "width": 96,
+    "height": 96
+  },
+  "avatar-template": {
+    "file": "avatar-template.png",
+    "width": 192,
+    "height": 256
+  },
+  "role-thief": {
+    "file": "role-thief.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-elder": {
+    "file": "role-elder.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-idiot": {
+    "file": "role-idiot.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-scapegoat": {
+    "file": "role-scapegoat.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-piper": {
+    "file": "role-piper.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-whitewolf": {
+    "file": "role-whitewolf.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-crow": {
+    "file": "role-crow.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-arsonist": {
+    "file": "role-arsonist.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-innocent": {
+    "file": "role-innocent.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-sister": {
+    "file": "role-sister.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-brother": {
+    "file": "role-brother.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-fox": {
+    "file": "role-fox.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-bear": {
+    "file": "role-bear.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-judge": {
+    "file": "role-judge.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-knight": {
+    "file": "role-knight.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-actor": {
+    "file": "role-actor.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-maid": {
+    "file": "role-maid.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-wildchild": {
+    "file": "role-wildchild.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-dogwolf": {
+    "file": "role-dogwolf.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-angel": {
+    "file": "role-angel.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-cultist": {
+    "file": "role-cultist.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-bigwolf": {
+    "file": "role-bigwolf.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-infectwolf": {
+    "file": "role-infectwolf.png",
+    "width": 48,
+    "height": 48
+  },
+  "role-gypsy": {
+    "file": "role-gypsy.png",
+    "width": 48,
+    "height": 48
+  },
+  "room-door": {
+    "file": "room-door.png",
+    "width": 44,
+    "height": 44
+  },
+  "plot-empty": {
+    "file": "plot-empty.png",
+    "width": 128,
+    "height": 104
+  },
+  "portal-res-to-community": {
+    "file": "portal-res-to-community.png",
+    "width": 52,
+    "height": 54
+  },
+  "portal-res-to-study": {
+    "file": "portal-res-to-study.png",
+    "width": 52,
+    "height": 54
+  },
+  "portal-community-to-res": {
+    "file": "portal-community-to-res.png",
+    "width": 52,
+    "height": 54
+  },
+  "portal-study-to-res": {
+    "file": "portal-study-to-res.png",
+    "width": 52,
+    "height": 50
+  },
+  "vanity": {
+    "file": "vanity.png",
+    "width": 64,
+    "height": 64
+  },
+  "icon-camera": {
+    "file": "icon-camera.png",
+    "width": 24,
+    "height": 24
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-11-04T20:50:32.648Z",
+  "environment": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "canvas": [
+    768,
+    1024
+  ],
+  "objects": 2001,
+  "samples": 52000,
+  "longStrokeSamples": 12000,
+  "editableJsonBytes": 4394116,
+  "drawPageMs": [
+    40.70000000298023,
+    12.399999998509884,
+    12.5
+  ],
+  "serializeMs": 38.100000001490116,
+  "indexedDbSaveMs": 400.79999999701977,
+  "indexedDbReadAndValidateMs": 345.6000000014901,
+  "physicalDevice": false
+}

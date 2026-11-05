@@ -1,0 +1,16 @@
+{
+  "name": "studyvillage-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "description": "Self-hosted StudyVillage world: Node 24, WebSocket and SQLite. No runtime dependencies.",
+  "engines": { "node": ">=24" },
+  "bin": { "studyvillage-server": "dist/server.mjs" },
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node dist/server.mjs",
+    "backup": "node dist/server.mjs backup",
+    "restore": "node dist/server.mjs restore"
+  }
+}

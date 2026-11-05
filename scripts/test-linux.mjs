@@ -1,0 +1,50 @@
+import { _electron as electron, expect } from '@playwright/test';
+import { mkdtempSync, readFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const executablePath = path.resolve('deliverables/linux-current/StudyVillage/studyvillage');
+const directory = mkdtempSync(path.join(tmpdir(), 'studyvillage-linux-test-'));
+const apps = [];
+async function launch(name) {
+  const data = path.join(directory, name);mkdirSync(path.join(data, 'localstorage'), { recursive: true });
+  const old = new DatabaseSync(path.join(data, 'localstorage/tauri_localhost_0.localstorage'));
+  old.exec('CREATE TABLE ItemTable (key TEXT UNIQUE,value BLOB)');
+  old.prepare('INSERT INTO ItemTable VALUES(?,?)').run('studyvillage-migration-test', Buffer.from('Apuntes 📝', 'utf16le'));old.close();
+  const app = await electron.launch({ executablePath, args: ['--allow-loopback-in-peer-connection','--add-server=https://saved-server.example.org','--server-name=Synthetic saved server'], env: { ...process.env, STUDYVILLAGE_TEST_DATA_DIR: data } });apps.push(app);
+  const page = await app.firstWindow();await expect(page.getByTestId('phone-button')).toBeVisible();
+  const capabilities = await page.evaluate(() => ({ rtc: typeof RTCPeerConnection, secure: isSecureContext, node: typeof window.require, legacy: localStorage.getItem('studyvillage-migration-test') }));
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('studyvillage-servers-v1')||'[]'))).toContainEqual({url:'https://saved-server.example.org',name:'Synthetic saved server'});
+  expect(capabilities).toEqual({ rtc: 'function', secure: true, node: 'undefined', legacy: 'Apuntes 📝' });
+  expect(await app.evaluate(({ BrowserWindow }) => { const p = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences(); return { sandbox: p.sandbox, isolation: p.contextIsolation, node: p.nodeIntegration }; })).toEqual({ sandbox: true, isolation: true, node: false });
+  return { app, page, data };
+}
+async function phone(page, name) {
+  if (await page.locator('.sv-phone').isHidden()) await page.getByTestId('phone-button').click();
+  else if (await page.locator('.sv-phone-head [aria-label="Volver"]').isVisible()) await page.locator('.sv-phone-head [aria-label="Volver"]').click();
+  await page.getByTestId(`phone-${name}`).click();
+}
+try {
+  const host = await launch('host');
+  const saved = path.join(directory, 'exported-contact.json');
+  await host.app.evaluate(({ session }, filename) => { session.defaultSession.on('will-download', (_event, item) => { globalThis.testSaveOptions = item.getSaveDialogOptions(); item.setSavePath(filename); }); }, saved);
+  await phone(host.page, 'contacts');
+  await host.page.getByRole('button', { name: '↓ Exportar mi tarjeta', exact: true }).click();
+  await expect.poll(() => existsSync(saved)).toBe(true);
+  const contact = JSON.parse(readFileSync(saved, 'utf8'));expect(contact.schemaVersion).toBe(1);expect(contact.identity.publicKey).toBeTruthy();expect(contact.privateKey).toBeUndefined();
+  expect(await host.app.evaluate(() => globalThis.testSaveOptions.title)).toContain('Guardar archivo');
+  console.log('PASS: sandbox, WebRTC API, secure context, legacy import, terminal saved-server profile, real file download and save dialog configuration');
+  await host.page.reload();await expect(host.page.getByTestId('phone-button')).toBeVisible();
+  expect(await host.page.evaluate(() => localStorage.getItem('studyvillage-migration-test'))).toBe('Apuntes 📝');
+  console.log('PASS: restart preserves imported settings and SQLite data');
+  if (process.env.STUDYVILLAGE_LIVE === '1') {
+    const guest = await launch('guest');
+    await phone(host.page, 'village');await host.page.getByRole('button', { name: 'Abrir mi aldea a otras personas' }).click();
+    const invite = host.page.getByLabel('Invitación actual', { exact: true });await expect(invite).not.toHaveValue('', { timeout: 30000 });
+    await phone(guest.page, 'village');await guest.page.getByPlaceholder('Pega una invitación').fill(await invite.inputValue());await guest.page.getByRole('button', { name: 'Unirme', exact: true }).click();
+    await host.page.locator('.sv-hud-card').getByRole('button', { name: 'Permitir', exact: true }).click({ timeout: 30000 });
+    await expect(guest.page.locator('.sv-status-pill')).toHaveText(/en la aldea/, { timeout: 30000 });
+    console.log('PASS: two packaged Linux clients joined through real PeerJS signaling and WebRTC');
+  }
+} finally { for (const app of apps.reverse()) await app.close(); rmSync(directory,{recursive:true,force:true}); }
