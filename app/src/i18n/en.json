@@ -2463,6 +2463,6 @@
   "Desbloquea tu identidad guardada para abrir el buzón.": "Unlock your saved identity to open the mailbox.",
   "Modo lápiz": "Pen mode",
   "Excalifont (Excalidraw)": "Excalifont (Excalidraw)",
-  "El lápiz escribe; dos dedos desplazan la página. Usa Zoom para ampliar.": "The pencil writes; two fingers move the page. Use Zoom to magnify.",
-  "No se pudo cargar la fuente. Vuelve a intentarlo.": "Could not load the font. Try again."
+  "No se pudo cargar la fuente. Vuelve a intentarlo.": "Could not load the font. Try again.",
+  "El lápiz escribe. Selecciona Mano para mover y ampliar con dos dedos.": "The pencil writes. Select Hand to pan and zoom with two fingers."
 }

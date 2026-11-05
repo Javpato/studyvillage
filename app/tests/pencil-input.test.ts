@@ -11,6 +11,19 @@ describe('light Pencil input and complete samples',()=>{
  it('falls back when older Safari lacks/rejects coalesced events and excludes unrelated pointers',()=>{expect(pointerSamples(pen)).toEqual([pen]);const unsupported={...pen,getCoalescedEvents:()=>{throw Error('unsupported');}};expect(pointerSamples(unsupported)).toEqual([unsupported]);const other={...pen,getCoalescedEvents:()=>[{...pen,pointerId:7}]};expect(pointerSamples(other)).toEqual([other]);});
 });
 describe('palm quarantine',()=>{
+ it('Hand bypasses only the post-pen delay, preserving active-pen and broad-palm rejection',()=>{
+  const guard=new PencilTouchGuard();guard.penDown();expect(guard.touchDown({pointerId:1,timeStamp:10,width:8},true,true)).toBe(false);
+  guard.touchEnd(1);guard.penUp(100);expect(guard.touchDown({pointerId:2,timeStamp:110,width:8},true,true)).toBe(true);guard.touchEnd(2);
+  expect(guard.touchDown({pointerId:3,timeStamp:110,width:8},true)).toBe(false);guard.touchEnd(3);
+  expect(guard.touchDown({pointerId:4,timeStamp:110,width:60},true,true)).toBe(false);
+ });
+ it('quarantines existing contacts on tool change and the entire Hand gesture on a third contact',()=>{
+  const guard=new PencilTouchGuard();guard.touchDown({pointerId:1,timeStamp:0},true,true);guard.quarantineTouches();expect(guard.touchMove({pointerId:1,width:8},true)).toBe(false);guard.touchEnd(1);
+  for(const pointerId of [1,2])expect(guard.touchDown({pointerId,timeStamp:100},true,true)).toBe(true);
+  expect(guard.touchDown({pointerId:3,timeStamp:110},true,true)).toBe(false);expect(guard.ignores(1)).toBe(true);expect(guard.ignores(2)).toBe(true);
+  guard.touchEnd(3);expect(guard.touchDown({pointerId:4,timeStamp:120},true,true)).toBe(false);
+  for(const id of [1,2,4])guard.touchEnd(id);expect(guard.touchDown({pointerId:1,timeStamp:130},true,true)).toBe(true);
+ });
  it('rejects a contact that grows into a palm and recovers recycled ids after a missing end',()=>{const guard=new PencilTouchGuard();expect(guard.touchDown({pointerId:2,timeStamp:0,width:8},true)).toBe(true);expect(guard.touchMove({pointerId:2,width:50},true)).toBe(false);expect(guard.touchMove({pointerId:2,width:8},true)).toBe(false);expect(guard.touchDown({pointerId:2,timeStamp:500,width:8},true)).toBe(true);});
  it('lets a pen take priority over a previously resting contact until that contact lifts',()=>{const guard=new PencilTouchGuard();expect(guard.touchDown({pointerId:2,timeStamp:0},true)).toBe(true);guard.penDown();expect(guard.ignores(2)).toBe(true);guard.penUp(100);expect(guard.ignores(2)).toBe(true);guard.touchEnd(2);expect(guard.touchDown({pointerId:2,timeStamp:500},true)).toBe(true);});
  it('blocks new palms during and immediately after pen-up; deliberate later fingers work',()=>{const guard=new PencilTouchGuard();guard.penDown();expect(guard.touchDown({pointerId:2,timeStamp:50},true)).toBe(false);guard.penUp(100);expect(guard.touchDown({pointerId:3,timeStamp:349},true)).toBe(false);expect(guard.touchDown({pointerId:4,timeStamp:350},true)).toBe(true);expect(guard.ignores(2)).toBe(true);expect(guard.ignores(3)).toBe(true);});
