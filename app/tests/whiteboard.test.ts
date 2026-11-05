@@ -36,6 +36,16 @@ describe('whiteboard layers', () => {
 });
 
 describe('infinite board, eraser and text notes', () => {
+  it('preserves Excalifont through protocol and clipboard validation', async () => {
+    const { strokeSchema } = await import('../../packages/core/src/protocol/schema');
+    const { validateClipboard,moveObjects,scaleObjects } = await import('../../packages/core/src/whiteboard/selection');
+    const fp='a'.repeat(64),note={...makeStroke(fp,fp,1,'text','#123456',2,[{x:10,y:10}],'font-note','Árbol, français'),textStyle:{fontSize:32,fontFamily:'excalifont' as const,bold:false,italic:false,align:'left' as const}};
+    expect(strokeSchema.parse(note).textStyle).toEqual(note.textStyle);
+    const pasted=validateClipboard({kind:'studyvillage-selection',version:1,objects:[note]});
+    expect(moveObjects(pasted,20,10)[0].textStyle).toEqual(note.textStyle);
+    expect(scaleObjects(pasted,{x:10,y:10,w:200,h:40},2)[0].textStyle).toMatchObject({fontFamily:'excalifont',fontSize:64});
+    expect(strokeSchema.safeParse({...note,textStyle:{...note.textStyle,fontFamily:'arbitrary-url'}}).success).toBe(false);
+  });
   it('keeps points far outside the old 768x432 frame', async () => {
     const { clampBoardPoint } = await import('../../packages/core/src/whiteboard/model');
     expect(clampBoardPoint({ x: -5000.4, y: 9000.6 })).toEqual({ x: -5000.4, y: 9000.6 });

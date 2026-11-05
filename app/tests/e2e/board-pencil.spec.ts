@@ -18,10 +18,10 @@ test('a light pen preempts a palm, keeps all coalesced fractions and only its ow
  ink.points.forEach((point,index)=>{expect(Math.abs(point.x-expected[index].x)).toBeLessThan(.01);expect(Math.abs(point.y-expected[index].y)).toBeLessThan(.01);});
  await page.reload();await openBoard(page);expect((await strokes(page))[0].points).toEqual(ink.points);
 });
-test('Pencil mode makes fingers pan and pinch without ink, persists and is shared with the notebook',async({page})=>{
+test('Pencil mode uses two-finger pan with stable zoom, persists and is shared with the notebook',async({page})=>{
  await page.goto('/');await openBoard(page);await mode(page);
  await pointer(page,'pointerdown',1,'touch',100,100);await pointer(page,'pointermove',1,'touch',180,140);await pointer(page,'pointerdown',2,'touch',280,140);await pointer(page,'pointermove',2,'touch',380,140);await pointer(page,'pointerup',2,'touch',380,140);await pointer(page,'pointerup',1,'touch',180,140);
- expect(await strokes(page)).toHaveLength(0);await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await page.locator('.sv-board-options-panel summary').filter({hasText:/^Vista$/}).click();await expect(page.locator('.sv-zoom-label')).toHaveText('200%');await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();
+ expect(await strokes(page)).toHaveLength(0);await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await page.locator('.sv-board-options-panel summary').filter({hasText:/^Vista$/}).click();await expect(page.locator('.sv-zoom-label')).toHaveText('100%');await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();
  await page.reload();await openBoard(page);await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await expect(page.getByTestId('board-pencil-mode')).toBeChecked();await page.locator('[data-testid=board-back]:visible, .sv-hud-back:visible').first().click();
  await page.getByTestId('phone-button').click();await page.getByTestId('phone-ink').click();await page.getByRole('button',{name:'Opciones del cuaderno',exact:true}).click();await page.getByRole('tab',{name:'Tinta y selección',exact:true}).click();await expect(page.locator('.sv-notebook').getByLabel('Modo Apple Pencil',{exact:true})).toBeChecked();
 });
@@ -46,4 +46,34 @@ test('starting a second text note with the pencil saves the first note',async({p
  await pointer(page,'pointerdown',1,'pen',100,100);await pointer(page,'pointerup',1,'pen',100,100);await page.getByLabel('Texto para la pizarra',{exact:true}).fill('Nota escrita antes de tocar con el lápiz');
  await pointer(page,'pointerdown',2,'pen',300,200);await pointer(page,'pointerup',2,'pen',300,200);
  await expect.poll(async()=>(await strokes(page)).map(s=>s.text)).toEqual(['Nota escrita antes de tocar con el lápiz']);await expect(page.getByLabel('Texto para la pizarra',{exact:true})).toHaveValue('');
+});
+
+test('board recovers a missing pen-up and cannot select text or zoom from a resting palm',async({page})=>{
+ await page.goto('/');await openBoard(page);await mode(page);
+ const before=await board(page).evaluate(el=>(el as HTMLCanvasElement).toDataURL());
+ await pointer(page,'pointerdown',1,'touch',100,100);await pointer(page,'pointermove',1,'touch',180,140);expect(await board(page).evaluate(el=>(el as HTMLCanvasElement).toDataURL())).toBe(before);
+ await pointer(page,'pointerdown',2,'pen',160,140);await pointer(page,'pointermove',2,'pen',200,140);
+ await pointer(page,'pointerdown',3,'pen',300,140);await pointer(page,'pointerup',3,'pen',360,140);await expect.poll(async()=>(await strokes(page)).length).toBe(1);expect((await strokes(page))[0].points[0]).toEqual({x:300,y:140});
+ await pointer(page,'pointermove',1,'touch',300,260);await pointer(page,'pointerup',1,'touch',300,260);expect(await strokes(page)).toHaveLength(1);
+ expect(await board(page).evaluate(el=>['touchstart','touchmove','selectstart','contextmenu'].every(type=>!el.dispatchEvent(new Event(type,{bubbles:true,cancelable:true}))))).toBe(true);
+ await board(page).evaluate(el=>{
+  el.setPointerCapture=()=>{throw new DOMException('No active pointer','NotFoundError');};
+  const b=el.getBoundingClientRect(),init={bubbles:true,cancelable:true,pointerType:'pen',pointerId:4,button:0,clientX:b.left+50,clientY:b.top+50,pressure:.3};
+  el.dispatchEvent(new PointerEvent('pointerdown',init));window.dispatchEvent(new PointerEvent('pointerup',{...init,clientX:b.left+80}));
+ });await expect.poll(async()=>(await strokes(page)).length).toBe(2);
+});
+
+test('Excalifont renders in the editor, survives offline reload and exports with local fonts',async({page,browserName})=>{
+ await page.goto('/');await openBoard(page);await page.locator('[data-board-tool=text]').click();await page.locator('.sv-board-context summary').click();
+ await page.getByLabel('Fuente del texto',{exact:true}).selectOption('excalifont');await page.locator('.sv-board-context').getByLabel('Tamaño del texto',{exact:true}).fill('32');await page.getByRole('button',{name:'Usar para el texto nuevo',exact:true}).click();
+ await pointer(page,'pointerdown',1,'pen',100,100);await pointer(page,'pointerup',1,'pen',100,100);
+ const input=page.getByLabel('Texto para la pizarra',{exact:true});await expect(input).toHaveCSS('font-family','Excalifont, cursive');await input.fill('Lápiz, acción, français\nExcalifont · Ελληνικά');await input.press('Enter');
+ await expect.poll(async()=>(await strokes(page))[0]?.textStyle?.fontFamily).toBe('excalifont');
+ await expect.poll(()=>page.evaluate(()=>[...document.fonts].filter(f=>f.family==='Excalifont'&&f.status==='loaded').length)).toBe(7);
+ if(await page.evaluate(()=>navigator.serviceWorker.getRegistration().then(Boolean))){await page.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));await page.context().setOffline(true);}
+ await page.reload();await openBoard(page);expect((await strokes(page))[0].textStyle?.fontFamily).toBe('excalifont');
+ await expect.poll(()=>page.evaluate(()=>[...document.fonts].filter(f=>f.family==='Excalifont'&&f.status==='loaded').length)).toBe(7);
+ await page.screenshot({path:`/tmp/studyvillage-excalifont-${browserName}.png`});
+ await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await page.locator('.sv-board-options-panel summary').filter({hasText:/^Pizarra y archivo$/}).click();
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'↓ Exportar PNG',exact:true}).click();expect((await download).suggestedFilename()).toMatch(/\.png$/);
 });

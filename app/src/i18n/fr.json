@@ -2464,5 +2464,7 @@
   "Solicitud de acceso pendiente": "Demande d’accès en attente",
   "Desbloquea tu identidad guardada para abrir el buzón.": "Déverrouille ton identité enregistrée pour ouvrir la boîte aux lettres.",
   "Modo Apple Pencil": "Mode Apple Pencil",
-  "El lápiz escribe; los dedos mueven y amplían la página.": "Le stylet écrit ; les doigts déplacent et agrandissent la page."
+  "Excalifont (Excalidraw)": "Excalifont (Excalidraw)",
+  "El lápiz escribe; dos dedos desplazan la página. Usa Zoom para ampliar.": "Le stylet écrit ; deux doigts déplacent la page. Utilisez Zoom pour agrandir.",
+  "No se pudo cargar la fuente. Vuelve a intentarlo.": "Impossible de charger la police. Réessayez."
 }

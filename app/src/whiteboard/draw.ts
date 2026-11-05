@@ -2,6 +2,7 @@ import type { BoardPoint, BoardStroke, BoardTextStyle } from '../../../packages/
 import { COLORS, text } from '../ui/art';
 import { mathImage, mathReady, rasterStep, toTex, type MathImage } from './math';
 import { DEFAULT_CAMERA, strokesBounds, type BoardCamera, type BoardRect } from '../../../packages/core/src/whiteboard/model';
+import { NOTE_FONTS,ensureExcalifont } from './fonts';
 
 export interface BoardDraft { points: readonly BoardPoint[]; tool: BoardStroke['tool']; color: string; width: number; text?: string; textStyle?: BoardTextStyle }
 /** Anything drawable: a stored stroke or an in-progress draft. */
@@ -9,7 +10,6 @@ type Drawable = Pick<BoardDraft, 'points' | 'tool' | 'color' | 'width' | 'text' 
 
 const PAPER = '#ffffff';
 const GRID = '#eceef1';
-const FONT = 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
 
 /** Width doubles as the text size for notes: Fino 16px, Medio 22px, Grueso 34px. */
 export function textFontPx(width: number): number {
@@ -89,7 +89,6 @@ export function textBox(stroke: BoardStroke): BoardRect | null {
   return { x: stroke.points[0].x, y: stroke.points[0].y, w, h };
 }
 
-const NOTE_FONTS = { sans: FONT, serif: 'Georgia, serif', mono: 'ui-monospace, monospace' };
 function noteFont(style: BoardTextStyle | undefined, size: number): string { return `${style?.italic ? 'italic ' : ''}${style?.bold === false ? 400 : 600} ${size}px ${NOTE_FONTS[style?.fontFamily ?? 'sans']}`; }
 
 function drawNote(ctx: CanvasRenderingContext2D, stroke: Drawable): void {
@@ -212,6 +211,7 @@ export function drawBoard(
  * half-loaded placeholder.
  */
 export async function renderBoardForExport(strokes: readonly BoardStroke[]): Promise<HTMLCanvasElement> {
+  if(strokes.some(stroke=>!stroke.deleted&&stroke.textStyle?.fontFamily==='excalifont'))await ensureExcalifont();
   for (const stroke of strokes) {
     if (stroke.tool !== 'text' || stroke.deleted) continue;
     const size = Math.round((stroke.textStyle?.fontSize ?? textFontPx(stroke.width)) * 1.15);

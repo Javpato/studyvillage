@@ -1,8 +1,21 @@
 # Verification and handoff — 5 November 2026
 
-Current source/build version: **1.0.0-dev.1**, PWA cache **studyvillage-6fc387a41ee85d65**. This is an independently runnable development candidate. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
+Current source/build version: **1.0.0-dev.1**, PWA cache **studyvillage-e56afdbbfe9c74f7**. This is an independently runnable development candidate. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
 
-## iPad Pencil, palm and browser gesture corrections
+## Excalidraw-style Pencil mode and Excalifont — current change
+
+Reviewed Excalidraw commit `701b901a0f1ba3d0b390d9cdf63d112e25abac4b` and bundled its seven unmodified Excalifont subsets with OFL/MIT notices. Room-board text now offers Excalifont, with matching canvas/editor fonts, validated storage/clipboard/wire styles, offline loading and font-aware PNG export. The [WebKit tablet screenshot](verification/excalifont-webkit.png) was visually inspected along with the Chromium desktop rendering.
+
+Pencil mode activates on the first pen contact, supports two-finger panning and keeps zoom fixed during freehand writing. Single touches cannot draw, pan or select in Pencil mode. Drawing surfaces cancel competing native touch/Scribble/selection gestures. Both editors recover from missing up/cancel events, failed capture and off-canvas release; notebook blur now rolls back unfinished edits. Native text-field selection remains available. See INK.md for deliberate differences from Excalidraw and the unchanged handwriting renderer.
+
+- `npm run typecheck`, `npm test`, `npm run i18n:check`, `npm run build`, and `npm run server:build` pass: **442 app tests / 50 files**, **31 server tests / 2 files**, **2,466 translations**. Production PWA cache: `studyvillage-e56afdbbfe9c74f7`.
+- **14 production Chromium journeys** and **13 production WebKit journeys** pass across `board-pencil`, `pencil-mode` and `browser-gestures`; WebKit skips the Chromium-only CDP page-scale case. Counts combine the focused run and the final font-test rerun after fixing ambiguous test selectors. Both engines verify that all seven font faces load after an offline reload and PNG export succeeds.
+- The input regressions cover pen preemption, coalesced/final samples, palm quarantine across strokes, exactly two-finger navigation, stable writing-time zoom, intentional pinch in selection mode, rollback/undo, missing pointer-up, throwing capture, outside release, blur, opt-out, persistence and native text editing. Synthetic PointerEvents exercise application behavior; they cannot certify real Apple Pencil latency or iPadOS palm classification.
+- The Linux package passes its isolated startup, sandbox, migration, persistence and file-download smoke checks. Packages are rebuilt in their existing `*-current` locations; all five packages match the 163 current web files byte-for-byte and contain no stale hashed assets. The SHA-256 manifest was regenerated. Temporary test reports are removed after verification.
+
+The remaining hardware check is writing continuously with the palm resting on the owner's iPad, including lifting/replacing the Pencil, a long press, two-finger navigation and leaving/reopening Safari. No physical iPad was available in this environment.
+
+## Earlier iPad Pencil, palm and browser gesture corrections
 
 Following the owner's iPadOS **17.7.10** feedback, notebook and room-board input now share an optional Apple Pencil mode: the pen writes immediately, fingers pan/pinch, and palm contacts cannot finish or redirect a pen stroke. Light-pressure starts, coalesced samples and final pointer-up samples are retained. Room-board coordinates now preserve thousandths instead of rounding to whole pixels. The mode persists locally, synchronizes across tabs and participates in full backups.
 

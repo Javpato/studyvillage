@@ -42,7 +42,7 @@ export const memberSchema = z.strictObject({
 });
 const boardCoordinate = z.number().min(-LIMITS.boardExtent).max(LIMITS.boardExtent);
 export const boardRefSchema = z.string().max(200).regex(/^(?:[a-f0-9]{64}|house:[a-f0-9]{64}:(?:space:[A-Za-z0-9_-]{1,32}:[A-Za-z0-9_-]{1,32}:)?[A-Za-z0-9_-]{1,80}|area:(?:residential|community|study):[A-Za-z0-9:_-]{1,110})$/);
-export const boardTextStyleSchema = z.strictObject({fontSize:z.number().min(8).max(160),fontFamily:z.enum(['sans','serif','mono']),bold:z.boolean(),italic:z.boolean(),underline:z.boolean().optional(),align:z.enum(['left','center','right']),boxWidth:z.number().min(24).max(4000).optional()});
+export const boardTextStyleSchema = z.strictObject({fontSize:z.number().min(8).max(160),fontFamily:z.enum(['sans','serif','mono','excalifont']),bold:z.boolean(),italic:z.boolean(),underline:z.boolean().optional(),align:z.enum(['left','center','right']),boxWidth:z.number().min(24).max(4000).optional()});
 export const strokeSchema = z.strictObject({
   id: idSchema, author: fingerprintSchema, boardId: boardRefSchema, seq: integer,
   color, width: z.number().min(1).max(32), tool: z.enum(['pen', 'line', 'rectangle', 'circle', 'arrow', 'text']),
