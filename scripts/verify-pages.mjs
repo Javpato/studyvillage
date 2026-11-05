@@ -67,7 +67,9 @@ async function verify(name,engine){
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(address);await expect(page.getByTestId('phone-button')).toBeVisible();
   await expect(page.getByTestId('board-pencil-mode')).toHaveAttribute('aria-label','Modo lápiz');
-  await page.waitForFunction(async()=>!!(await navigator.serviceWorker.getRegistration())?.active);
+  // `active` can already exist while its activate event is still running. A reload
+  // during that interval may remain uncontrolled because this app does not claim open tabs.
+  await page.waitForFunction(async()=>(await navigator.serviceWorker.getRegistration())?.active?.state==='activated');
   await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
   const installed=await page.evaluate(async key=>(await (await caches.open(key)).keys()).map(request=>new URL(request.url).pathname),cache);
   assert.deepEqual(installed.sort(),precache.map(name=>mount+name.slice(2)).sort(),'Incomplete offline package');

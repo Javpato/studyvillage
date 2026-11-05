@@ -10,6 +10,7 @@ The owner reported that ordinary mode already works well with the physical Penci
 - **26 Chromium scenarios** (22 existing/updated plus 4 new cases) and **26 production WebKit scenarios** pass across `board-pencil`, `pencil-mode` and `hand-navigation`. They cover finger editing prevention for all writing/erasing tools, navigation, selection/movement, preference persistence, pen/palm ownership, cancellation and saved ink.
 - The packaged Pages check passes in both engines with all 163 files, offline cache/reload, saved writing and finger navigation with Eraser, Pen and Hand while Pen mode remains checked.
 - The production Chromium configuration now specifies the repository working directory; its first attempt exposed an invalid `app/app/vite.config.ts` path, and all focused cases passed after correcting the runner.
+- The first PR CI run timed out waiting for a controlled page after reload. The package check now waits for the service worker’s `activated` state, not just a non-null `active` reference, before reloading. It passes with CI’s bundled Chromium, WebKit and a fixture with deliberately delayed activation; the intermittent CI failure was not reproduced locally.
 - Pointer gestures are browser automation, not a physical iPad/Pencil certification. The current native release packages were not rebuilt for this web update.
 
 ## Pages deployment failure investigation
