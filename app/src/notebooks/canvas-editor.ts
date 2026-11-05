@@ -7,7 +7,7 @@ import { msg,setDisplayAttribute } from '../i18n';
 import { detectPencil } from '../input/pencil-mode';
 import { installDrawingSurface } from '../input/drawing-surface';
 
-export type InkTool=InkObject['tool']|'erase'|'partial-erase'|'select';
+export type InkTool=InkObject['tool']|'erase'|'partial-erase'|'select'|'hand';
 interface EditorCallbacks {page:()=>InkPage|null;before:()=>void;commit:()=>void;rollback:()=>void;canEdit?:(ink:InkObject)=>boolean;view?:(zoom:number)=>void}
 /** Local ink never waits for storage or the network. The static page is a separate layer. */
 export class InkCanvasEditor {
@@ -36,7 +36,10 @@ export class InkCanvasEditor {
  private rotated=()=>this.cancel();
  private disposeSurface:()=>void;
  private ended=(event:PointerEvent)=>event.type==='pointerup'?this.up(event):this.cancelPointer(event);
- tool:InkTool='pen';color='#24402f';width=3;zoom=1;rotation:PageRotation=0;
+ private currentTool:InkTool='pen';private handPan:Point|null=null;
+ get tool():InkTool{return this.currentTool;}
+ set tool(value:InkTool){if(value===this.currentTool)return;this.cancel(false);this.palms.quarantineTouches();this.pointers.clear();this.touchBase=null;this.currentTool=value;}
+ color='#24402f';width=3;zoom=1;rotation:PageRotation=0;
  constructor(private callbacks:EditorCallbacks){
   this.root.className='sv-notebook-scroll';this.surface.className='sv-notebook-surface';this.paper.className='sv-notebook-paper';
   this.canvas.width=this.preview.width=768;this.canvas.height=this.preview.height=1024;this.preview.className='sv-ink-input';setDisplayAttribute(this.preview,'aria-label',msg('Página para escribir'));
@@ -92,9 +95,12 @@ export class InkCanvasEditor {
   let page=this.callbacks.page();if(!page)return;
   if(e.pointerType==='touch'){
    e.preventDefault();this.capture(e.pointerId);
-   if(!this.palms.touchDown(e,this.pencilOnly))return;
+   if(!this.palms.touchDown(e,this.pencilOnly,this.tool==='hand')){
+    for(const id of this.pointers.keys())if(this.palms.ignores(id))this.pointers.delete(id);
+    this.startTouch();return;
+   }
    this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-   if(this.pencilOnly||!this.pen.fingerDrawing||this.pointers.size>1){if(this.pen.activeKind==='touch')this.cancel(false);this.startTouch();return;}
+   if(this.tool==='hand'||this.pencilOnly||!this.pen.fingerDrawing||this.pointers.size>1){if(this.pen.activeKind==='touch')this.cancel(false);this.startTouch();return;}
   }
   if(e.pointerType==='pen'){
    detectPencil(e.pointerType);
@@ -106,6 +112,7 @@ export class InkCanvasEditor {
    this.palms.penDown();this.pointers.clear();this.touchBase=null;
   }
   if(!this.pen.begin(e))return;e.preventDefault();this.capture(e.pointerId);
+  if(this.tool==='hand'){this.handPan={x:e.clientX,y:e.clientY};return;}
   const point=this.point(e);this.stroke=null;this.moveStart=null;this.moving=[];
   if(this.tool==='select'){
    if(page.ink.some(i=>this.selection.has(i.id)&&this.allowed(i)&&hitsInk(i,point.x,point.y,8/this.zoom))){this.beginEdit();this.moveStart=point;this.moving=page.ink.filter(i=>this.selection.has(i.id)&&this.allowed(i)).map(i=>structuredClone(i));}
@@ -131,12 +138,23 @@ export class InkCanvasEditor {
    if(this.touchBase&&!this.pen.accepts(e)){
     e.preventDefault();const points=[...this.pointers.values()],base=this.touchBase;
     const center=points.length>1?{x:(points[0].x+points[1].x)/2,y:(points[0].y+points[1].y)/2}:points[0];
+    if(this.tool==='hand'){
+     // Use actual paper geometry: scroll padding, centering and rotation must not
+     // move the content under the fingers when the page changes size.
+     const before=this.surface.getBoundingClientRect(),anchor={x:(base.center.x-before.left)/this.zoom,y:(base.center.y-before.top)/this.zoom};
+     const distance=points.length===2?Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y):0;
+     const old=this.zoom;if(distance>8&&base.distance>8)this.zoom=Math.max(.25,Math.min(4,this.zoom*distance/base.distance));
+     if(old!==this.zoom)this.layout();const after=this.surface.getBoundingClientRect();
+     this.root.scrollLeft+=after.left+anchor.x*this.zoom-center.x;this.root.scrollTop+=after.top+anchor.y*this.zoom-center.y;
+     this.startTouch();if(old!==this.zoom){this.paint();this.callbacks.view?.(this.zoom);}return;
+    }
     const writing=this.pencilOnly&&(this.tool==='pen'||this.tool==='highlight');
     if(!writing&&points.length===2&&base.distance>8){const distance=Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);this.setZoom(base.zoom*distance/base.distance,base.center);}
     const ratio=this.zoom/base.zoom,rect=this.root.getBoundingClientRect();this.root.scrollLeft=(base.left+base.center.x-rect.left)*ratio-(center.x-rect.left);this.root.scrollTop=(base.top+base.center.y-rect.top)*ratio-(center.y-rect.top);return;
    }
   }
   if(!this.pen.accepts(e))return;e.preventDefault();const page=this.callbacks.page();if(!page)return;
+  if(this.handPan){this.root.scrollLeft-=e.clientX-this.handPan.x;this.root.scrollTop-=e.clientY-this.handPan.y;this.handPan={x:e.clientX,y:e.clientY};return;}
   const rect=this.preview.getBoundingClientRect(),samples=pointerSamples(e).map(sample=>this.point(sample,rect)),point=samples[samples.length-1];
   if(this.tool==='erase'||this.tool==='partial-erase'){for(const sample of samples)this.erase(sample,false);this.paint();return;}
   if(this.tool==='select'){
@@ -159,6 +177,7 @@ export class InkCanvasEditor {
   this.move(e);
   if(!this.pen.finish(e.pointerId))return;
   if(e.pointerType==='pen')this.palms.penUp(e.timeStamp);
+  this.handPan=null;
   if(this.stroke){this.callbacks.page()?.ink.push(this.stroke);this.stroke=null;}
   if(this.tool==='select'&&!this.moveStart){for(const ink of this.callbacks.page()?.ink??[])if(this.allowed(ink)&&selectedByLasso(ink,this.lasso))this.selection.add(ink.id);}
   this.lasso=[];this.moveStart=null;this.moving=[];
@@ -173,7 +192,7 @@ export class InkCanvasEditor {
  deleteSelection():void{const page=this.callbacks.page();if(!page||!this.selection.size)return;this.callbacks.before();page.ink=page.ink.filter(i=>!this.selection.has(i.id)||!this.allowed(i));this.selection.clear();this.callbacks.commit();this.paint();}
  cancel(clearTouches=true):void {
   if(this.pen.activeKind==='pen')this.palms.penUp(performance.now());
-  this.pen.cancel();this.stroke=null;this.lasso=[];this.moveStart=null;this.moving=[];if(clearTouches){this.pointers.clear();this.touchBase=null;this.palms.reset();}
+  this.pen.cancel();this.handPan=null;this.stroke=null;this.lasso=[];this.moveStart=null;this.moving=[];if(clearTouches){this.pointers.clear();this.touchBase=null;this.palms.reset();}
   if(this.editing){this.editing=false;this.callbacks.rollback();}this.paint();
  }
  dispose():void{this.cancel();this.disposeSurface();document.removeEventListener('visibilitychange',this.hidden);window.removeEventListener('orientationchange',this.rotated);window.removeEventListener('blur',this.rotated);window.removeEventListener('pointerup',this.ended);window.removeEventListener('pointercancel',this.ended);this.root.remove();}

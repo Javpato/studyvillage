@@ -11,23 +11,26 @@ export function pointerSamples<T extends PointerSample>(event:T&{getCoalescedEve
 }
 /** Contacts present during a pen stroke stay quarantined until lifted, including after pen-up. */
 export class PencilTouchGuard {
- private contacts=new Set<number>();private ignored=new Set<number>();private penActive=false;private lastPenUp=-Infinity;
- touchDown(event:Pick<PointerSample,'pointerId'|'timeStamp'>&{width?:number;height?:number},pencilMode:boolean):boolean {
+ private contacts=new Set<number>();private ignored=new Set<number>();private penActive=false;private lastPenUp=-Infinity;private navigationBlocked=false;
+ touchDown(event:Pick<PointerSample,'pointerId'|'timeStamp'>&{width?:number;height?:number},pencilMode:boolean,navigation=false):boolean {
   // A fresh down proves any earlier contact with this recycled id has ended.
   this.ignored.delete(event.pointerId);
   this.contacts.add(event.pointerId);
-  if(this.penActive||event.timeStamp-this.lastPenUp<250||(pencilMode&&Math.max(event.width??0,event.height??0)>=40))this.ignored.add(event.pointerId);
+  if(navigation&&this.contacts.size>2)this.quarantineTouches(true);
+  if(this.penActive||(!navigation&&event.timeStamp-this.lastPenUp<250)||(navigation&&this.navigationBlocked)||(pencilMode&&Math.max(event.width??0,event.height??0)>=40))this.ignored.add(event.pointerId);
   return !this.ignored.has(event.pointerId);
  }
  touchMove(event:{pointerId:number;width?:number;height?:number},pencilMode:boolean):boolean {
   if(this.contacts.has(event.pointerId)&&pencilMode&&Math.max(event.width??0,event.height??0)>=40)this.ignored.add(event.pointerId);
   return !this.ignored.has(event.pointerId);
  }
- touchEnd(id:number):void{this.contacts.delete(id);this.ignored.delete(id);}
+ touchEnd(id:number):void{this.contacts.delete(id);this.ignored.delete(id);if(!this.contacts.size)this.navigationBlocked=false;}
+ /** A tool change must never promote a resting palm into a navigation finger. */
+ quarantineTouches(blockNavigation=false):void{for(const id of this.contacts)this.ignored.add(id);if(blockNavigation&&this.contacts.size)this.navigationBlocked=true;}
  ignores(id:number):boolean{return this.ignored.has(id);}
  penDown():void{this.penActive=true;for(const id of this.contacts)this.ignored.add(id);}
  penUp(time:number):void{if(this.penActive)this.lastPenUp=time;this.penActive=false;}
- reset():void{this.contacts.clear();this.ignored.clear();this.penActive=false;this.lastPenUp=-Infinity;}
+ reset():void{this.contacts.clear();this.ignored.clear();this.penActive=false;this.lastPenUp=-Infinity;this.navigationBlocked=false;}
 }
 /** No DOM or world state. A second finger/palm cannot take ownership of an active stroke. */
 export class PenInput {

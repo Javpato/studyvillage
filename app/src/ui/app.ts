@@ -1089,6 +1089,7 @@ class StudyUI {
       setDisplayAttribute(item, 'title', hint);
       item.addEventListener('click', () => {
         this.commitBoardText();
+        this.prepareBoardToolChange();
         this.richBoardTool = null;
         this.boardTool = tool;
         this.refreshBoardControls();
@@ -1107,6 +1108,7 @@ class StudyUI {
       item.dataset.testid = `board-tool-${rTool}`;
       item.addEventListener('click', () => {
         this.commitBoardText();
+        this.prepareBoardToolChange();
         this.richBoardTool = rTool;
         this.refreshBoardControls();
       });
@@ -1325,7 +1327,7 @@ class StudyUI {
     setDisplayAttribute(this.pencilModeInput,'aria-label',msg('Modo lápiz'));this.pencilModeInput.dataset.testid='board-pencil-mode';
     this.pencilModeInput.onchange=()=>setPencilMode(this.pencilModeInput.checked);
     const pencilModeLabel=node('label','sv-pencil-mode');pencilModeLabel.append(this.pencilModeInput,node('span','',msg('Modo lápiz')));
-    const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe; dos dedos desplazan la página. Usa Zoom para ampliar.')));
+    const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe. Selecciona Mano para mover y ampliar con dos dedos.')));
     this.offPencilMode=subscribePencilMode(enabled=>{this.pencilMode=enabled;this.pencilModeInput.checked=enabled;this.cancelBoardGesture(false);this.startBoardTouch();});
     append(this.boardAdvancedPanel,pencilOptions,
       category(msg('Formas'), extraTools),
@@ -3201,6 +3203,10 @@ class StudyUI {
     if (!clicked) this.stageTaps.reset();
   };
 
+  private get boardHandMode():boolean{return this.boardTool==='hand'&&!this.richBoardTool;}
+  private prepareBoardToolChange():void {
+    this.cancelBoardGesture(false);this.boardPalms.quarantineTouches();this.activeBoardPointers.clear();
+  }
   /** The pen owns its draft. Other contacts can never finish it or turn it into a pinch. */
   private cancelBoardGesture(clearTouches=true):void {
     if(this.boardPointer?.kind==='pen')this.boardPalms.penUp(performance.now());
@@ -3217,7 +3223,7 @@ class StudyUI {
     this.lastPinchDistance=points.length===2?Math.hypot(points[0].clientX-points[1].clientX,points[0].clientY-points[1].clientY):0;
     this.lastPinchCenter=points.length===2?{clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2}:null;
     this.boardPan=null;
-    if(points.length===1&&!this.pencilMode&&this.boardTool==='hand'){const [id,point]=[...this.activeBoardPointers][0];this.boardPan={pointerId:id,x:point.clientX,y:point.clientY};}
+    if(points.length===1&&!this.pencilMode&&this.boardHandMode){const [id,point]=[...this.activeBoardPointers][0];this.boardPan={pointerId:id,x:point.clientX,y:point.clientY};}
   }
   private onBoardPointerDown = (event: PointerEvent): void => {
     const kind=event.pointerType;
@@ -3229,7 +3235,10 @@ class StudyUI {
       this.cancelBoardGesture(false);this.activeBoardPointers.clear();
       this.boardPalms.penDown();
     }else if(kind==='touch'){
-      if(!this.boardPalms.touchDown(event,this.pencilMode)){this.captureBoardPointer(event);return;}
+      if(!this.boardPalms.touchDown(event,this.pencilMode,this.boardHandMode)){
+        let removed=false;for(const id of this.activeBoardPointers.keys())if(this.boardPalms.ignores(id)){this.activeBoardPointers.delete(id);removed=true;}
+        if(removed)this.startBoardTouch();this.captureBoardPointer(event);return;
+      }
       this.activeBoardPointers.set(event.pointerId,{clientX:event.clientX,clientY:event.clientY});this.captureBoardPointer(event);
       if(this.activeBoardPointers.size>1){this.cancelBoardGesture(false);this.startBoardTouch();return;}
       if(this.pencilMode){this.startBoardTouch();return;}
@@ -3237,7 +3246,7 @@ class StudyUI {
     if(this.boardPointer)return;
     this.boardPointer={id:event.pointerId,kind};this.captureBoardPointer(event);
     if(this.boardEditor.pointerDown(event,this.boardTool==='select'))return;
-    if(event.button===1||this.boardTool==='hand'){
+    if(event.button===1||this.boardHandMode){
       this.boardPan={pointerId:event.pointerId,x:event.clientX,y:event.clientY};this.captureBoardPointer(event);return;
     }
     if(event.button!==0||!this.canDrawBoard())return;
@@ -3250,7 +3259,7 @@ class StudyUI {
     if(boardAtCapacity(this.allStrokes(this.boardId()),this.boardId()))return;
     if(this.richBoardTool){this.richBoardDraft={kind:this.richBoardTool,start:point,current:point};this.captureBoardPointer(event);return;}
     if(this.boardTool==='text'){this.openBoardText(point);return;}
-    const tool=this.boardTool;if(tool==='select')return;
+    const tool=this.boardTool;if(tool==='select'||tool==='hand')return;
     this.boardDraft={points:[point],tool,color:this.boardColor.value,width:Number(this.boardWidth.value)};
     this.captureBoardPointer(event);this.boardExtraFrames=2;
   };

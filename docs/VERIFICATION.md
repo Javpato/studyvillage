@@ -1,8 +1,20 @@
 # Verification and handoff — 5 November 2026
 
-Current source/build version: **1.0.0-dev.1**, PWA cache **studyvillage-e56afdbbfe9c74f7**. This is an independently runnable development candidate. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
+Current web build version: **1.0.0-dev.1**, PWA cache **studyvillage-93fcc8c5ebe5c207**. This combines Hand navigation with the device-neutral **Modo lápiz / Pen mode / Mode stylet** labels. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
 
-## Excalidraw-style Pencil mode and Excalifont — current change
+## Hand navigation — web update for iPad testing
+
+Both the room board and notebook offer Hand navigation: two fresh fingers pan and pinch in Pencil mode, while pen/mouse dragging in Hand never edits ink. Switching tools cancels unfinished edits and excludes resting contacts; a third contact blocks navigation until all contacts lift. Writing-time zoom suppression, pen priority and native selection suppression are retained. The notebook pinch anchor accounts for centered/rotated paper and responds immediately when reversing at the zoom limits.
+
+- TypeScript, web/PWA build, translation coverage and whitespace checks pass. **444 app tests**, **31 server tests**, **2,466 translations** pass.
+- After integrating the device-neutral mode name, the final candidate passes **18 Chromium journeys** across `board-pencil`, `pencil-mode` and `hand-navigation`, plus all **7 Hand-navigation journeys in production WebKit**. The application/server suites and web build were rerun successfully on this candidate.
+- **21 Chromium journeys** and **20 production WebKit journeys** pass across `board-pencil`, `pencil-mode`, `browser-gestures` and `hand-navigation`; WebKit skips the Chromium-only page-scale case. Counts combine the focused runs and final reruns. Two initial WebKit assertions read geometry during the entrance animation or pixels before the scheduled repaint; tests now await the animation/frame without loosening coordinate checks. The WebKit configuration also specifies the repository working directory so it can start its preview server independently.
+- Local HTTPS worked from the development machine, but the owner could not access that address from the iPad. This update targets the hosted web app so the owner can try the gestures at the usual public URL.
+- Native packages remain at the earlier Excalifont release; this update targets the hosted web app. Temporary test output is removed after verification, and the current web build is retained.
+
+Synthetic pointer automation verifies application behavior, not physical iPadOS touch classification. The owner should try Hand panning/pinching and then return to writing with the palm resting on the iPad. Open StudyVillage online, allow the update to download, then close all its Safari/PWA windows and reopen the public site to activate the new offline build; clearing saved data is unnecessary.
+
+## Excalidraw-style Pencil mode and Excalifont — published baseline
 
 Reviewed Excalidraw commit `701b901a0f1ba3d0b390d9cdf63d112e25abac4b` and bundled its seven unmodified Excalifont subsets with OFL/MIT notices. Room-board text now offers Excalifont, with matching canvas/editor fonts, validated storage/clipboard/wire styles, offline loading and font-aware PNG export. The [WebKit tablet screenshot](verification/excalifont-webkit.png) was visually inspected along with the Chromium desktop rendering.
 
