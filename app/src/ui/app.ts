@@ -1322,9 +1322,9 @@ class StudyUI {
       return group;
     };
     this.pencilModeInput=node('input');this.pencilModeInput.type='checkbox';this.pencilModeInput.checked=this.pencilMode;
-    setDisplayAttribute(this.pencilModeInput,'aria-label',msg('Modo Apple Pencil'));this.pencilModeInput.dataset.testid='board-pencil-mode';
+    setDisplayAttribute(this.pencilModeInput,'aria-label',msg('Modo lápiz'));this.pencilModeInput.dataset.testid='board-pencil-mode';
     this.pencilModeInput.onchange=()=>setPencilMode(this.pencilModeInput.checked);
-    const pencilModeLabel=node('label','sv-pencil-mode');pencilModeLabel.append(this.pencilModeInput,node('span','',msg('Modo Apple Pencil')));
+    const pencilModeLabel=node('label','sv-pencil-mode');pencilModeLabel.append(this.pencilModeInput,node('span','',msg('Modo lápiz')));
     const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe; dos dedos desplazan la página. Usa Zoom para ampliar.')));
     this.offPencilMode=subscribePencilMode(enabled=>{this.pencilMode=enabled;this.pencilModeInput.checked=enabled;this.cancelBoardGesture(false);this.startBoardTouch();});
     append(this.boardAdvancedPanel,pencilOptions,
