@@ -2464,5 +2464,5 @@
   "Modo lápiz": "Pen mode",
   "Excalifont (Excalidraw)": "Excalifont (Excalidraw)",
   "No se pudo cargar la fuente. Vuelve a intentarlo.": "Could not load the font. Try again.",
-  "El lápiz escribe. Selecciona Mano para mover y ampliar con dos dedos.": "The pencil writes. Select Hand to pan and zoom with two fingers."
+  "El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar.": "The pen writes and erases. Fingers pan, zoom and select without drawing or erasing."
 }

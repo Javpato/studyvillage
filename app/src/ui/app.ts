@@ -1327,7 +1327,7 @@ class StudyUI {
     setDisplayAttribute(this.pencilModeInput,'aria-label',msg('Modo lápiz'));this.pencilModeInput.dataset.testid='board-pencil-mode';
     this.pencilModeInput.onchange=()=>setPencilMode(this.pencilModeInput.checked);
     const pencilModeLabel=node('label','sv-pencil-mode');pencilModeLabel.append(this.pencilModeInput,node('span','',msg('Modo lápiz')));
-    const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe. Selecciona Mano para mover y ampliar con dos dedos.')));
+    const pencilOptions=node('div','sv-pencil-mode-option');pencilOptions.append(pencilModeLabel,node('p','sv-tiny',msg('El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar.')));
     this.offPencilMode=subscribePencilMode(enabled=>{this.pencilMode=enabled;this.pencilModeInput.checked=enabled;this.cancelBoardGesture(false);this.startBoardTouch();});
     append(this.boardAdvancedPanel,pencilOptions,
       category(msg('Formas'), extraTools),
@@ -3204,6 +3204,8 @@ class StudyUI {
   };
 
   private get boardHandMode():boolean{return this.boardTool==='hand'&&!this.richBoardTool;}
+  /** In Pen mode fingers navigate instead of creating or erasing content. Selection stays available. */
+  private get boardTouchNavigates():boolean{return this.boardHandMode||(this.pencilMode&&(this.boardTool!=='select'||!!this.richBoardTool));}
   private prepareBoardToolChange():void {
     this.cancelBoardGesture(false);this.boardPalms.quarantineTouches();this.activeBoardPointers.clear();
   }
@@ -3223,7 +3225,7 @@ class StudyUI {
     this.lastPinchDistance=points.length===2?Math.hypot(points[0].clientX-points[1].clientX,points[0].clientY-points[1].clientY):0;
     this.lastPinchCenter=points.length===2?{clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2}:null;
     this.boardPan=null;
-    if(points.length===1&&!this.pencilMode&&this.boardHandMode){const [id,point]=[...this.activeBoardPointers][0];this.boardPan={pointerId:id,x:point.clientX,y:point.clientY};}
+    if(points.length===1&&this.boardTouchNavigates){const [id,point]=[...this.activeBoardPointers][0];this.boardPan={pointerId:id,x:point.clientX,y:point.clientY};}
   }
   private onBoardPointerDown = (event: PointerEvent): void => {
     const kind=event.pointerType;
@@ -3235,13 +3237,13 @@ class StudyUI {
       this.cancelBoardGesture(false);this.activeBoardPointers.clear();
       this.boardPalms.penDown();
     }else if(kind==='touch'){
-      if(!this.boardPalms.touchDown(event,this.pencilMode,this.boardHandMode)){
+      if(!this.boardPalms.touchDown(event,false,this.boardTouchNavigates)){
         let removed=false;for(const id of this.activeBoardPointers.keys())if(this.boardPalms.ignores(id)){this.activeBoardPointers.delete(id);removed=true;}
         if(removed)this.startBoardTouch();this.captureBoardPointer(event);return;
       }
       this.activeBoardPointers.set(event.pointerId,{clientX:event.clientX,clientY:event.clientY});this.captureBoardPointer(event);
       if(this.activeBoardPointers.size>1){this.cancelBoardGesture(false);this.startBoardTouch();return;}
-      if(this.pencilMode){this.startBoardTouch();return;}
+      if(this.boardTouchNavigates){this.startBoardTouch();return;}
     }
     if(this.boardPointer)return;
     this.boardPointer={id:event.pointerId,kind};this.captureBoardPointer(event);
@@ -3265,7 +3267,7 @@ class StudyUI {
   };
 
   private onBoardPointerMove = (event: PointerEvent): void => {
-    if(event.pointerType==='touch'&&!this.boardPalms.touchMove(event,this.pencilMode)){event.preventDefault();if(this.activeBoardPointers.delete(event.pointerId))this.startBoardTouch();return;}
+    if(event.pointerType==='touch'&&!this.boardPalms.touchMove(event,false)){event.preventDefault();if(this.activeBoardPointers.delete(event.pointerId))this.startBoardTouch();return;}
     if(event.pointerType==='touch'&&this.boardPointer?.kind==='pen'){event.preventDefault();return;}
     if(this.activeBoardPointers.has(event.pointerId))this.activeBoardPointers.set(event.pointerId,{clientX:event.clientX,clientY:event.clientY});
     if(event.pointerType==='touch'&&this.activeBoardPointers.size===2){
@@ -3274,7 +3276,7 @@ class StudyUI {
       const center={clientX:(points[0].clientX+points[1].clientX)/2,clientY:(points[0].clientY+points[1].clientY)/2};
       if(this.lastPinchCenter){
         const scale=768/Math.max(1,this.boardCanvas.getBoundingClientRect().width),anchor=this.canvasPoint(this.lastPinchCenter as MouseEvent,this.boardCanvas);
-        let camera=this.boardCamera();if(!(this.pencilMode&&this.boardTool==='pen')&&this.lastPinchDistance>8&&distance>8)camera=zoomAt(camera,anchor.x,anchor.y,distance/this.lastPinchDistance);
+        let camera=this.boardCamera();if(this.lastPinchDistance>8&&distance>8)camera=zoomAt(camera,anchor.x,anchor.y,distance/this.lastPinchDistance);
         this.setBoardCamera(panBy(camera,(center.clientX-this.lastPinchCenter.clientX)*scale,(center.clientY-this.lastPinchCenter.clientY)*scale));
       }
       this.lastPinchDistance=distance;this.lastPinchCenter=center;return;

@@ -20,13 +20,13 @@ test('light pen starts over a resting palm, keeps coalesced/final samples and ig
  const ink=await savedInk(page);expect(ink[0].points).toHaveLength(5);expect(ink[0].points.map(p=>p.time)).toEqual([10,16,18,20,30]);expect(ink[0].points.every(p=>Math.abs(p.pressure-.001)<.00001)).toBe(true);expect(ink[0].points.at(-1)!.x).toBeGreaterThan(ink[0].points[3].x);
  await page.reload();await openNotebook(page);expect(await savedInk(page)).toEqual(ink);
 });
-test('Pencil uses two-finger pan without writing-time zoom, and cancelled edits roll back',async({page})=>{
+test('Pencil allows one-finger pan and pinch, and cancelled edits roll back',async({page})=>{
  await page.goto('/');await openNotebook(page);await mode(page,true);
  const start=await send(page,[]);
- const single=await send(page,[{type:'pointerdown',id:10,kind:'touch',x:200,y:250,time:10},{type:'pointermove',id:10,kind:'touch',x:200,y:150,time:20}]);expect(single.top).toBe(start.top);
- const pan=await send(page,[{type:'pointerdown',id:11,kind:'touch',x:300,y:150,time:25},{type:'pointermove',id:11,kind:'touch',x:350,y:80,time:30}]);expect(pan.top).toBeGreaterThan(start.top);expect(pan.surfaceWidth).toBe(start.surfaceWidth);
- const remaining=await send(page,[{type:'pointerup',id:11,kind:'touch',x:350,y:80,time:40},{type:'pointermove',id:10,kind:'touch',x:200,y:50,time:41},{type:'pointerup',id:10,kind:'touch',x:200,y:50,time:42}]);expect(remaining.top).toBe(pan.top);expect(await savedInk(page)).toHaveLength(0);
- // Outside freehand writing, the selection tool still permits intentional pinch zoom.
+ const single=await send(page,[{type:'pointerdown',id:10,kind:'touch',x:200,y:250,time:10},{type:'pointermove',id:10,kind:'touch',x:200,y:150,time:20}]);expect(single.top).toBeGreaterThan(start.top);
+ const pan=await send(page,[{type:'pointerdown',id:11,kind:'touch',x:300,y:150,time:25},{type:'pointermove',id:11,kind:'touch',x:350,y:80,time:30}]);expect(pan.top).toBeGreaterThan(start.top);expect(parseFloat(pan.surfaceWidth)).toBeGreaterThan(parseFloat(start.surfaceWidth));
+ const remaining=await send(page,[{type:'pointerup',id:11,kind:'touch',x:350,y:80,time:40},{type:'pointermove',id:10,kind:'touch',x:200,y:50,time:41},{type:'pointerup',id:10,kind:'touch',x:200,y:50,time:42}]);expect(remaining.top).toBeGreaterThan(pan.top);expect(await savedInk(page)).toHaveLength(0);
+ // Selection also yields to a two-finger pinch without changing saved content.
  await page.locator('.sv-notebook').getByLabel('Herramienta',{exact:true}).selectOption('select');
  const zoomed=await send(page,[{type:'pointerdown',id:10,kind:'touch',x:200,y:150,time:50},{type:'pointerdown',id:11,kind:'touch',x:300,y:150,time:51},{type:'pointermove',id:11,kind:'touch',x:350,y:150,time:52},{type:'pointerup',id:10,kind:'touch',x:200,y:150,time:60},{type:'pointerup',id:11,kind:'touch',x:350,y:150,time:61}]);expect(parseFloat(zoomed.surfaceWidth)).toBeGreaterThan(parseFloat(start.surfaceWidth));
  await page.locator('.sv-notebook').getByLabel('Herramienta',{exact:true}).selectOption('pen');

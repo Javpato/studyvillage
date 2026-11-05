@@ -95,12 +95,12 @@ export class InkCanvasEditor {
   let page=this.callbacks.page();if(!page)return;
   if(e.pointerType==='touch'){
    e.preventDefault();this.capture(e.pointerId);
-   if(!this.palms.touchDown(e,this.pencilOnly,this.tool==='hand')){
+   if(!this.palms.touchDown(e,false,this.tool==='hand'||this.pencilOnly&&this.tool!=='select')){
     for(const id of this.pointers.keys())if(this.palms.ignores(id))this.pointers.delete(id);
     this.startTouch();return;
    }
    this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-   if(this.tool==='hand'||this.pencilOnly||!this.pen.fingerDrawing||this.pointers.size>1){if(this.pen.activeKind==='touch')this.cancel(false);this.startTouch();return;}
+   if(this.tool==='hand'||this.tool!=='select'&&(this.pencilOnly||!this.pen.fingerDrawing)||this.pointers.size>1){if(this.pen.activeKind==='touch')this.cancel(false);this.startTouch();return;}
   }
   if(e.pointerType==='pen'){
    detectPencil(e.pointerType);
@@ -111,7 +111,7 @@ export class InkCanvasEditor {
    page=this.callbacks.page();if(!page)return;
    this.palms.penDown();this.pointers.clear();this.touchBase=null;
   }
-  if(!this.pen.begin(e))return;e.preventDefault();this.capture(e.pointerId);
+  if(!this.pen.begin(e,this.tool==='select'||this.pen.fingerDrawing))return;e.preventDefault();this.capture(e.pointerId);
   if(this.tool==='hand'){this.handPan={x:e.clientX,y:e.clientY};return;}
   const point=this.point(e);this.stroke=null;this.moveStart=null;this.moving=[];
   if(this.tool==='select'){
@@ -127,18 +127,18 @@ export class InkCanvasEditor {
  private beginEdit(){this.callbacks.before();this.editing=true;}
  private startTouch():void {
   const points=[...this.pointers.values()];
-  if(points.length>2||this.pencilOnly&&points.length!==2){this.touchBase=null;return;}
+  if(points.length>2){this.touchBase=null;return;}
   const center=points.length>1?{x:(points[0].x+points[1].x)/2,y:(points[0].y+points[1].y)/2}:points[0];
   this.touchBase=center?{distance:points.length>1?Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y):0,zoom:this.zoom,center,left:this.root.scrollLeft,top:this.root.scrollTop}:null;
  }
  private move(e:PointerEvent):void {
-  if(e.pointerType==='touch'&&!this.palms.touchMove(e,this.pencilOnly)){e.preventDefault();if(this.pointers.delete(e.pointerId))this.startTouch();return;}
+  if(e.pointerType==='touch'&&!this.palms.touchMove(e,false)){e.preventDefault();if(this.pointers.delete(e.pointerId))this.startTouch();return;}
   if(e.pointerType==='touch'&&this.pointers.has(e.pointerId)){
    this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
    if(this.touchBase&&!this.pen.accepts(e)){
     e.preventDefault();const points=[...this.pointers.values()],base=this.touchBase;
     const center=points.length>1?{x:(points[0].x+points[1].x)/2,y:(points[0].y+points[1].y)/2}:points[0];
-    if(this.tool==='hand'){
+    if(this.tool==='hand'||this.pencilOnly){
      // Use actual paper geometry: scroll padding, centering and rotation must not
      // move the content under the fingers when the page changes size.
      const before=this.surface.getBoundingClientRect(),anchor={x:(base.center.x-before.left)/this.zoom,y:(base.center.y-before.top)/this.zoom};
@@ -148,8 +148,7 @@ export class InkCanvasEditor {
      this.root.scrollLeft+=after.left+anchor.x*this.zoom-center.x;this.root.scrollTop+=after.top+anchor.y*this.zoom-center.y;
      this.startTouch();if(old!==this.zoom){this.paint();this.callbacks.view?.(this.zoom);}return;
     }
-    const writing=this.pencilOnly&&(this.tool==='pen'||this.tool==='highlight');
-    if(!writing&&points.length===2&&base.distance>8){const distance=Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);this.setZoom(base.zoom*distance/base.distance,base.center);}
+    if(points.length===2&&base.distance>8){const distance=Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);this.setZoom(base.zoom*distance/base.distance,base.center);}
     const ratio=this.zoom/base.zoom,rect=this.root.getBoundingClientRect();this.root.scrollLeft=(base.left+base.center.x-rect.left)*ratio-(center.x-rect.left);this.root.scrollTop=(base.top+base.center.y-rect.top)*ratio-(center.y-rect.top);return;
    }
   }
