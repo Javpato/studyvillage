@@ -83,21 +83,24 @@ async function verify(name,engine){
   await pointer(canvas,'pointerup',1,'pen',x+50,y,120);await pointer(canvas,'pointerup',9,'touch',x+80,y+60,121,60);
   await expect.poll(async()=>(await savedPage(page))?.ink.length).toBe(1);
   await expect(page.locator('html')).toHaveAttribute('data-pencil-mode','true');
-  const before=await savedPage(page),tool=page.getByLabel('Herramienta',{exact:true});await tool.selectOption('hand');
+  const before=await savedPage(page),tool=page.getByLabel('Herramienta',{exact:true});
   const view=()=>page.locator('.sv-notebook-scroll').evaluate(el=>({top:el.scrollTop,left:el.scrollLeft,width:el.querySelector('.sv-notebook-paper').style.width}));
-  const start=await view();await pointer(canvas,'pointerdown',2,'touch',x,y,130);await pointer(canvas,'pointermove',2,'touch',x,y-30,131);
-  assert.deepEqual(await view(),start,'One finger must stay inactive in Pen mode');
-  await pointer(canvas,'pointerdown',3,'touch',x+100,y-30,132);await pointer(canvas,'pointermove',3,'touch',x+150,y-60,133);
-  assert(parseFloat((await view()).width)>parseFloat(start.width),'Hand pinch did not enlarge the page');
-  await pointer(canvas,'pointerup',2,'touch',x,y-30,134);await pointer(canvas,'pointerup',3,'touch',x+150,y-60,135);
-  assert.deepEqual(await savedPage(page),before,'Hand navigation changed saved ink');
-  await tool.selectOption('pen');await pointer(canvas,'pointerdown',4,'pen',x,y+40,200);await pointer(canvas,'pointerup',4,'pen',x+50,y+40,210);
+  for(const name of ['erase','pen','hand']){
+   await tool.selectOption(name);await expect(page.locator('.sv-notebook').getByLabel('Modo lápiz',{exact:true})).toBeChecked();
+   const start=await view();await pointer(canvas,'pointerdown',2,'touch',x,y,130);await pointer(canvas,'pointermove',2,'touch',x,y-30,131);
+   assert.notDeepEqual(await view(),start,`${name}: Pen mode must allow normal one-finger pan`);
+   await pointer(canvas,'pointerdown',3,'touch',x+100,y-30,132);await pointer(canvas,'pointermove',3,'touch',x+150,y-60,133);
+   assert(parseFloat((await view()).width)>parseFloat(start.width),`${name}: pinch did not enlarge the page`);
+   await pointer(canvas,'pointerup',2,'touch',x,y-30,134);await pointer(canvas,'pointerup',3,'touch',x+150,y-60,135);
+   assert.deepEqual(await savedPage(page),before,`${name}: finger navigation changed saved ink`);
+  }
+  await tool.selectOption('pen');await expect(page.locator('.sv-notebook').getByLabel('Modo lápiz',{exact:true})).toBeChecked();await pointer(canvas,'pointerdown',4,'pen',x,y+40,200);await pointer(canvas,'pointerup',4,'pen',x+50,y+40,210);
   await expect.poll(async()=>(await savedPage(page))?.ink.length).toBe(2);const saved=await savedPage(page);
   await context.setOffline(true);await page.reload();await openNotebook(page);
   assert.deepEqual(await savedPage(page),saved,'Offline reload lost notebook data');
   await tool.selectOption('hand');
   assert.deepEqual(errors,[],'Browser runtime errors');assert.deepEqual(missing,[],'Missing static files');
-  console.log(`PASS ${name}: ${files.size} packaged files at ${mount}; offline cache, saved ink, palm rejection and Hand pinch.`);
+  console.log(`PASS ${name}: ${files.size} packaged files at ${mount}; offline cache, saved ink, palm rejection and finger pan/pinch without writing or erasure.`);
  }catch(error){
   if(errors.length||missing.length)console.error({browser:name,runtimeErrors:errors,missingFiles:missing});throw error;
  }finally{await browser.close();}

@@ -1,6 +1,16 @@
 # Verification and handoff — 5 November 2026
 
-Current web build version: **1.0.0-dev.1**, PWA cache **studyvillage-93fcc8c5ebe5c207**. This combines Hand navigation with the device-neutral **Modo lápiz / Pen mode / Mode stylet** labels. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
+Current web build version: **1.0.0-dev.1**, PWA cache **studyvillage-7ee145a93f404960**. Pen mode reserves writing and erasure for the pen while allowing fingers to pan, pinch, select and move existing content. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
+
+## Pen mode with ordinary touch navigation
+
+The owner reported that ordinary mode already works well with the physical Pencil. Pen mode now prevents touch-created ink, shapes, canvas text and erasure instead of disabling finger interaction. One-finger pan, two-finger pinch, selection and moving selected content remain available. Hand no longer needs a temporary mode switch. Saved preferences, active-pen priority, quarantining contacts until release, and native long-press suppression are retained. Broad contacts no longer block intentional navigation. The updated help text is available in ES/EN/FR.
+
+- TypeScript/PWA build, whitespace checks and 2,466 ES/EN/FR translations pass. **444 app tests** and **31 server tests** pass.
+- **26 Chromium scenarios** (22 existing/updated plus 4 new cases) and **26 production WebKit scenarios** pass across `board-pencil`, `pencil-mode` and `hand-navigation`. They cover finger editing prevention for all writing/erasing tools, navigation, selection/movement, preference persistence, pen/palm ownership, cancellation and saved ink.
+- The packaged Pages check passes in both engines with all 163 files, offline cache/reload, saved writing and finger navigation with Eraser, Pen and Hand while Pen mode remains checked.
+- The production Chromium configuration now specifies the repository working directory; its first attempt exposed an invalid `app/app/vite.config.ts` path, and all focused cases passed after correcting the runner.
+- Pointer gestures are browser automation, not a physical iPad/Pencil certification. The current native release packages were not rebuilt for this web update.
 
 ## Pages deployment failure investigation
 
@@ -10,7 +20,9 @@ The downloaded artifact `13448450665` contains 163 regular files totaling 6,126,
 
 The publishing workflow previously compiled the app without browser verification. It now runs the unit/server suites and the packaged-app check before artifact upload, and pull requests validate without deploying. This closes a verification gap; it does not claim to repair GitHub's Pages backend. No app input defect was reproduced in these checks, and no further publication was requested during this investigation. The published site was still serving `studyvillage-462ef152b1465a38` when inspected. Similar first-hand reports of accepted artifacts followed by empty-status timeouts exist in [GitHub Community](https://github.com/orgs/community/discussions/212117); those reports support a hosting-side explanation but are not an official root-cause determination.
 
-## Hand navigation — web update for iPad testing
+The later fresh [run 42104557827](https://github.com/Javpato/studyvillage/actions/runs/42104557827) successfully published the same application package; no artifact splitting was needed. Public WebKit smoke checks passed. The physical-device feedback then prompted the revised Pen-mode behavior above.
+
+## Previous Hand navigation — web update for iPad testing
 
 Both the room board and notebook offer Hand navigation: two fresh fingers pan and pinch in Pencil mode, while pen/mouse dragging in Hand never edits ink. Switching tools cancels unfinished edits and excludes resting contacts; a third contact blocks navigation until all contacts lift. Writing-time zoom suppression, pen priority and native selection suppression are retained. The notebook pinch anchor accounts for centered/rotated paper and responds immediately when reversing at the zoom limits.
 

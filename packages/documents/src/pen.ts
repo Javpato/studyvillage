@@ -37,7 +37,7 @@ export class PenInput {
  private active:{id:number;kind:string}|null=null;
  fingerDrawing=false;
  // A pointer-down starts immediately, even with zero pressure/buttons (light Pencil contact).
- begin(e:PointerSample):boolean {if(this.active || (e.pointerType==='touch'&&!this.fingerDrawing))return false;this.active={id:e.pointerId,kind:e.pointerType};return true;}
+ begin(e:PointerSample,allowTouch=this.fingerDrawing):boolean {if(this.active || (e.pointerType==='touch'&&!allowTouch))return false;this.active={id:e.pointerId,kind:e.pointerType};return true;}
  accepts(e:PointerSample):boolean{return !!this.active&&this.active.id===e.pointerId&&this.active.kind===e.pointerType;}
  finish(id:number):boolean{if(this.active?.id!==id)return false;this.active=null;return true;}
  cancel():void{this.active=null;}
