@@ -17,7 +17,7 @@ for(const [key,target]of Object.entries(releaseTargets)){
  for(const architecture of target.architectures){
   const receipt=JSON.parse(await readFile(path.join(directory,`INSTALL_CHECK-${key}-${architecture}.json`),'utf8'));
   assert.equal(receipt.version,version);assert.equal(receipt.commit,commit);assert.equal(receipt.target,key);assert.equal(receipt.architecture,architecture);assert.equal(receipt.installer,target.file);assert.equal(receipt.sha256,digest);
-  const required=key==='android'?['installation','startup','phone','house','restart']:['payload','startup','storage','restart','notebook','nativeExport',...(key==='windows'?['uninstallPreservesUserData']:key==='macos'?['universalBinary']:[])];
+  const required=key==='android'?['installation','startup','phone','house','restart']:['payload','sandbox','startup','storage','restart','notebook','nativeExport',...(key==='windows'?['uninstallPreservesUserData']:key==='macos'?['universalBinary']:[])];
   for(const check of required)assert.equal(receipt.checks[check],true,`${key}/${architecture}: missing ${check}`);
   checks.push(receipt);
  }

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {copyFile,chmod} from 'node:fs/promises';
 import {releaseTarget} from './release-targets.mjs';
 export function installerConfig(key,root,app,output,pkg){
  const target=releaseTarget(key);
@@ -6,6 +7,7 @@ export function installerConfig(key,root,app,output,pkg){
   appId:'com.studyvillage.rebuild',productName:'StudyVillage',electronVersion:pkg.devDependencies.electron,
   directories:{app,output},asar:true,npmRebuild:false,publish:null,
   files:['*.cjs','package.json','icon.png','web/**/*','!node_modules/**/*'],
+  afterPack:async context=>{if(context.electronPlatformName==='linux'){const launcher=path.join(context.appOutDir,'AppRun');await copyFile(path.join(root,'scripts/linux-apprun.sh'),launcher);await chmod(launcher,0o755);}},
   extraMetadata:{description:'Una aldea para compartir, decorar y crear a tu ritmo.',author:'StudyVillage contributors'},
   artifactName:target.file,
   win:{target:['nsis'],icon:path.join(root,'app/src-tauri/icons/icon.ico'),signExecutable:false},

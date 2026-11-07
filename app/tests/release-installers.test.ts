@@ -18,7 +18,7 @@ function fixture(){
   else if(key==='macos')bytes.write('koly');else bytes.set([0x50,0x4b,0x03,0x04]);
   writeFileSync(path.join(directory,target.file),bytes);
   writeFileSync(path.join(directory,`BUILD_INFO-${key}.json`),JSON.stringify({version,commit,target:key,installer:target.file,format:target.format,architectures:target.architectures,matchedWebFiles:163,webIndexSha256:'same-web',pwaCache:'same-cache'}));
-  for(const architecture of target.architectures)writeFileSync(path.join(directory,`INSTALL_CHECK-${key}-${architecture}.json`),JSON.stringify({version,commit,target:key,architecture,installer:target.file,sha256:createHash('sha256').update(bytes).digest('hex'),checks:{payload:true,startup:true,storage:true,restart:true,notebook:true,nativeExport:true,uninstallPreservesUserData:true,universalBinary:true,installation:true,phone:true,house:true}}));
+  for(const architecture of target.architectures)writeFileSync(path.join(directory,`INSTALL_CHECK-${key}-${architecture}.json`),JSON.stringify({version,commit,target:key,architecture,installer:target.file,sha256:createHash('sha256').update(bytes).digest('hex'),checks:{payload:true,sandbox:true,startup:true,storage:true,restart:true,notebook:true,nativeExport:true,uninstallPreservesUserData:true,universalBinary:true,installation:true,phone:true,house:true}}));
  }
  return directory;
 }

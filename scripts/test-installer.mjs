@@ -31,6 +31,7 @@ try{
   executable=path.join(install,'StudyVillage.exe');await waitFor(()=>exists(executable));appRoot=install;
  }else if(key==='linux'){
   await run(file,['--appimage-extract'],{cwd:scratch});appRoot=path.join(scratch,'squashfs-root');
+  assert((await readFile(path.join(appRoot,'AppRun'))).equals(await readFile('scripts/linux-apprun.sh')),'AppImage must use the sandbox-preserving launcher');
   const helper=path.join(appRoot,'chrome-sandbox');await run('sudo',['chown','root:root',helper]);await run('sudo',['chmod','4755',helper]);
   environment.CHROME_DEVEL_SANDBOX=helper;executable=path.join(appRoot,'AppRun');
  }else{
@@ -46,7 +47,7 @@ try{
  const compared=await verifyPackagedWeb(asar,'asar');
  console.log(`PASS ${target.label}: actual installer payload matches ${compared.matchedWebFiles} current web files.`);
  execFileSync(process.execPath,['scripts/test-linux.mjs'],{env:{...environment,SV_DESKTOP_EXECUTABLE:executable},stdio:'inherit',timeout:120000});
- const checks={payload:true,startup:true,storage:true,restart:true,notebook:true,nativeExport:true};
+ const checks={payload:true,sandbox:true,startup:true,storage:true,restart:true,notebook:true,nativeExport:true};
  if(key==='windows'){await uninstall();assert.equal(await readFile(profileSentinel,'utf8'),'Keep existing player data');checks.uninstallPreservesUserData=true;}
  if(key==='macos')checks.universalBinary=true;
  await recordInstallerCheck(key,checks);
