@@ -9,6 +9,10 @@ on:
         description: Version tag to publish after all checks pass
         required: true
         type: string
+      publish_release:
+        description: Publish a new Release after verification (disable to audit current code)
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -32,6 +36,7 @@ jobs:
           node-version: '24'
           cache: npm
       - name: Check release version
+        if: github.event_name != 'workflow_dispatch' || inputs.publish_release
         env:
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: node scripts/check-release-version.mjs
@@ -49,7 +54,7 @@ jobs:
         run: npm run test:e2e -- phone-layout.spec.ts initial-house.spec.ts
       - name: Verify phone and starter house in WebKit
         run: npm run test:webkit -- phone-layout.spec.ts initial-house.spec.ts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-web
           path: app/dist
@@ -90,7 +95,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: release-web
           path: app/dist
@@ -127,6 +132,20 @@ jobs:
           npx cap sync android
           bash android/gradlew -p android assembleDebug
           node scripts/collect-android.mjs
+      - name: Enable hardware acceleration for Android smoke test
+        if: matrix.key == 'android'
+        run: sudo chmod a+rw /dev/kvm
+      - name: Install and launch the actual APK in Android emulator
+        if: matrix.key == 'android'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: node scripts/test-android.mjs
       - name: Compare packaged web files and desktop bridge
         run: node scripts/verify-packages.mjs '${{ matrix.label }}'
       - name: Linux startup, storage and native file smoke test
@@ -149,7 +168,7 @@ jobs:
         run: node scripts/test-linux.mjs
       - name: Archive current package
         run: node scripts/archive-platform.mjs '${{ matrix.key }}'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.key }}
           path: deliverables/release-current/*
@@ -168,7 +187,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: package-*
           path: deliverables/release-current
@@ -176,6 +195,7 @@ jobs:
       - name: Verify all archives and generate checksums
         run: node scripts/verify-release.mjs
       - name: Publish complete development release
+        if: github.event_name != 'workflow_dispatch' || inputs.publish_release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
