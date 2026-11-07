@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing version tag to build
+        description: Version tag to publish after all checks pass
         required: true
         type: string
 
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -34,12 +34,14 @@ jobs:
       - name: Check release version
         env:
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-        run: node -e "if(process.env.RELEASE_TAG!=='v'+require('./package.json').version)throw Error('Tag and package version differ')"
+        run: node scripts/check-release-version.mjs
       - run: npm ci
       - run: npm run check
       - name: Native bridge tests
         run: |
           env -u ELECTRON_SKIP_BINARY_DOWNLOAD node node_modules/electron/install.js
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
           xvfb-run -a npm run linux:test
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:pages
@@ -82,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -98,6 +100,8 @@ jobs:
           unset ELECTRON_SKIP_BINARY_DOWNLOAD
           node node_modules/electron/install.js
           node scripts/build-linux.mjs
+          sudo chown root:root deliverables/linux-current/StudyVillage/chrome-sandbox
+          sudo chmod 4755 deliverables/linux-current/StudyVillage/chrome-sandbox
       - name: Windows application
         if: matrix.key == 'windows'
         run: node scripts/package-platform.mjs win32 x64
@@ -156,7 +160,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -172,4 +176,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" deliverables/release-current/* --verify-tag --prerelease --title "StudyVillage $RELEASE_TAG" --notes-file docs/RELEASE_NOTES.md
+          gh release create "$RELEASE_TAG" deliverables/release-current/* --target "$GITHUB_SHA" --prerelease --title "StudyVillage $RELEASE_TAG" --notes-file docs/RELEASE_NOTES.md
