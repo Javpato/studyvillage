@@ -23,7 +23,7 @@ for(const profile of [{name:'desktop',width:1440,height:1000,touch:false},{name:
  });
 }
 test('the outdoor mailbox opens by approaching it and pressing E',async({page})=>{
- await page.goto('/');await page.getByTestId('phone-button').click();await openPhoneApp(page,'garden');const tray=page.locator('.sv-garden-tray');await tray.getByRole('button',{name:'Buzón',exact:true}).click();await page.mouse.click(...await worldPoint(page,64,160));await expect(tray.locator('.sv-garden-count')).toContainText('1/16');await tray.getByRole('button',{name:'Terminar',exact:true}).click();await expect(tray).toBeHidden();
+ await page.goto('/');await page.getByTestId('phone-button').click();await openPhoneApp(page,'garden');const tray=page.locator('.sv-garden-tray');await expect(tray.locator('.sv-garden-count')).toContainText('1/16');await tray.getByRole('button',{name:'Terminar',exact:true}).click();await expect(tray).toBeHidden();
  await page.mouse.dblclick(...await worldPoint(page,64,150));await expect(mailbox(page)).toBeVisible({timeout:15000});await mailbox(page).getByLabel('Escribe una nota',{exact:true}).fill('Nota exterior');await mailbox(page).getByRole('button',{name:'Dejar nota',exact:true}).click();await expect(mailbox(page).getByText('Nota exterior',{exact:true})).toBeVisible();await mailbox(page).getByRole('button',{name:'Cerrar',exact:true}).click();await page.keyboard.press('e');await expect(mailbox(page)).toBeVisible();await expect(mailbox(page).getByText('Nota exterior',{exact:true})).toBeVisible();
 });
 
