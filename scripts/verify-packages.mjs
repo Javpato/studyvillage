@@ -13,11 +13,13 @@ const targets=[
  ['Android debug','deliverables/android-current/StudyVillage-development.apk','apk'],
 ];
 const checked=[];
-for(const[label,location,kind]of targets){
- for(const[name,hash]of expected){const bytes=kind==='folder'?await readFile(path.join(location,'web',name)):kind==='asar'?extractFile(location,'web/'+name):execFileSync('unzip',['-p',location,'assets/public/'+name],{maxBuffer:32*1024*1024});if(digest(bytes)!==hash)throw Error(`${label}: different ${name}`);}
+const requested=process.argv[2];
+if(requested&&!targets.some(([label])=>label===requested))throw Error('Unknown target: '+requested);
+for(const[label,location,kind]of targets.filter(([label])=>!requested||label===requested)){
+ for(const[name,hash]of expected){const bytes=kind==='folder'?await readFile(path.join(location,'web',name)):kind==='asar'?extractFile(location,path.join('web',name)):execFileSync('unzip',['-p',location,'assets/public/'+name],{maxBuffer:32*1024*1024});if(digest(bytes)!==hash)throw Error(`${label}: different ${name}`);}
  if(kind!=='apk')for(const name of ['main.cjs','preload.cjs','storage.cjs','server-profile.cjs']){const bytes=kind==='folder'?await readFile(path.join(location,name)):extractFile(location,name);if(digest(bytes)!==digest(await readFile(path.join('app/linux',name))))throw Error(`${label}: different bridge ${name}`);}
  checked.push({target:label,matchedWebFiles:entries.length,package:location,nativeExecutedByThisCheck:false});console.log(`PASS ${label}: ${entries.length} current web assets match byte-for-byte.`);
 }
 const sw=await readFile(path.join(bundle,'sw.js'),'utf8'),version=JSON.parse(await readFile('package.json','utf8')).version;
-const report={version,builtAt:new Date().toISOString(),pwaCache:sw.match(/const CACHE='([^']+)'/)?.[1],webIndexSha256:expected.get('index.html'),packages:checked};
+const report={version,commit:process.env.GITHUB_SHA||execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),builtAt:new Date().toISOString(),pwaCache:sw.match(/const CACHE='([^']+)'/)?.[1],webIndexSha256:expected.get('index.html'),packages:checked};
 await writeFile('deliverables/BUILD_INFO.json',JSON.stringify(report,null,2)+'\n');

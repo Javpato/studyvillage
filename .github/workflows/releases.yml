@@ -1,0 +1,175 @@
+name: Build and publish Releases
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Check release version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: node -e "if(process.env.RELEASE_TAG!=='v'+require('./package.json').version)throw Error('Tag and package version differ')"
+      - run: npm ci
+      - run: npm run check
+      - name: Native bridge tests
+        run: |
+          env -u ELECTRON_SKIP_BINARY_DOWNLOAD node node_modules/electron/install.js
+          xvfb-run -a npm run linux:test
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:pages
+      - name: Verify phone and starter house in Chromium
+        run: npm run test:e2e -- phone-layout.spec.ts initial-house.spec.ts
+      - name: Verify phone and starter house in WebKit
+        run: npm run test:webkit -- phone-layout.spec.ts initial-house.spec.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-web
+          path: app/dist
+          if-no-files-found: error
+          retention-days: 3
+
+  package:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: linux
+            os: ubuntu-24.04
+            label: Linux x64
+          - key: windows
+            os: windows-2025
+            label: Windows x64
+          - key: intel
+            os: macos-15-intel
+            label: macOS Intel
+          - key: arm64
+            os: macos-15
+            label: macOS Apple Silicon
+          - key: android
+            os: ubuntu-24.04
+            label: Android debug
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-web
+          path: app/dist
+      - name: Linux application
+        if: matrix.key == 'linux'
+        run: |
+          unset ELECTRON_SKIP_BINARY_DOWNLOAD
+          node node_modules/electron/install.js
+          node scripts/build-linux.mjs
+      - name: Windows application
+        if: matrix.key == 'windows'
+        run: node scripts/package-platform.mjs win32 x64
+      - name: Intel Mac application
+        if: matrix.key == 'intel'
+        run: node scripts/package-platform.mjs darwin x64
+      - name: Apple Silicon application
+        if: matrix.key == 'arm64'
+        run: node scripts/package-platform.mjs darwin arm64
+      - uses: actions/setup-java@v5
+        if: matrix.key == 'android'
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android application
+        if: matrix.key == 'android'
+        run: |
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+          npx cap sync android
+          bash android/gradlew -p android assembleDebug
+          node scripts/collect-android.mjs
+      - name: Compare packaged web files and desktop bridge
+        run: node scripts/verify-packages.mjs '${{ matrix.label }}'
+      - name: Linux startup, storage and native file smoke test
+        if: matrix.key == 'linux'
+        run: xvfb-run -a node scripts/test-linux.mjs
+      - name: Windows startup, storage and native file smoke test
+        if: matrix.key == 'windows'
+        env:
+          SV_DESKTOP_EXECUTABLE: deliverables/windows-current/StudyVillage-win32-x64/StudyVillage.exe
+        run: node scripts/test-linux.mjs
+      - name: Intel Mac startup, storage and native file smoke test
+        if: matrix.key == 'intel'
+        env:
+          SV_DESKTOP_EXECUTABLE: deliverables/macos-current/StudyVillage-darwin-x64/StudyVillage.app/Contents/MacOS/StudyVillage
+        run: node scripts/test-linux.mjs
+      - name: Apple Silicon startup, storage and native file smoke test
+        if: matrix.key == 'arm64'
+        env:
+          SV_DESKTOP_EXECUTABLE: deliverables/macos-current/StudyVillage-darwin-arm64/StudyVillage.app/Contents/MacOS/StudyVillage
+        run: node scripts/test-linux.mjs
+      - name: Archive current package
+        run: node scripts/archive-platform.mjs '${{ matrix.key }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.key }}
+          path: deliverables/release-current/*
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          path: deliverables/release-current
+          merge-multiple: true
+      - name: Verify all archives and generate checksums
+        run: node scripts/verify-release.mjs
+      - name: Publish complete development release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" deliverables/release-current/* --verify-tag --prerelease --title "StudyVillage $RELEASE_TAG" --notes-file docs/RELEASE_NOTES.md

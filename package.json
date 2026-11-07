@@ -1,6 +1,6 @@
 {
   "name": "studyvillage",
-  "version": "1.0.0-dev.1",
+  "version": "1.0.0-dev.2",
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
@@ -24,14 +24,15 @@
     "server:test": "vitest run --config server/vitest.config.ts",
     "i18n:check": "node scripts/check-translations.mjs",
     "dev:lan": "node scripts/lan-https.mjs",
-    "android:apk": "npm run build && npx cap sync android && (cd android && ./gradlew assembleDebug) && node scripts/collect-android.mjs",
+    "android:apk": "npm run build && node scripts/build-android.mjs",
     "i18n:audit": "AUDIT_OUT=test-results/i18n-audit.json playwright test --config app/playwright.config.ts audit/crawl.spec.ts && python3 scripts/i18n-audit-report.py test-results/i18n-audit.json",
     "linux:build": "node node_modules/electron/install.js && npm run build && node scripts/build-linux.mjs",
     "linux:test": "node --test app/linux/*.test.cjs",
     "linux:smoke": "node scripts/test-linux.mjs",
     "windows:build": "npm run build && node scripts/package-platform.mjs win32 x64",
     "mac:build": "npm run build && node scripts/package-platform.mjs darwin x64",
-    "test:webkit": "playwright test --config app/playwright.webkit.config.ts"
+    "test:webkit": "playwright test --config app/playwright.webkit.config.ts",
+    "mac:arm64:build": "npm run build && node scripts/package-platform.mjs darwin arm64"
   },
   "dependencies": {
     "@capacitor/core": "8.6.0",
@@ -54,5 +55,5 @@
     "vite": "8.3.5",
     "vitest": "5.0.5"
   },
-  "description": "StudyVillage \u2014 local-first pixel-art study village rebuild"
+  "description": "StudyVillage — local-first pixel-art study village rebuild"
 }

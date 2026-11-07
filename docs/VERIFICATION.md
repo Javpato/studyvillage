@@ -1,3 +1,18 @@
+# Phone, starter house and release automation — 7 November 2026
+
+Version **1.0.0-dev.2** adds the customizable phone, minimal new-house furniture and removable starter mailbox. Saved houses are preserved, including deleted wardrobes and mailboxes. The main README now describes the social-village vision.
+
+- Local Windows checks: application/server types; **452 app tests in 52 files**, **31 server tests**; **2,483 ES/EN/FR catalogue entries**; production web/PWA and server builds passed.
+- Chromium and WebKit each passed all **six new phone/house journeys**: desktop/mobile defaults, folder edits/reordering/deletion with Settings retained, quota failure/cancel, initial furniture/mailbox removal and preservation of saved layouts. Additional Chromium checks passed garden dragging, the outdoor mailbox interaction, Settings persistence, notebook ink persistence and French identity navigation.
+- The packaged Pages application passed Chromium and WebKit offline/ink checks after the phone changes. Final release automation repeats these checks on its exact shared web artifact.
+- The current Windows executable passed sandbox/context isolation, secure-context/WebRTC availability, synthetic legacy import, saved server settings, real native file export and reload. All **163 web files** and desktop bridge files match the current web bundle byte-for-byte.
+- Initial native launch in the restricted workspace failed because its generated folder lacked Windows AppContainer read permission. Granting read/execute to the generated package folder allowed the same sandboxed executable to pass. The legacy-export unit fixture had the same local ACL restriction in Electron's dependency directory; the other four native unit checks passed. CI runs the full native suite on Linux outside that Windows workspace restriction.
+- The Releases workflow builds the web client once, packages on the corresponding native OS runners, verifies embedded assets, runs desktop startup/storage/file smoke tests and only then publishes all five packages with build metadata and SHA-256 checksums. Successful remote run/release results are recorded separately after execution.
+
+Physical Android, Apple Pencil, OS signing/notarization and real-network multimedia are not certified by these checks. Earlier records below describe older builds.
+
+---
+
 # Verification and handoff — 5 November 2026
 
 Current web build version: **1.0.0-dev.1**, PWA cache **studyvillage-7ee145a93f404960**. Pen mode reserves writing and erasure for the pen while allowing fingers to pan, pinch, select and move existing content. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.

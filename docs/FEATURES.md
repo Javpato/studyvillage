@@ -1,5 +1,12 @@
 # Feature and acceptance inventory
 
+## Current phone and new-house defaults
+
+The phone starts with Village, Contacts and Identity, plus Home (My house, Rooms, Decorate, My garden) and Settings (Settings, Connection, Voice, Edit controls on touch devices). Ink notebook, Music, Study, Projects and Focus are optional shortcuts. Settings → Phone manages folders, ordering and shortcuts; Settings cannot be removed. Removing a folder moves its shortcuts to the home screen. Layout is per device and included in full backups; removing shortcuts never removes tool data.
+
+New houses contain only the board, desk, plant, wardrobe and guide, plus the existing private-floor portal. They start with a removable outdoor mailbox. Saved houses and deleted furnishings are not replenished or rearranged. These defaults supersede earlier initial-furniture descriptions below.
+
+
 Original paths below are relative to `../hackathon`; replacement paths are in this independent repository. The original source, reference release and private profiles are preserved. This inventory records deliberate reuse and changed behavior; build/test evidence is in VERIFICATION.md. It is not a claim that every platform or physical pen has been tested.
 
 | Original location and behavior | Rebuild decision / target | Acceptance evidence or remaining boundary |

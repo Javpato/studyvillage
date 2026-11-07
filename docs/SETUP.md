@@ -26,6 +26,12 @@ A successful build is distinct from a successful Pages publication. If `deploy-p
 
 An arbitrary HTTP LAN address is not a secure iPad camera/PWA route. Use HTTPS with a certificate trusted by the testing device; `npm run dev:lan` helps prepare local HTTPS. Do not disable browser security to make camera access work.
 
+## Downloads and Releases
+
+Download the five development packages from [GitHub Releases](https://github.com/Javpato/studyvillage/releases). A version tag matching package.json triggers the Releases workflow: one validated web build is packaged on Linux, Windows, Intel macOS, Apple Silicon macOS and Android runners. Each package is compared byte-for-byte with that web build. Desktop startup/storage/file smoke tests run on their corresponding OS; Android is built and inspected, without physical-device certification. All five must succeed before the pre-release is published with SHA-256 checksums and build metadata.
+
+Desktop archives contain the complete application folder and must be unpacked together. These development packages have no commercial signing or macOS notarization. Android is debug signed; CI's generated debug key can change between builds, so upgrade continuity is not guaranteed. Export backups before uninstalling an older APK. iOS continues to use the installable web app.
+
 ## Desktop and Android
 
 Build and launch paths:
@@ -35,7 +41,7 @@ Build and launch paths:
 | Linux x64 | `npm run linux:build` | `deliverables/linux-current/StudyVillage/studyvillage` |
 | Windows x64 | `npm run windows:build` | `deliverables/windows-current/StudyVillage-win32-x64/StudyVillage.exe` |
 | macOS Intel | `npm run mac:build` | `deliverables/macos-current/StudyVillage-darwin-x64/StudyVillage.app` |
-| macOS Apple Silicon | `npm run build && node scripts/package-platform.mjs darwin arm64` | `deliverables/macos-current/StudyVillage-darwin-arm64/StudyVillage.app` |
+| macOS Apple Silicon | `npm run mac:arm64:build` | `deliverables/macos-current/StudyVillage-darwin-arm64/StudyVillage.app` |
 | Android | `npm run android:apk` | `deliverables/android-current/StudyVillage-development.apk` |
 
 Keep the complete desktop folder, including resources/DLLs. Windows/macOS packages are unsigned; OS execution policy may restrict them. Linux retains Chromium sandboxing and can use an installed root-owned Chrome sandbox helper. Wayland screen sharing requires a functioning system portal and actual-session testing. Electron 45 requires **macOS 13 Ventura or later**; the owner's older Mac version is unknown ([Electron support change](https://www.electronjs.org/docs/latest/breaking-changes#removed-macos-12-support)). See VERIFICATION.md for built versus runtime-tested targets.

@@ -4,7 +4,7 @@ const root=new URL('../deliverables/',import.meta.url),source=new URL(`.desktop-
 const out=new URL(platform==='win32'?'windows-current/':'macos-current/',root);await mkdir(out,{recursive:true});await prepareDesktop(source);
 try{
  const pkg=JSON.parse(await readFile(new URL('../package.json',import.meta.url)));
- const [output]=await packager({dir:fileURLToPath(source),name:'StudyVillage',platform,arch,electronVersion:pkg.devDependencies.electron,out:fileURLToPath(staging),tmpdir:fileURLToPath(temporary),overwrite:true});
+ const [output]=await packager({dir:fileURLToPath(source),name:'StudyVillage',platform,arch,asar:true,electronVersion:pkg.devDependencies.electron,out:fileURLToPath(staging),tmpdir:fileURLToPath(temporary),overwrite:true});
  const target=new URL(`StudyVillage-${platform}-${arch}`,out),previous=new URL(`.previous-${platform}-${arch}`,root);
  await rm(previous,{recursive:true,force:true});try{await rename(target,previous);}catch(e){if(e.code!=='ENOENT')throw e;}
  try{await rename(output,target);}catch(e){try{await rename(previous,target);}catch{}throw e;}
