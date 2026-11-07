@@ -121,3 +121,11 @@ describe('optional game camera consent and audience',()=>{
   });
 });
 function cameraRoom(call:Call):string{return (call.metadata as {room:string}).room;}
+
+it('limits Forest Blocks to four selected remote cameras and releases deselected tracks',()=>{
+ const camera=new GameCameraManager(()=>{}),ids=['1','2','3','4','5'].map(s=>s.repeat(64)),room='village:game:tetris';
+ camera.setContext({...context(),room,peers:ids.map((identityId,i)=>({identityId,endpoint:`p${i}`,sendToken:'y'.repeat(43),receiveToken:'x'.repeat(43),watching:true}))});
+ camera.setPolicy({canSend:true,canReceive:true,audience:null,receiveAudience:ids.slice(0,4)});
+ const calls=ids.map((identityId,i)=>new Call(`p${i}`,{...metadata(),identityId,room})),streams=ids.map(()=>stream());calls.forEach((call,i)=>{camera.receive(call);for(const fn of call.streams)fn(streams[i].stream);});
+ expect(camera.view.remote).toHaveLength(4);expect(calls[4].closed).toBe(true);camera.setPolicy({canSend:true,canReceive:true,audience:null,receiveAudience:[ids[4]]});expect(camera.view.remote).toHaveLength(0);expect(streams.slice(0,4).every(s=>s.track.stopped)).toBe(true);camera.dispose();
+});

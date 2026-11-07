@@ -165,7 +165,7 @@ export class WorldExpansionUIController {
     };
     const me = () => { const a = this.getActor(); return { name: a.displayName, color: a.color }; };
     this.tetrisRoom=new SharedRoom('tetris',callbacks.actions,context,()=>new TetrisGame());
-    this.tetrisPanel=new TetrisPanel({send:a=>this.tetrisRoom.act(a),close:()=>this.closeModal(),me:()=>({id:context().selfId,name:me().name}),cameras:ids=>callbacks.actions.setGameCameraPolicy?.({canSend:true,canReceive:true,audience:null,receiveAudience:ids}),media:battle=>{this.activityOverlay.dataset.tetrisMode=battle?'battle':'solo';if(battle){this.cameraDock.mount(this.activityOverlay);callbacks.actions.setCameraActivity('tetris');}else{this.cameraDock.unmount();callbacks.actions.setGameCameraPolicy?.(null);callbacks.actions.setCameraActivity('village');const selected=callbacks.getView()?.network.voice?.selected;if(selected?.game==='tetris')callbacks.actions.voiceCommand({action:'leave'});}}});
+    this.tetrisPanel=new TetrisPanel({send:a=>this.tetrisRoom.act(a),close:()=>this.closeModal(),me:()=>({id:context().selfId,name:me().name}),cameras:ids=>callbacks.actions.setGameCameraPolicy?.({canSend:true,canReceive:true,audience:null,receiveAudience:ids}),media:battle=>{this.activityOverlay.dataset.tetrisMode=battle?'battle':'solo';if(!battle)callbacks.actions.setTalking(false);if(battle){this.cameraDock.mount(this.activityOverlay);callbacks.actions.setCameraActivity('tetris');}else{this.cameraDock.unmount();callbacks.actions.setGameCameraPolicy?.(null);callbacks.actions.setCameraActivity('village');const selected=callbacks.getView()?.network.voice?.selected;if(selected?.game==='tetris')callbacks.actions.voiceCommand({action:'leave'});}}});
     this.werewolvesRoom = new SharedRoom('werewolves', callbacks.actions, context, () => new WerewolvesGame(undefined, context().selfId));
     this.garticRoom = new SharedRoom('gartic', callbacks.actions, context, () => new GarticGame(undefined, context().selfId));
     this.garticBots = new OllamaGarticBots(this.ollamaGateway, this.garticRoom, m => callbacks.notify(m));
@@ -243,7 +243,7 @@ export class WorldExpansionUIController {
     if (this.garticRoom.canLead() && this.ollamaGateway.isReady('gartic') && !this.garticBots.ready()) void this.garticBots.enable();
     const view = this.callbacks.getView();
     if (!view) return;
-    const cameraGame=this.werewolvesRoom.current();if(cameraGame)this.callbacks.actions.setGameCameraPolicy?.({canSend:cameraGame.canBroadcastCamera,canReceive:cameraGame.canSeeCameras,audience:cameraGame.cameraAudience,epoch:cameraGame.cameraPhase});
+    const cameraGame=this.werewolvesRoom.current();if(cameraGame&&this.activityOverlay.dataset.kind==='werewolves')this.callbacks.actions.setGameCameraPolicy?.({canSend:cameraGame.canBroadcastCamera,canReceive:cameraGame.canSeeCameras,audience:cameraGame.cameraAudience,epoch:cameraGame.cameraPhase});
     this.cameraDock.policy(this.activityOverlay.dataset.kind==='werewolves'?cameraGame:null);this.cameraDock.update(view);
     // «Working now» only means something for people who are actually here.
     const present = new Set(view.network.members.filter((m) => m.connected).map((m) => m.identity.fingerprint));
@@ -510,6 +510,7 @@ export class WorldExpansionUIController {
     this.activeModalKind = null;
     this.modalOverlay.hidden = true;
     this.activityOverlay.hidden = true;
+    this.activityOverlay.querySelectorAll('.sv-game-voice,.sv-tetris-voice').forEach(el=>el.remove());
     this.modalCard.replaceChildren();
     if (wasOpen) this.callbacks.activityChanged(false);
   }

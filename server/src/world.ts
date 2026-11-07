@@ -288,7 +288,7 @@ export class World {
         this.changed(from); this.changed(target); return { neighborhood: target };
       });
       case 'media.private': this.voice.apply(me, { action: 'call', target: body.with }, this.onlineIds(), String(c.neighborhood)); this.broadcastVoice(); return null;
-      case 'voice': if (body.command.action === 'game.end') throw new Reject('forbidden'); this.voice.apply(me, body.command, this.onlineIds(), String(c.neighborhood)); this.broadcastVoice(); return null;
+      case 'voice': if (body.command.action === 'game.end') throw new Reject('forbidden'); this.voice.apply(me, body.command, this.onlineIds(), body.command.action==='game'&&body.command.game==='tetris'?'forest':String(c.neighborhood)); this.broadcastVoice(); return null;
       case 'media.signal': {
         const peer = this.byFingerprint(body.to);
         if (this.byFingerprint(me)!==c || !peer || !this.canSignal(c, peer, body.data)) throw new Reject('forbidden');
@@ -382,6 +382,9 @@ export class World {
     try {
       const signal = JSON.parse(data) as { k?: string; meta?: { kind?: string;room?:string } };
       if (signal.k === 'close') return true;
+      const forest=this.rooms.get('forest:tetris');const forestPair=!!forest&&forest.hasAudience(a.identity!.fingerprint)&&forest.hasAudience(b.identity!.fingerprint);
+      if(signal.k==='offer'&&signal.meta?.kind==='camera'&&signal.meta.room==='village:game:tetris')return forestPair;
+      if(forestPair&&['answer','ice'].includes(signal.k??''))return true;
       if (signal.k === 'offer') {
         if(signal.meta?.kind==='camera'&&signal.meta.room?.endsWith(':game:werewolves')&&!this.rooms.get(`${a.neighborhood}:werewolves`)?.cameraAllowed(a.identity!.fingerprint,b.identity!.fingerprint))return false;
         return signal.meta?.kind === 'camera' ? spatial : this.sameScene(a, b);
@@ -467,8 +470,9 @@ export class World {
       this.room(c.neighborhood, channel, scope).receive(me, data);
       return null;
     }
-    const targets = to ? this.personDevices(to) : this.present(c.neighborhood).filter(o => o !== c);
-    for (const target of targets) if (target.neighborhood === c.neighborhood) this.send(target, { t: 'app', channel, from: me, data });
+    let forestCamera=false;try{forestCamera=channel==='camera'&&JSON.parse(data).game==='tetris';}catch{}
+    const targets = to ? this.personDevices(to) : (forestCamera?[...this.connections.values()].filter(o=>o.identity):this.present(c.neighborhood)).filter(o => o !== c);
+    for (const target of targets) if (forestCamera||target.neighborhood === c.neighborhood) this.send(target, { t: 'app', channel, from: me, data });
     return null;
   }
   private async aiRequest(c:Connection, data:string):Promise<void> {
@@ -486,13 +490,14 @@ export class World {
     if(this.connections.get(c.id)===c)this.send(c,{t:'app',channel:'ai',from:SERVER_AUTHORITY,data:JSON.stringify(reply)});
   }
   private room(neighborhood: number, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study', scope = ''): ActivityRoom {
-    const key = `${neighborhood}:${channel}${scope ? `:${scope}` : ''}`;
+    const global=channel==='tetris'&&!scope;
+    const key = `${global?'forest':neighborhood}:${channel}${scope ? `:${scope}` : ''}`;
     let room = this.rooms.get(key);
     if (!room) {
       const factory = this.options.engines[channel];
       if (!factory) throw new Reject('not-found');
-      room = new ActivityRoom(channel, factory, (id, data) => { for(const target of this.personDevices(id)) if (target.neighborhood === neighborhood) this.send(target, { t: 'app', channel, from: SERVER_AUTHORITY, data: scope ? JSON.stringify({ ...JSON.parse(data), s: scope }) : data }); },
-        id => this.byFingerprint(id)?.neighborhood === neighborhood, this.now, this.store, neighborhood, () => { this.voice.endGame(String(neighborhood), channel); this.broadcastVoice(); }, scope, this.options.ai);
+      room = new ActivityRoom(channel, factory, (id, data) => { for(const target of this.personDevices(id)) if (global||target.neighborhood === neighborhood) this.send(target, { t: 'app', channel, from: SERVER_AUTHORITY, data: scope ? JSON.stringify({ ...JSON.parse(data), s: scope }) : data }); },
+        id => global?!!this.byFingerprint(id):this.byFingerprint(id)?.neighborhood === neighborhood, this.now, this.store, neighborhood, () => { this.voice.endGame(global?'forest':String(neighborhood), channel); this.broadcastVoice(); }, scope, this.options.ai);
       this.rooms.set(key, room);
     }
     return room;
@@ -548,6 +553,7 @@ class ActivityRoom {
     }
   }
   private metaKey(): string { return `projects:${this.neighborhood}${this.scope ? `:${this.scope}` : ''}`; }
+  hasAudience(id:string):boolean{return this.engine.audience().includes(id);}
   cameraAllowed(from:string,to:string):boolean{return (this.engine.canBroadcastCamera?.(from)??true)&&(this.engine.canReceiveCamera?.(to,from)??true);}
   organizer(): string | null { return this.watchers.find(id => this.present(id)) ?? null; }
   private botOwner():string{return `bots:${this.neighborhood}:${this.channel}:${this.scope}`;}

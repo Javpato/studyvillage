@@ -556,3 +556,16 @@ it('shares the request lock across paired devices and clears it only when the la
  await tablet.request({op:'access.cancel',requestId:'paired_request'});await expect.poll(()=>state().visits).toEqual([]);
  await tablet.request({op:'house.visit',ownerId:admin.id,requestId:'last_request'});await expect.poll(()=>state().visits).toHaveLength(1);await tablet.close();await expect.poll(()=>state().visits).toEqual([]);await admin.close();
 });
+
+it('runs a 16-person Forest Blocks room across server neighborhoods with shared game voice',async()=>{
+ const r=await boot(),{admin,invite}=await adminAndInvite(r);await admin.request({op:'admin.capacity',maxOnline:24});const clients=[admin];
+ try{
+  for(let i=1;i<16;i++){const client=await TestClient.create(`Blocks ${i}`);expect(await client.connect(r.port,{invite:invite.code})).toBe('resident');clients.push(client);}
+  const act=(client:TestClient,a:unknown)=>client.request({op:'app.send',channel:'tetris',to:SERVER_AUTHORITY,data:JSON.stringify({t:'act',a})});
+  for(const [i,client]of clients.entries()){expect((await act(client,{type:'join',name:`Blocks ${i}`})).ok).toBe(true);await act(client,{type:'ready',ready:true});}
+  const last=clients[15];const countdown=last.next(m=>m.t==='app'&&m.channel==='tetris'&&JSON.parse(m.data).v?.phase==='countdown');await act(admin,{type:'start'});expect(JSON.parse((await countdown as {data:string}).data).v.players).toHaveLength(16);
+  const play=last.next(m=>m.t==='app'&&m.channel==='tetris'&&JSON.parse(m.data).v?.phase==='playing');await play;
+  const moved=admin.next(m=>m.t==='app'&&m.channel==='tetris'&&JSON.parse(m.data).v?.players.some((p:{id:string;seq:number})=>p.id===last.id&&p.seq===1));await act(last,{type:'input',round:1,seq:1,key:'left'});await moved;
+  await admin.request({op:'voice',command:{action:'game',game:'tetris'}});const voice=last.next(m=>m.t==='voice'&&m.voice.selected?.members.includes(admin.id)===true);await last.request({op:'voice',command:{action:'game',game:'tetris'}});expect((await voice as Extract<ServerMessage,{t:'voice'}>).voice.selected?.members).toContain(last.id);
+ }finally{await Promise.all(clients.map(c=>c.close()));}
+},15000);

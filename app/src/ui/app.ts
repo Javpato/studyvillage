@@ -44,7 +44,6 @@ import './theme.css';
 import './study.css';
 import './workspace.css';
 import './village-polish.css';
-import './garden-viewport.css';
 import './furniture-actions.css';
 import { DoubleTap, loadControls, saveControls, touchEnabled, type ControlPreferences } from '../input/gestures';
 import {
@@ -3726,26 +3725,14 @@ class StudyUI {
     const {width:viewportWidth,height:viewportHeight}=layoutViewport();
     if (!canvas || !wrap) return;
     // Same condition as the portrait rules in game.css.
-    const gardenBounds=this.garden.active?this.garden.viewportBounds():null;
-    wrap.classList.toggle('sv-garden-stage',!!gardenBounds);
-    if(gardenBounds){
-      const top=wrap.getBoundingClientRect().top,tray=this.garden.trayBounds();
-      const ppu=Math.max(.1,Math.min((viewportWidth-48)/gardenBounds.w,(Math.max(64,tray.top-top-12)-32)/gardenBounds.h,2.5));
-      wrap.style.setProperty('--garden-width',`${gardenBounds.w*ppu+32}px`);
-      wrap.style.setProperty('--garden-height',`${gardenBounds.h*ppu+32}px`);
-    }else{wrap.style.removeProperty('--garden-width');wrap.style.removeProperty('--garden-height');}
-    const active = !!gardenBounds || document.documentElement.classList.contains('sv-mobile-device') && viewportHeight > viewportWidth && viewportWidth < 600 && (this.pane === 'world' || this.pane === 'house');
+    const active = document.documentElement.classList.contains('sv-mobile-device') && viewportHeight > viewportWidth && viewportWidth < 600 && (this.pane === 'world' || this.pane === 'house');
     if (!active) {
       if (this.portraitCameraSig) { this.portraitCameraSig = ''; canvas.style.removeProperty('width'); canvas.style.removeProperty('transform'); canvas.style.removeProperty('transform-origin'); }
       return;
     }
     const w = wrap.clientWidth, h = wrap.clientHeight;
     if (!w || !h) return;
-    let view;
-    if(gardenBounds){
-      const ppu=Math.max(.1,Math.min((w-24)/gardenBounds.w,(h-24)/gardenBounds.h));
-      view={ppu,x:Math.round((w-gardenBounds.w*ppu)/2-gardenBounds.x*ppu),y:Math.round((h-gardenBounds.h*ppu)/2-gardenBounds.y*ppu)};
-    }else view=portraitView(w,h,this.portraitZoom,this.localPosition);
+    const view=portraitView(w,h,this.portraitZoom,this.localPosition);
     if (wrap.scrollLeft || wrap.scrollTop) { wrap.scrollLeft = 0; wrap.scrollTop = 0; } // focus must never scroll the window
     const sig = `${w}x${h}:${view.ppu}:${view.x}:${view.y}`;
     if (sig === this.portraitCameraSig) return;

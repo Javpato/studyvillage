@@ -10,15 +10,15 @@ Empiezas con una casa sencilla: una pizarra, un escritorio, una planta, un armar
 
 El teléfono reúne los accesos cotidianos:
 
-- **Inicio:** Aldea, Contactos e Identidad.
+- **Inicio:** Aldea y Contactos.
 - **Hogar:** Mi casa, Habitaciones, Decorar y Mi jardín.
-- **Ajustes:** Ajustes, Conexión, Voz y Editar controles en dispositivos táctiles.
+- **Ajustes:** Ajustes, Voz y Editar controles en computadora y dispositivos táctiles.
 
-En **Ajustes → Teléfono** puedes añadir aplicaciones, crear carpetas, cambiar sus nombres y reorganizarlo todo. Cuaderno de tinta, Música, Estudio, Proyectos y Concentración son opcionales. Quitar un acceso conserva sus datos; Ajustes siempre permanece disponible. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad.
+Organiza el teléfono con clic derecho sobre un icono o manteniéndolo pulsado durante tres segundos. En edición puedes arrastrar accesos, agruparlos en carpetas, cambiar el nombre de una carpeta tocando su título y añadir accesos desde **Biblioteca de apps**. La × quita el acceso y conserva sus datos; Ajustes siempre permanece disponible. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad.
 
 ## Compartir el tiempo
 
-Abre una aldea temporal e invita a tus amigos, o únete a un servidor persistente. Visita sus casas respetando sus permisos, conversa por voz y activa la cámara cuando lo decidas. En la plaza puedes jugar a Hombres Lobo o a Gartic Phone.
+Abre una aldea temporal e invita a tus amigos, o únete a un servidor persistente. Visita sus casas respetando sus permisos, conversa por voz y activa la cámara cuando lo decidas. En la plaza puedes jugar a Hombres Lobo, Gartic Phone o **Bloques del Bosque**, con partidas individuales y batallas de bloques para 2–16 personas.
 
 Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra colaborativa, tarjetas, quizzes, proyectos, música local y un reloj de concentración. Son actividades dentro de la aldea: tú eliges cuáles forman parte de tu día. Las herramientas manuales funcionan sin IA; la integración local con Ollama es opcional.
 

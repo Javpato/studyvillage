@@ -75,3 +75,13 @@ Physical Apple Pencil/palm rejection, Android active pen, actual Windows/macOS e
 - Long presses on game controls no longer select text or request Safari's callout. Editable text, document content and mailbox notes remain copyable. Rapid taps on controls suppress double-tap browser zoom; browser pinch remains available outside the game's own canvas gestures. HUD and dialogs recover after zooming and panning.
 - End game appears only during an active round for its authorized organizer. Confirmation is cancelled if the phase or authority changes.
 - These corrections pass synthetic Chromium/WebKit tests. The owner's iPadOS 17.7.10 and actual Apple Pencil need a physical retest.
+
+
+## Direct editing and Forest Blocks
+
+- The phone is organized directly: right click, or hold an icon for three seconds; drag to reorder/group, remove shortcuts with ×, rename open folders by their title, and add optional tools through the App library. Settings remains available; removing a shortcut preserves its data. Legacy layouts are normalized when loaded.
+- Garden editing uses a separate high-density canvas, placement grid, invalid-zone outlines, zoom and pan. Opening, saving or canceling it preserves the player's actual location.
+- Edit controls supports desktop and touch profiles, including clock placement, size and visibility. Identity stays in Settings; signaling/TURN configuration is under Servers → Advanced connection.
+- Forest Blocks is available at the community arcade and as an optional phone shortcut. Solo play runs offline, with a separate optional power-practice mode and local records. Battles support up to 16 participants on a sufficiently sized persistent server, spanning neighborhoods; temporary villages retain their existing six-person capacity.
+- The authority validates sequenced inputs, applies gravity, lock delay, line attacks, delayed stone rows and three energy powers. Stone rows require Moss; Shield cancels pending attacks; Roots sends two extra rows. Late joiners spectate until the next round. Leaving or a 15-second loss of contact eliminates a participant; changing temporary authority resets the round.
+- Voice and video retain explicit, separate consent. Up to four remote cameras can be selected, with initials/name/board cards for everyone. Networked rounds do not pause when an application is backgrounded; solo rounds pause until resumed.

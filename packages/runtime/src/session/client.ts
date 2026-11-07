@@ -162,7 +162,7 @@ export class VillageClient implements VillageActions {
   onApp(listener: (message: AppMessage) => void): () => void { this.appListeners.add(listener); return () => this.appListeners.delete(listener); }
   private deliverApp(message: AppMessage): void {
     if(message.channel==='mailbox'){this.mailbox.receive(message.from,message.data);return;}
-    if(message.channel==='werewolves'&&message.from===this.hostId){try{const wire=JSON.parse(message.data);if(wire.t==='view'&&wire.v)this.camera.setPolicy({canSend:wire.v.canBroadcastCamera,canReceive:wire.v.canSeeCameras,audience:wire.v.cameraAudience,epoch:wire.v.cameraPhase});}catch{/* Ignore invalid authority policy. */}}
+    if(this.cameraActivity==='werewolves'&&message.channel==='werewolves'&&message.from===this.hostId){try{const wire=JSON.parse(message.data);if(wire.t==='view'&&wire.v)this.camera.setPolicy({canSend:wire.v.canBroadcastCamera,canReceive:wire.v.canSeeCameras,audience:wire.v.cameraAudience,epoch:wire.v.cameraPhase});}catch{/* Ignore invalid authority policy. */}}
 
     if (message.channel === 'camera') {
       try {

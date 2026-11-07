@@ -15,7 +15,7 @@ import { randomId, sign } from '../../../core/src/identity';
 import { GameCameraManager, cameraScene, type CameraPeer } from '../media/game-camera';
 import { MediaManager, type MediaDevicesAdapter, type MediaPeer } from '../media/manager';
 import { STUN_ONLY_CONFIG } from '../signaling/peerjs';
-import { strokeSchema, type SignedBoardCommit, type SignedHouse, type SignedStroke } from '../../../core/src/protocol/schema';
+import { cameraPresenceSchema, strokeSchema, type SignedBoardCommit, type SignedHouse, type SignedStroke } from '../../../core/src/protocol/schema';
 import type { AccessRequest, GameCameraPolicy, ServerStatus, AppChannel, AppMessage, BoardStroke, CameraActivity, LocalIdentity, Member, NetworkView, Position, PublicHouse, SessionPhase, VillageActions } from '../../../core/src/protocol/types';
 import type { AvatarAppearance } from '../../../core/src/assets/appearance';
 import type { DataChannel, MediaCall, TransportEndpoint } from '../transport/types';
@@ -266,7 +266,7 @@ export class ServerVillageClient implements VillageActions {
         if(self&&sameSpace(self.position.space,this.workspaceState.space))this.position={...this.position,space:self.position.space};
         if (self && self.houseId !== this.houseId && Date.now() - this.houseIntentAt > 3000) this.houseId = self.houseId;
         if (this.houseId && this.houseId !== this.id && !this.present.get(this.id)) this.houseId = null;
-        for (const id of this.cameraWatchers.keys()) if (!this.present.has(id)) this.cameraWatchers.delete(id);
+        for (const id of this.cameraWatchers.keys()) if (!this.voiceDirectory.has(id)) this.cameraWatchers.delete(id);
         this.syncMedia(); this.notify();
         return;
       }
@@ -285,8 +285,8 @@ export class ServerVillageClient implements VillageActions {
         this.notify(); return;
       }
       case 'app': {
-        if(message.channel==='werewolves'&&message.from===SERVER_AUTHORITY){try{const wire=JSON.parse(message.data);if(wire.t==='view'&&wire.v)this.camera.setPolicy({canSend:wire.v.canBroadcastCamera,canReceive:wire.v.canSeeCameras,audience:wire.v.cameraAudience,epoch:wire.v.cameraPhase});}catch{/* Invalid authority policy is ignored. */}}
-        if (message.channel === 'camera') { try { const parsed = JSON.parse(message.data) as { game?: CameraActivity | null }; this.cameraWatchers.set(message.from, parsed.game ?? null); this.syncCamera(); } catch { /* Ignore. */ } }
+        if(this.cameraActivity==='werewolves'&&message.channel==='werewolves'&&message.from===SERVER_AUTHORITY){try{const wire=JSON.parse(message.data);if(wire.t==='view'&&wire.v)this.camera.setPolicy({canSend:wire.v.canBroadcastCamera,canReceive:wire.v.canSeeCameras,audience:wire.v.cameraAudience,epoch:wire.v.cameraPhase});}catch{/* Invalid authority policy is ignored. */}}
+        if (message.channel === 'camera') { try { const parsed = cameraPresenceSchema.parse(JSON.parse(message.data)); this.cameraWatchers.set(message.from, parsed.game); this.syncCamera();if(parsed.request)this.sendApp('camera',message.from,JSON.stringify({game:this.cameraActivity,request:false})); } catch { /* Ignore. */ } }
         const app: AppMessage = { channel: message.channel, from: message.from, data: message.data };
         for (const listener of this.appListeners) listener(app);
         return;
@@ -483,10 +483,10 @@ export class ServerVillageClient implements VillageActions {
   private syncCamera(): void {
     const game = this.cameraActivity; const mine = this.present.get(this.id);
     if (!game || this.phase !== 'JOINED' || !mine || !this.mediaActive) { this.camera.setContext(null); return; }
-    const scene = cameraScene(this.houseId,this.position);
-    const peers: CameraPeer[] = [...this.present.values()].filter(p => p.identity.fingerprint !== this.id && this.inScene(p))
+    const scene = game==='tetris'?'village':cameraScene(this.houseId,this.position);
+    const peers: CameraPeer[] = (game==='tetris'?[...this.voiceDirectory.values()]:[...this.present.values()].filter(p=>this.inScene(p))).filter(p => p.identity.fingerprint !== this.id)
       .map(p => ({ ...this.peer(p), watching: this.cameraWatchers.get(p.identity.fingerprint) === game }));
-    this.camera.setContext({ sessionId: this.scope, epoch: this.epoch, identityId: this.id, room: `${scene}:game:${game}`, roomName: game, peers });
+    this.camera.setContext({ sessionId: game==='tetris'?this.mediaSession||this.scope:this.scope, epoch: this.epoch, identityId: this.id, room: `${scene}:game:${game}`, roomName: game, peers });
   }
   requestPrivate(identityId: string | null): void { this.voiceCommand({ action: 'call', target: identityId }); }
   workspaceCommand(command:WorkspaceCommand):void {

@@ -25,6 +25,7 @@ export class GameCameraManager {
   private outgoing = new Map<string, CallState>();
   private policy:GameCameraPolicy|null=null;
   private declined=new Set<string>();
+  private forestRetry:ReturnType<typeof setInterval>|null=null;
   private phaseRetry:ReturnType<typeof setTimeout>|null=null;
   constructor(private readonly changed: () => void, private readonly devices?: MediaDevicesAdapter) {}
   get view(): GameCameraView {
@@ -63,6 +64,8 @@ export class GameCameraManager {
       else this.stop();
     }
     this.context = context;
+    if(this.forestRetry){clearInterval(this.forestRetry);this.forestRetry=null;}
+    if(context?.room.endsWith(':game:tetris'))this.forestRetry=setInterval(()=>this.reconcile(),3000);
     for(const peer of context?.peers??[])if(!previous?.peers.some(p=>p.identityId===peer.identityId&&p.endpoint===peer.endpoint&&p.watching===peer.watching))this.declined.delete(peer.identityId);
     for (const [id, c] of this.incoming) if (!context?.peers.some(p => p.identityId === id && p.endpoint === c.call.endpoint && p.receiveToken === previous?.peers.find(p => p.identityId === id)?.receiveToken)) this.close(this.incoming, id);
     for (const [id, c] of this.outgoing) if (!context?.peers.some(p => p.identityId === id && p.endpoint === c.call.endpoint && p.watching && p.sendToken === previous?.peers.find(p => p.identityId === id)?.sendToken)) this.close(this.outgoing, id);
@@ -148,7 +151,7 @@ export class GameCameraManager {
     for (const id of [...this.outgoing.keys()]) this.close(this.outgoing, id);
     for (const id of [...this.incoming.keys()]) this.close(this.incoming, id);
   }
-  stop(): void { this.stopCapture();this.disconnectCalls(); }
+  stop(): void {if(this.forestRetry){clearInterval(this.forestRetry);this.forestRetry=null;} this.stopCapture();this.disconnectCalls(); }
   suspend(): void { this.stop(); this.context = null;this.policy=null; this.changed(); }
   dispose(): void { this.suspend(); this.endpoint = undefined; }
 }

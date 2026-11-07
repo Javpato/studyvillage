@@ -2515,5 +2515,9 @@
   "Espera a que todos estén preparados.": "Wait until everyone is ready.",
   "Una partida de bloques bajo los árboles.": "A block game under the trees.",
   "E · Bloques del Bosque": "E · Forest Blocks",
-  "Completa líneas. Las piedras resisten: usa Musgo para transformarlas. Escudo cancela ataques pendientes y Raíces envía piedras. Flechas: mover; X/Z: girar; espacio: caída; C: reserva; 1/2/3: poderes. Selecciona un rival tocando su tablero.": "Complete lines. Stones resist: use Moss to transform them. Shield cancels incoming attacks and Roots sends stones. Arrows: move; X/Z: rotate; space: drop; C: hold; 1/2/3: powers. Tap a rival’s board to target them."
+  "Completa líneas. Las piedras resisten: usa Musgo para transformarlas. Escudo cancela ataques pendientes y Raíces envía piedras. Flechas: mover; X/Z: girar; espacio: caída; C: reserva; 1/2/3: poderes. Selecciona un rival tocando su tablero.": "Complete lines. Stones resist: use Moss to transform them. Shield cancels incoming attacks and Roots sends stones. Arrows: move; X/Z: rotate; space: drop; C: hold; 1/2/3: powers. Tap a rival’s board to target them.",
+  "Desplazar": "Pan",
+  "Practicar poderes": "Practice powers",
+  "La partida terminó al cambiar de conexión.": "The round ended when the connection changed.",
+  "Batallas de hasta 16 personas en un servidor con capacidad suficiente. Las aldeas temporales admiten hasta 6 personas.": "Battles for up to 16 people on a server with sufficient capacity. Temporary villages support up to 6 people."
 }

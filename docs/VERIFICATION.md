@@ -239,3 +239,22 @@ The owner's iPad reports iPadOS **17.7.10**. The owner reported Pencil/palm, lon
 ## Published iPad correction — 5 November 2026
 
 Commit `5ac233f` deployed successfully through GitHub Pages. A fresh WebKit tablet browser checked the public URL's exact current cache (`studyvillage-6fc387a41ee85d65`), touch navigation, enabling and persisting Apple Pencil mode, synthetic low-pressure pen input over a held touch, saved ink after reload, the non-selectable control policy and the scoped HTTPS service worker. No page errors occurred. The first public probe used an ambiguous close-button selector; scoping it to the drawer header passed. This remains Linux browser automation; physical iPadOS 17.7.10 retesting is pending.
+
+
+## Forest Blocks and direct phone editing candidate — 2026-11-07
+
+Integrated upstream `2ac1bc1` (25 commits) and preserved the pre-existing handbook edits. Candidate changes cover inline phone gestures/folders/library, independent garden rendering and cancellation, desktop HUD editing with the clock, consolidated network settings, and the Tetris activity engine/UI/host/server/media contracts.
+
+Completed before the candidate checkpoint: typecheck; 13 focused engine/layout tests; translation coverage; browser journeys at 390 and 1440 pixels for phone installation/removal, solo gameplay and garden cancellation, plus folder drag/rename. General unit run: 461 passed; five installer checks could not spawn Git inside the sandbox and require an unrestricted rerun.
+
+Remaining at checkpoint: full unit/server rerun, delayed 16-client transport test, Chromium garden/HUD regression, WebKit journeys, current production build, and final cleanup. Physical cameras/microphones, WAN/NAT behavior and foreign native installers are not certified by these checks. This is a testable candidate, not a verified release.
+
+### Candidate verification follow-up
+
+- Initial candidate: `5f81052`; workflow https://github.com/Javpato/studyvillage/actions/runs/42393242811 failed because the newly added transport test lacked explicit generic types. Corrected locally before the final check.
+- `npm run check`: PASS, 467 client tests and 32 server tests, ES/EN/FR coverage, typecheck, production web/PWA and server builds.
+- A real server test authenticated 16 clients in multiple neighborhoods, started one shared round, reconciled a guest input and joined one shared game voice channel. Temporary peer villages retain their existing six-person capacity.
+- Chromium: 10 garden/phone/HUD journeys passed; the additional long-press/desktop-clock journey passed separately after selecting the live HUD rather than its preview clone.
+- WebKit: five garden/phone/game journeys passed. The sixth exposed clock overlap over the phone; corrected with a scoped visibility rule and awaiting targeted rerun.
+- `npm run test:pages`: PASS in Chromium and WebKit, including packaged subpath assets, offline cache, persistent ink, palm rejection and finger navigation.
+- Focused camera and game tests: 21 passed, including four-camera selection and track cleanup. No physical media hardware or WAN/NAT certification, and no new native installers or release tags. Existing native bundles predate this candidate; current working builds are `app/dist` and `server/dist`.

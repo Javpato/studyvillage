@@ -141,3 +141,5 @@
 
 .sv-jukebox>.sv-desk-error {color:#70765f;font-size:12px;}
 .sv-jukebox>.sv-desk-error[data-error=true] {color:#875a3d;}
+/* Floating controls must not intercept the phone, garden editor or a game. */
+body:has(.sv-phone:not([hidden]),.sv-activity:not([hidden]),.sv-garden-tray:not([hidden]))>.sv-focus-hud[data-hud-widget=clock]{visibility:hidden;pointer-events:none}

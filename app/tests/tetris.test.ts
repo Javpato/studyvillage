@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {TetrisGame,cells,fits,type TetrisPlayer} from '../../packages/core/src/minigames/tetris';
+import {TetrisGame,cells,fits,type TetrisPlayer,type TetrisAction,type TetrisView} from '../../packages/core/src/minigames/tetris';
 function start(count=2,solo=false){const g=new TetrisGame(42,solo);for(let i=0;i<count;i++){g.apply(String(i),{type:'join',name:`Player ${i}`},0);g.apply(String(i),{type:'ready',ready:true},0);}g.apply('0',{type:'start'},0);g.tick(3000);return g;}
 const player=(g:TetrisGame,id='0')=>g.viewFor(id,3000).players.find(p=>p.id===id)!;
 // Controlled board fixtures exercise public actions, including collision and attack application.
@@ -20,6 +20,6 @@ import type {AppChannel,AppMessage} from '../../packages/core/src/protocol/types
 it('reconciles 16 network clients with delayed messages and disconnects without cross-room actions',async()=>{
  vi.useFakeTimers();vi.setSystemTime(100000);const listeners=new Map<string,Set<(m:AppMessage)=>void>>();let deliveries=0;
  const actions=(self:string)=>({sendApp:(channel:AppChannel,to:string|null,data:string)=>{if(!to)return false;setTimeout(()=>{for(const listener of listeners.get(to)??[]){deliveries++;listener({channel,from:self,data});}},60);return true;},onApp:(fn:(m:AppMessage)=>void)=>{const set=listeners.get(self)??new Set();set.add(fn);listeners.set(self,set);return()=>{set.delete(fn);};}});
- const rooms=Array.from({length:16},(_,i)=>new SharedRoom('tetris',actions(String(i)),()=>({selfId:String(i),hostId:'0'}),()=>new TetrisGame(123)));
+ const rooms=Array.from({length:16},(_,i)=>new SharedRoom<TetrisAction,TetrisView,TetrisGame>('tetris',actions(String(i)),()=>({selfId:String(i),hostId:'0'}),()=>new TetrisGame(123)));
  try{rooms.forEach(r=>r.sync());rooms.forEach((r,i)=>r.act({type:'join',name:`Player ${i}`}));await vi.advanceTimersByTimeAsync(200);rooms.forEach(r=>r.act({type:'ready',ready:true}));await vi.advanceTimersByTimeAsync(200);rooms[0].act({type:'start'});await vi.advanceTimersByTimeAsync(3300);expect(rooms.every(r=>r.current()?.phase==='playing')).toBe(true);rooms[7].act({type:'input',round:1,seq:1,key:'left'});await vi.advanceTimersByTimeAsync(250);expect(rooms[0].current()!.players.find(p=>p.id==='7')!.piece.x).toBe(2);expect(rooms[7].current()!.players.find(p=>p.id==='7')!.seq).toBe(1);expect(deliveries).toBeLessThan(2500);listeners.delete('8');for(const r of rooms.filter((_,i)=>i!==8))r.act({type:'ping'});await vi.advanceTimersByTimeAsync(14000);for(const r of rooms.filter((_,i)=>i!==8))r.act({type:'ping'});await vi.advanceTimersByTimeAsync(2000);expect(rooms[0].current()!.players.find(p=>p.id==='8')!.alive).toBe(false);}finally{rooms.forEach(r=>r.dispose());vi.useRealTimers();}
 });

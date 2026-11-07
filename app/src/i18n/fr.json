@@ -2517,5 +2517,9 @@
   "Espera a que todos estén preparados.": "Attendez que tout le monde soit prêt.",
   "Una partida de bloques bajo los árboles.": "Un jeu de blocs sous les arbres.",
   "E · Bloques del Bosque": "E · Blocs de la forêt",
-  "Completa líneas. Las piedras resisten: usa Musgo para transformarlas. Escudo cancela ataques pendientes y Raíces envía piedras. Flechas: mover; X/Z: girar; espacio: caída; C: reserva; 1/2/3: poderes. Selecciona un rival tocando su tablero.": "Complétez des lignes. Les pierres résistent : utilisez Mousse pour les transformer. Bouclier annule les attaques et Racines envoie des pierres. Flèches : déplacer ; X/Z : tourner ; espace : chute ; C : réserve ; 1/2/3 : pouvoirs. Touchez un plateau adverse pour le cibler."
+  "Completa líneas. Las piedras resisten: usa Musgo para transformarlas. Escudo cancela ataques pendientes y Raíces envía piedras. Flechas: mover; X/Z: girar; espacio: caída; C: reserva; 1/2/3: poderes. Selecciona un rival tocando su tablero.": "Complétez des lignes. Les pierres résistent : utilisez Mousse pour les transformer. Bouclier annule les attaques et Racines envoie des pierres. Flèches : déplacer ; X/Z : tourner ; espace : chute ; C : réserve ; 1/2/3 : pouvoirs. Touchez un plateau adverse pour le cibler.",
+  "Desplazar": "Déplacer la vue",
+  "Practicar poderes": "Pratiquer les pouvoirs",
+  "La partida terminó al cambiar de conexión.": "La manche s’est terminée lors du changement de connexion.",
+  "Batallas de hasta 16 personas en un servidor con capacidad suficiente. Las aldeas temporales admiten hasta 6 personas.": "Batailles jusqu’à 16 personnes sur un serveur de capacité suffisante. Les villages temporaires accueillent jusqu’à 6 personnes."
 }
