@@ -1,32 +1,68 @@
 # StudyVillage
 
-[Open StudyVillage in your browser](https://javpato.github.io/studyvillage/). On iPad, open this link in Safari and use Share → Add to Home Screen.
+Una aldea acogedora en pixel art para tener tu propio rincón, visitar a tus amigos y compartir tiempo juntos. Decora tu casa, cuida el jardín, deja una nota en un buzón o reúnete para jugar, dibujar, estudiar y crear a tu ritmo.
 
-An independent reconstruction of the original cozy study village, preserving its Canvas world and artwork while rebuilding document editing, synchronization, identity/device handling and several game/tool interfaces. The original `../hackathon` project and data remain separate. This is the current **development candidate**; [verification](docs/VERIFICATION.md) distinguishes working tests, platform builds and remaining validation.
+**[Jugar en el navegador](https://javpato.github.io/studyvillage/)** · **[Descargar para tu dispositivo](https://github.com/Javpato/studyvillage/releases)**
+
+## Tu lugar en la aldea
+
+Empiezas con una casa sencilla: una pizarra, un escritorio, una planta, un armario y una guía que te ayuda a orientarte. La puerta interior da acceso a las plantas y habitaciones. Fuera te espera un buzón; puedes moverlo o retirarlo desde el jardín. Los demás muebles se añaden cuando tú quieras. Las casas ya guardadas conservan su decoración.
+
+El teléfono reúne los accesos cotidianos:
+
+- **Inicio:** Aldea, Contactos e Identidad.
+- **Hogar:** Mi casa, Habitaciones, Decorar y Mi jardín.
+- **Ajustes:** Ajustes, Conexión, Voz y Editar controles en dispositivos táctiles.
+
+En **Ajustes → Teléfono** puedes añadir aplicaciones, crear carpetas, cambiar sus nombres y reorganizarlo todo. Cuaderno de tinta, Música, Estudio, Proyectos y Concentración son opcionales. Quitar un acceso conserva sus datos; Ajustes siempre permanece disponible. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad.
+
+## Compartir el tiempo
+
+Abre una aldea temporal e invita a tus amigos, o únete a un servidor persistente. Visita sus casas respetando sus permisos, conversa por voz y activa la cámara cuando lo decidas. En la plaza puedes jugar a Hombres Lobo o a Gartic Phone.
+
+Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra colaborativa, tarjetas, quizzes, proyectos, música local y un reloj de concentración. Son actividades dentro de la aldea: tú eliges cuáles forman parte de tu día. Las herramientas manuales funcionan sin IA; la integración local con Ollama es opcional.
+
+## Empezar a jugar
+
+Abre el enlace web o descarga el paquete de tu plataforma en Releases. En escritorio, descomprime y conserva la carpeta completa antes de abrir el ejecutable. Hay paquetes para **Windows x64, Linux x64, macOS Intel, macOS Apple Silicon y Android**. Las entregas de desarrollo de escritorio no tienen firma comercial; Android se distribuye como APK de desarrollo.
+
+En iPhone y iPad, abre la web en Safari y usa **Compartir → Añadir a pantalla de inicio**. No se distribuye una aplicación nativa de iOS. Consulta [instalación y compatibilidad](docs/SETUP.md) para requisitos de cada sistema.
+
+- **WASD o flechas:** caminar. **Shift:** correr.
+- **E:** interactuar con lo que tengas cerca.
+- **Doble clic o doble toque:** acercarte y usar casas, muebles y portales.
+- **M:** abrir o cerrar el teléfono. **Escape:** cerrar o volver.
+- En pantallas táctiles, usa los controles en pantalla y personalízalos desde Editar controles.
+
+Puedes explorar y usar tus herramientas personales sin iniciar sesión. Guarda una identidad cifrada para que tus amigos puedan reconocerte entre sesiones. Los datos personales se conservan localmente: exporta una copia completa desde Identidad antes de borrar datos del navegador o cambiar de dispositivo. La escritura guardada puede reabrirse sin conexión después de la primera carga web.
+
+## Desarrollo
+
+Requiere Node.js 24 y npm.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3100. WASD/arrows move, Shift runs, E interacts and M opens the phone. Identity unlock is optional for offline work. Choose Español / English / Français in Settings → Profile.
-
-Use the phone for Identity, Ink notebook, Focus, Music, Garden, study tools, voice and connection settings. New houses include a notebook desk, a movable/removable guide, a study clock and a jukebox. Add furniture through Decorate; existing houses are not silently rearranged. Local music stays on your device and can continue with its panel closed; Stop music ends playback.
-
-Personal notebooks have editable pressure-aware ink, partial erasure, selection, touch navigation, PDF annotation and portable backups. Explicitly share one page into the current shared board or save a personal copy. Notebooks have independent IDs and survive furniture changes. Export backups before clearing device data.
-
-LoupGarou has selectable illustrated role cards, game settings, mayor elections and a camera-based table. Camera and microphone consent remain separate. Artwork is replaceable through PNGs with dimensions recorded in the [sprite catalogue](docs/SPRITES.md).
+Abre http://127.0.0.1:3100.
 
 ```sh
-npm run check                 # Types, unit/server tests, translations, web/server builds
-npm run test:e2e -- rebuild.spec.ts keyboard-movement.spec.ts
-npm run linux:build           # Current Linux executable folder
-npm run linux:smoke            # Isolated synthetic profiles
-npm run windows:build         # Unsigned Windows folder
-npm run mac:build             # Unsigned Intel Mac folder
-npm run android:apk           # Requires JDK 21 and Android SDK
+npm run check          # Tipos, pruebas, traducciones y builds web/servidor
+npm run test:e2e       # Recorridos de navegador
+npm run test:pages     # Paquete web, instalación offline y escritura
+npm run windows:build # Carpeta ejecutable de Windows
+npm run linux:build   # Carpeta ejecutable de Linux; ejecutar desde Linux
+npm run mac:build     # Aplicación macOS Intel
+npm run android:apk   # APK; requiere JDK 21 y Android SDK 36
 ```
 
-For Apple Silicon: `npm run build`, then `node scripts/package-platform.mjs darwin arm64`. iPhone/iPad use the HTTPS PWA and Safari's Add to Home Screen; no native signing or Apple membership is required. Hardware/OS requirements and unknown-device limits are in [setup](docs/SETUP.md).
+Las Releases se construyen desde una etiqueta de versión: los cinco paquetes comparten el mismo cliente web y solo se publican cuando terminan sus verificaciones. Se adjuntan información de compilación y sumas SHA-256. Los scripts de empaquetado mantienen únicamente la entrega local vigente en `deliverables/`.
 
-Read the [feature inventory](docs/FEATURES.md), [architecture](docs/ARCHITECTURE.md), [ink behavior](docs/INK.md) and [current verification](docs/VERIFICATION.md). No mandatory paid runtime component, cloud AI API, purchased domain or subscription. Free services have quotas and self-hosting uses the owner's hardware/network. This repository is public. No open-source license has been selected; the project remains UNLICENSED and existing assets haven't been relicensed.
+Más información: [funciones](docs/FEATURES.md), [arquitectura](docs/ARCHITECTURE.md), [cuadernos y tinta](docs/INK.md), [recursos gráficos](docs/SPRITES.md) y [verificaciones y límites](docs/VERIFICATION.md). Las pruebas automatizadas y una compilación correcta no sustituyen las comprobaciones en dispositivos físicos.
+
+## Proyecto y recursos
+
+StudyVillage es un proyecto independiente en desarrollo. No requiere una suscripción, API de IA de pago ni dominio comprado. Los servicios externos tienen sus propias condiciones y los servidores propios usan los recursos de quien los aloja.
+
+El repositorio sigue siendo **UNLICENSED**: todavía no se ha seleccionado una licencia de código abierto. Consulta [las licencias de recursos](ASSETS_LICENSES.md); los gráficos y demás materiales conservan sus condiciones originales.
