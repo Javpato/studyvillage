@@ -1,6 +1,6 @@
 # Expanded platform audit — 7 November 2026
 
-Candidate **1.0.0-dev.6**, source `519aa12`, includes the phone, starter house and mailbox changes described below. This audit also corrected the pending-access banner covering phone buttons on small screens and prevents editing or saving a sprite before its asynchronous PNG import finishes. Server action buttons now stay disabled until an operation is acknowledged, including after an intermediate house update.
+Version **1.0.0-dev.6**, source `519aa12`, includes the phone, starter house and mailbox changes described below. This audit also corrected the pending-access banner covering phone buttons on small screens and prevents editing or saving a sprite before its asynchronous PNG import finishes. Server action buttons now stay disabled until an operation is acknowledged, including after an intermediate house update.
 
 - Local application/server types, **452 application tests across 52 files**, **31 server tests**, **2,483 ES/EN/FR entries**, production web/PWA and server builds pass. Syntax checks pass for 37 JavaScript build, server and native-bridge files.
 - The eight Chromium garden/language/sprite regression cases pass. Fourteen applicable WebKit phone/house/garden/language/sprite cases pass; the CDP-only continuous-touch case runs in Chromium. Both engines pass production PWA installation, offline reopening, saved ink and finger navigation without writing or erasure.
@@ -8,17 +8,30 @@ Candidate **1.0.0-dev.6**, source `519aa12`, includes the phone, starter house a
 - Earlier verification-only [run 42377485242](https://github.com/Javpato/studyvillage/actions/runs/42377485242) passed all four desktop runners and installed/launched the APK in an Android API 35 emulator. It did not modify a Release. The expanded native checks now run on every release.
 - Release validation runs the complete Chromium suite under Xvfb so its Electron-backed backup fixture has a display. Language preservation compares stored editable strokes rather than font-dependent PNG bytes. The raw-CDP garden case uses the mouse driver to finish saving; a separate touch-only case verifies tap placement and saving.
 
-## Active verification checkpoint
+## Final release result
 
-- Candidate code and version are pushed: `519aa125f3cfc68f74d1279fccd707e4fbd48bc8` on `main`.
-- [Release verification 42381429243](https://github.com/Javpato/studyvillage/actions/runs/42381429243) is running with tag input `v1.0.0-dev.6`. It creates the tag and Release only after validation and all five package jobs succeed. Do not repoint earlier tags.
-- The preceding full Windows Chromium run passed **174 tests**, with **14 intentional opt-in/environment skips**. The corresponding Linux run passed 173 and exposed the server-action race above. All four earlier Linux regressions passed after their fixes.
-- The new deterministic delayed-import regression passes in Chromium and WebKit. Focused Chromium server/access coverage passes **7 tests**, with 2 external-signaling skips. Application/server types, 483 unit tests, translations and builds pass after the server-action change.
-- A rebuilt local Windows candidate and production PWA/server WebKit checks are running or awaiting final collection. The current executable is `deliverables/windows-current/StudyVillage-win32-x64/StudyVillage.exe`.
-- Remaining: collect the current workflow result; inspect any failure before rerunning; confirm all five native packages, published downloads and SHA-256 metadata; replace this checkpoint with observed final results; remove task-generated `deliverables/.audit`, `test-results`, root `debug.log` and `scripts/.audit-github.ps1`. Preserve the current build, source, dependencies, reference images and user data.
-- Read-only local helper while this task is active: `powershell -File scripts/.audit-github.ps1 -RunId 42381429243`. The helper reads existing Git credentials without printing them. Completed job logs can be collected with its `-JobId` option.
+[Workflow 42381429243](https://github.com/Javpato/studyvillage/actions/runs/42381429243) completed successfully and published [v1.0.0-dev.6](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.6) from source `519aa125f3cfc68f74d1279fccd707e4fbd48bc8` on 7 November 2026.
 
-This checkpoint is deliberately saved before the final CI result so work can resume after a usage-limit reset.
+- Validation passed **483 application/server unit tests**, **5 native bridge tests**, **175 Chromium scenarios** and **7 WebKit phone/house scenarios**. Fourteen Chromium scenarios remain intentionally opt-in or require a separate native AI fixture.
+- All four desktop runners passed sandboxed startup, secure-context/WebRTC availability, legacy import, saved server settings, native file export, restart and private notebook/optional phone-shortcut persistence.
+- The actual Android APK passed installation, WebView startup, default phone folders, house navigation and process restart in the API 35 emulator.
+- All five packages match the same **163 web files** byte-for-byte. Release PWA cache: `studyvillage-2c52fae4aaa3b96b`. Archive integrity and source/version agreement passed before publication.
+- All **12 published asset URLs** returned HTTP 200. The **11 SHA-256 manifest entries** agree with GitHub's published asset digests. The manifest covers the five archives and six metadata files.
+- The preceding complete Windows Chromium pass approved 174 scenarios with 14 intentional skips. After the server-action correction, 7 focused Chromium server/access scenarios, 6 production WebKit server/access scenarios and the delayed-acknowledgement fixture in both engines passed. The current local Windows executable and archive are version 1.0.0-dev.6; older local package versions were replaced.
+
+## Workspace handoff
+
+The owner's current rule is to commit only substantial changes or on explicit request. The owner requested saving the final verification report and instructions together after the recheck. The published version is available for manual testing; future long verification should continue from a pushed candidate and a saved checkpoint.
+
+The current Windows executable is `deliverables/windows-current/StudyVillage-win32-x64/StudyVillage.exe`. Current production web/server builds, source, dependencies, reference images and user data are preserved.
+
+Permanent cleanup had been rejected by automatic approval review. Cleanup is now complete using the safer, reversible Windows Recycle Bin operation: generated `deliverables/.audit` and `test-results` were removed from the workspace. The current executable/archive and production builds remain; source, reference images, dependencies and user data are preserved. The temporary GitHub helper and root debug log were also removed.
+
+## Final local recheck
+
+The owner's final requested recheck passed on 7 November 2026: application/server types, **483 unit tests**, **2,483 translations**, web/PWA and server builds, **18 Chromium scenarios**, **9 WebKit scenarios** and **5 native bridge tests**. Both production browser engines passed offline/cache/ink checks. The current Windows executable passed startup, storage, restart, native export and private notebook persistence. A read-only comparison confirms all **163 web files** and four native bridge files match the current build. No test failures were detected; Node experimental-storage and Vite bundle-size notices remain informational.
+
+The phone layout and optional apps (including Focus), Settings protection and touch-control placement, removable starter mailbox, five starter furnishings plus room access, updated README and all five Release packages have been checked against the original request. Runtime source is unchanged from the successful Release; subsequent changes concern instructions and verification documentation. The recheck required no runtime source changes.
 
 These checks cover automated execution on the named runners and emulator. Physical-device permissions, external-network multimedia, Apple Pencil and OS signing/notarization are not certified.
 

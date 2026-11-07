@@ -6,7 +6,7 @@
 
 # Verification checkpoints
 
-- Commit each stable change separately.
+- Commit only substantial changes or when the owner explicitly requests it. Do not create commits for routine small edits or progress updates.
 - Push a testable candidate to the existing branch before lengthy verification so the owner can test it in GitHub while local checks continue.
 - Before long checks or a usage-limit interruption, save the candidate commit, workflow links, completed checks and remaining work in `docs/VERIFICATION.md` so the next session can resume.
 - Distinguish a pushed candidate from a verified and published release.
