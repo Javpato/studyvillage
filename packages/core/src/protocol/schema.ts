@@ -56,7 +56,7 @@ export const signedHouseSchema = z.strictObject({ house: houseSchema, signature 
 export const signedStrokeSchema = z.strictObject({ stroke: strokeSchema, signature });
 export const boardCommitSchema = z.strictObject({ id:idSchema,boardId:boardRefSchema,documents:z.array(signedStrokeSchema).min(1).max(128),signature }).refine(c=>new Set(c.documents.map(d=>d.stroke.id)).size===c.documents.length && c.documents.every(d=>d.stroke.boardId===c.boardId));
 export type SignedBoardCommit = z.infer<typeof boardCommitSchema>;
-export const appChannelSchema = z.enum(['werewolves', 'gartic', 'projects', 'study', 'camera', 'ai', 'ink', 'sprites', 'mailbox']);
+export const appChannelSchema = z.enum(['werewolves', 'tetris', 'gartic', 'projects', 'study', 'camera', 'ai', 'ink', 'sprites', 'mailbox']);
 const appDataSchema = z.string().min(2).max(LIMITS.appData);
 export const inviteSchema = z.strictObject({
   v: z.literal(1), sessionId: idSchema, epoch: integer.min(1), hostFingerprint: fingerprintSchema,
@@ -143,10 +143,10 @@ export const mediaMetadataSchema = z.strictObject({
   epoch: integer.min(1), room: roomSchema, identityId: fingerprintSchema, token: nonce,
 });
 export type MediaMetadata = z.infer<typeof mediaMetadataSchema>;
-export const cameraPresenceSchema = z.strictObject({ game: z.enum(['werewolves', 'gartic', 'village']).nullable(), request: z.boolean() });
+export const cameraPresenceSchema = z.strictObject({ game: z.enum(['werewolves', 'tetris', 'gartic', 'village']).nullable(), request: z.boolean() });
 export const cameraMetadataSchema = z.strictObject({
   v: z.literal(2), kind: z.literal('camera'), sessionId: idSchema, epoch: integer.min(1),
-  room: z.string().regex(/^(village|area:(?:residential|community|study)|house:[a-f0-9]{64}(?::space:[A-Za-z0-9_-]{1,32}:(?:floor|room:[A-Za-z0-9_-]{1,32}))?):game:(werewolves|gartic|village)$/),
+  room: z.string().regex(/^(village|area:(?:residential|community|study)|house:[a-f0-9]{64}(?::space:[A-Za-z0-9_-]{1,32}:(?:floor|room:[A-Za-z0-9_-]{1,32}))?):game:(werewolves|tetris|gartic|village)$/),
   identityId: fingerprintSchema, token: nonce,
 });
 export function parseWire(raw: unknown): WireMessage {

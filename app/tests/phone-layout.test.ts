@@ -1,18 +1,18 @@
 import {describe,it,expect} from 'vitest';
-import {defaultPhoneLayout,phoneLayoutSchema,removePhoneFolder,movePhoneApp,removePhoneApp} from '../../packages/core/src/phone/layout';
+import {defaultPhoneLayout,phoneLayoutSchema,removePhoneFolder,movePhoneApp,removePhoneApp,dropPhoneApp,normalizePhoneLayout} from '../../packages/core/src/phone/layout';
 import {loadPhoneLayout,savePhoneLayout,PHONE_LAYOUT_KEY} from '../../packages/runtime/src/storage/phone-layout';
 import {parseBackup} from '../../packages/runtime/src/storage/backup';
 import {newLocalData} from '../../packages/runtime/src/storage/local-store';
 describe('phone layout',()=>{
  it('starts with the requested apps and folders',()=>{expect(defaultPhoneLayout().entries).toEqual([
-  {type:'app',id:'village'},{type:'app',id:'contacts'},{type:'app',id:'identity'},
+  {type:'app',id:'village'},{type:'app',id:'contacts'},
   {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden']},
-  {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','connection','voice','hud-editor']},
+  {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor']},
  ]);});
  it('moves apps without duplication and preserves settings when deleting its folder',()=>{
   let layout=movePhoneApp(defaultPhoneLayout(),'ink','home');layout=movePhoneApp(layout,'ink',null);
   layout=removePhoneFolder(layout,'settings');expect(phoneLayoutSchema.parse(layout)).toEqual(layout);
-  expect(layout.entries.slice(-4)).toEqual(['settings','connection','voice','hud-editor'].map(id=>({type:'app',id})));
+  expect(layout.entries.slice(-3)).toEqual(['settings','voice','hud-editor'].map(id=>({type:'app',id})));
   expect(removePhoneApp(layout,'settings')).toBe(layout);expect(removePhoneApp(layout,'ink').entries.some(e=>e.id==='ink')).toBe(false);
  });
  it('rejects duplicates and missing settings, and recovers invalid local state',()=>{
@@ -29,4 +29,12 @@ describe('phone layout',()=>{
   expect((await parseBackup(JSON.stringify(backup))).values).toEqual(backup.values);
   backup.values[PHONE_LAYOUT_KEY]=JSON.stringify({version:1,entries:[]});await expect(parseBackup(JSON.stringify(backup))).rejects.toThrow();
  });
+});
+
+it('groups icons, cleans empty folders and migrates retired shortcuts',()=>{
+ let layout=dropPhoneApp(defaultPhoneLayout(),'contacts','village',true);
+ expect(layout.entries[0]).toMatchObject({type:'folder',name:'Folder 1',apps:['village','contacts']});
+ layout=dropPhoneApp(layout,'contacts',null);layout=dropPhoneApp(layout,'village',null);
+ expect(layout.entries.some(e=>e.type==='folder'&&e.name==='Folder 1')).toBe(false);
+ expect(normalizePhoneLayout({...layout,entries:[...layout.entries,{type:'app',id:'identity'}]})).toEqual(layout);
 });

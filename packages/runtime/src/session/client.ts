@@ -903,7 +903,7 @@ export class VillageClient implements VillageActions {
     if (channel) {
       room = `channel:${channel.id}`;
       const partner = channel.members.find(id => id !== this.id);
-      roomName = channel.kind === 'call' ? t('Privado con {name}', { name: this.members.get(partner ?? '')?.identity.displayName ?? t('alguien') }) : channel.kind === 'game' ? t(channel.game === 'werewolves' ? 'Hombres lobo' : channel.game === 'gartic' ? 'Gartic Phone' : 'Quiz de estudio') : channel.name;
+      roomName = channel.kind === 'call' ? t('Privado con {name}', { name: this.members.get(partner ?? '')?.identity.displayName ?? t('alguien') }) : channel.kind === 'game' ? t(channel.game === 'werewolves' ? 'Hombres lobo' : channel.game === 'tetris' ? 'Bloques del Bosque' : channel.game === 'gartic' ? 'Gartic Phone' : 'Quiz de estudio') : channel.name;
       audience = channel.members.filter(id => id !== this.id);
     } else {
       room = self.houseId ? `house:${self.houseId}${self.position.space ? `:space:${spaceKey(self.position.space)}` : ''}` : areaOf(self.position) === 'residential' ? 'village' : `area:${areaOf(self.position)}`;

@@ -35,6 +35,7 @@ export class GameCameraManager {
   /** Receives the authority's projected permissions; it never reads secret game roles. */
   setPolicy(policy:GameCameraPolicy|null):void {
     if(policy&&(typeof policy.canSend!=='boolean'||typeof policy.canReceive!=='boolean'||policy.audience!==null&&(!Array.isArray(policy.audience)||policy.audience.length>24||policy.audience.some(id=>typeof id!=='string'||id.length>128))||policy.epoch!==undefined&&(typeof policy.epoch!=='string'||policy.epoch.length>128)))return;
+    if(policy?.receiveAudience&&(policy.receiveAudience.length>4||policy.receiveAudience.some(id=>typeof id!=='string'||id.length>128)))return;
     if(JSON.stringify(policy)===JSON.stringify(this.policy))return;
     const nextPhase=policy?.epoch!==this.policy?.epoch;
     this.policy=policy?{...policy,audience:policy.audience?[...policy.audience]:null}:null;
@@ -46,6 +47,7 @@ export class GameCameraManager {
     // Only the public phase changes are broadcast. A sleeping receiver rejects
     // its own offers; the sender never receives a list of awake/secret roles.
     if(nextPhase&&this.usesPolicy()){for(const id of [...this.outgoing.keys()])this.close(this.outgoing,id);if(this.phaseRetry)clearTimeout(this.phaseRetry);this.phaseRetry=setTimeout(()=>{this.phaseRetry=null;this.declined.clear();this.reconcile();},500);}
+    if(this.context?.room.endsWith(':game:tetris')&&this.policy?.receiveAudience)for(const id of [...this.incoming.keys()])if(!this.policy.receiveAudience.includes(id))this.close(this.incoming,id);
     this.reconcile();this.changed();
   }
   private usesPolicy():boolean{return !!this.policy&&!!this.context?.room.endsWith(':game:werewolves');}
@@ -75,7 +77,7 @@ export class GameCameraManager {
     const generation = ++this.generation;
     this.pending = true; this.error = null; this.changed();
     try {
-      const stream = await devices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30, max: 30 } } });
+      const stream = await devices.getUserMedia({ audio: false, video: this.context?.room.endsWith(':game:tetris')?{width:{ideal:320},height:{ideal:240},frameRate:{ideal:15,max:15}}:{ facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30, max: 30 } } });
       if (generation !== this.generation || !this.context || this.usesPolicy()&&!this.policy!.canSend) { this.stopTracks(stream); return; }
       if (!stream.getVideoTracks().length || stream.getAudioTracks().length) { this.stopTracks(stream); throw new Error('Invalid camera stream'); }
       this.local = stream;
@@ -94,8 +96,9 @@ export class GameCameraManager {
     const parsed = cameraMetadataSchema.safeParse(call.metadata); const context = this.context;
     if (!parsed.success || !context) { call.close(); return; }
     const metadata = parsed.data;
+    if(context.room.endsWith(':game:tetris')&&this.policy?.receiveAudience&&!this.policy.receiveAudience.includes(metadata.identityId)){call.close();return;}
     const peer = context.peers.find(p => p.identityId === metadata.identityId && p.endpoint === call.endpoint && p.receiveToken === metadata.token);
-    if (!peer || metadata.sessionId !== context.sessionId || metadata.epoch !== context.epoch || metadata.room !== context.room || this.incoming.has(peer.identityId) || this.incoming.size >= 11) { call.close(); return; }
+    if (!peer || metadata.sessionId !== context.sessionId || metadata.epoch !== context.epoch || metadata.room !== context.room || this.incoming.has(peer.identityId) || this.incoming.size >= (context.room.endsWith(':game:tetris')?4:11)) { call.close(); return; }
     const item: CallState = { call, identityId: peer.identityId, off: [] };
     this.incoming.set(peer.identityId, item);
     item.off.push(call.onClose(() => { this.close(this.incoming, peer.identityId); this.changed(); }));
@@ -112,9 +115,11 @@ export class GameCameraManager {
     }));
     try { call.answer(); } catch { this.close(this.incoming, peer.identityId); }
   }
+  private lastRetry=0;
   private reconcile(): void {
     const context = this.context;
     if (!context || !this.local || !this.endpoint || this.phaseRetry || this.usesPolicy()&&!this.policy!.canSend) return;
+    if(context.room.endsWith(':game:tetris')&&Date.now()-this.lastRetry>3000){this.declined.clear();this.lastRetry=Date.now();}
     for (const peer of context.peers) {
       if (!peer.watching || this.outgoing.has(peer.identityId) || this.declined.has(peer.identityId) || this.usesPolicy()&&this.policy!.audience&&!this.policy!.audience.includes(peer.identityId)) continue;
       try {

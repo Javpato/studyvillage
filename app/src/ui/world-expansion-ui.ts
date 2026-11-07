@@ -1,3 +1,5 @@
+import {TetrisGame,type TetrisAction,type TetrisView} from '../../../packages/core/src/minigames/tetris';
+import {TetrisPanel} from './tetris-ui';
 import {browserKeyValue} from '../../../packages/runtime/src/storage/key-value';
 import {ActivityStopControl} from './activity-stop-control';
 import {SpriteTransfer} from '../assets/sprite-transfer';
@@ -82,7 +84,7 @@ export interface WorldExpansionCallbacks {
   requestStageRedraw(): void;
   /** A full-screen activity opened or closed: the stage must stop taking keys. */
   activityChanged(open: boolean): void;
-  actions: Pick<AppActions, 'sendApp' | 'onApp' | 'setCameraActivity' | 'setGameCameraPolicy' | 'toggleGameCamera' | 'voiceCommand'>;
+  actions: Pick<AppActions, 'sendApp' | 'onApp' | 'setCameraActivity' | 'setGameCameraPolicy' | 'toggleGameCamera' | 'voiceCommand' | 'toggleMicrophone' | 'setMuted' | 'setDeafened' | 'setPushToTalk' | 'setTalking'>;
 }
 
 interface ScopedApps {
@@ -90,7 +92,7 @@ interface ScopedApps {
   studyRoom: SharedRoom<QuizAction, QuizView, StudyQuiz>; studyPanel: StudyPanel;
   projectsRoom: SharedRoom<ProjectsAction, ProjectsView, GroupProjectsBoard>; projectsPanel: ProjectsPanel;
 }
-type ActivityKind = 'werewolves' | 'gartic' | 'notes' | 'projects' | 'study';
+type ActivityKind = 'tetris' | 'werewolves' | 'gartic' | 'notes' | 'projects' | 'study';
 type ModalKind = ActivityKind | 'ollama_study' | 'object_inspector' | 'ollama_setup';
 
 export class WorldExpansionUIController {
@@ -108,6 +110,8 @@ export class WorldExpansionUIController {
   private cameraDock: GameCameraDock;
 
   // Shared activities: one authority (the village host, or this device offline).
+  readonly tetrisRoom:SharedRoom<TetrisAction,TetrisView,TetrisGame>;
+  private tetrisPanel:TetrisPanel;
   readonly werewolvesRoom: SharedRoom<WerewolvesAction, WerewolvesView>;
   readonly garticRoom: SharedRoom<GarticAction, GarticView, GarticGame>;
   readonly studyRoom: SharedRoom<QuizAction, QuizView, StudyQuiz>;
@@ -160,6 +164,8 @@ export class WorldExpansionUIController {
       return { selfId: view?.identity.fingerprint || 'local-host', hostId: joined ? view!.network.hostId : null, authority:!joined||(!view!.network.server&&view!.network.isHost) };
     };
     const me = () => { const a = this.getActor(); return { name: a.displayName, color: a.color }; };
+    this.tetrisRoom=new SharedRoom('tetris',callbacks.actions,context,()=>new TetrisGame());
+    this.tetrisPanel=new TetrisPanel({send:a=>this.tetrisRoom.act(a),close:()=>this.closeModal(),me:()=>({id:context().selfId,name:me().name}),cameras:ids=>callbacks.actions.setGameCameraPolicy?.({canSend:true,canReceive:true,audience:null,receiveAudience:ids}),media:battle=>{this.activityOverlay.dataset.tetrisMode=battle?'battle':'solo';if(battle){this.cameraDock.mount(this.activityOverlay);callbacks.actions.setCameraActivity('tetris');}else{this.cameraDock.unmount();callbacks.actions.setGameCameraPolicy?.(null);callbacks.actions.setCameraActivity('village');const selected=callbacks.getView()?.network.voice?.selected;if(selected?.game==='tetris')callbacks.actions.voiceCommand({action:'leave'});}}});
     this.werewolvesRoom = new SharedRoom('werewolves', callbacks.actions, context, () => new WerewolvesGame(undefined, context().selfId));
     this.garticRoom = new SharedRoom('gartic', callbacks.actions, context, () => new GarticGame(undefined, context().selfId));
     this.garticBots = new OllamaGarticBots(this.ollamaGateway, this.garticRoom, m => callbacks.notify(m));
@@ -230,6 +236,7 @@ export class WorldExpansionUIController {
   /** Called on every view change so activities follow the session (online, offline, new host). */
   syncSession(): void {
     this.sharedAi.sync();this.spriteTransfer.sync();
+    this.tetrisRoom.sync();
     this.werewolvesRoom.sync();
     this.garticRoom.sync();
     for (const apps of this.scoped.values()) apps.studyRoom.sync();
@@ -424,6 +431,7 @@ export class WorldExpansionUIController {
       case 'campfire_werewolves':
         this.openModal('werewolves');
         break;
+      case 'arcade_tetris':this.openModal('tetris');break;
       case 'drawing_table_gartic':
         this.openModal('gartic');
         break;
@@ -456,30 +464,30 @@ export class WorldExpansionUIController {
     this.closeModal();
     this.activeModalKind = kind;
     this.callbacks.activityChanged(true);
-    if (kind === 'werewolves' || kind === 'gartic' || kind === 'notes' || kind === 'projects' || kind === 'ollama_study' || kind === 'study' || kind === 'ollama_setup') {
+    if (kind === 'tetris' || kind === 'werewolves' || kind === 'gartic' || kind === 'notes' || kind === 'projects' || kind === 'ollama_study' || kind === 'study' || kind === 'ollama_setup') {
       this.activityOverlay.hidden = false;
       this.activityOverlay.dataset.kind = kind;
       if (kind === 'ollama_setup') { this.ollamaSetup.mount(this.activityOverlay); return; }
       const apps = this.apps();
       if (kind === 'ollama_study' || kind === 'study' || kind === 'notes') { apps.studyPanel.mount(this.activityOverlay); return; }
-      const [room, panel] = kind === 'werewolves'
+      const [room, panel] = kind === 'tetris'?[this.tetrisRoom,this.tetrisPanel] as const:kind === 'werewolves'
         ? [this.werewolvesRoom, this.werewolvesPanel] as const
         : kind === 'gartic' ? [this.garticRoom, this.garticPanel] as const : [apps.projectsRoom, apps.projectsPanel] as const;
       panel.mount(this.activityOverlay);
-      const stopControl=kind==='werewolves'||kind==='gartic'?new ActivityStopControl(this.activityOverlay,()=>{if(!room.canStop())return;if(kind==='gartic')this.garticBots.cancel();room.stop();}):null;
+      const stopControl=kind==='tetris'||kind==='werewolves'||kind==='gartic'?new ActivityStopControl(this.activityOverlay,()=>{if(!room.canStop())return;if(kind==='gartic')this.garticBots.cancel();room.stop();}):null;
       // Each room/panel pair shares one view type; TypeScript cannot see that through the union.
       const offView = (room as SharedRoom<unknown, unknown>).subscribe((view, error) => { (panel as { update(v: unknown, e: string | null): void }).update(view, error);stopControl?.update((view as {phase?:string}|null)?.phase,room.canStop());if(kind==='werewolves'){const game=this.werewolvesRoom.current();if(game)this.callbacks.actions.setGameCameraPolicy?.({canSend:game.canBroadcastCamera,canReceive:game.canSeeCameras,audience:game.cameraAudience,epoch:game.cameraPhase});this.cameraDock.policy(game);const current=this.callbacks.getView();if(current)this.cameraDock.update(current);} });
       // A language change redraws the open game in place; the round, drafts and drawings stay.
       const offLanguage = subscribeLanguage(() => (panel as { update(v: unknown, e: string | null): void }).update((room as SharedRoom<unknown, unknown>).current(), null));
       this.activityUnsubscribe = () => { offView(); offLanguage(); stopControl?.dispose(); };
       room.refresh();
-      if (kind === 'werewolves' || kind === 'gartic') {
+      if (kind === 'tetris' || kind === 'werewolves' || kind === 'gartic') {
         const joinVoice = document.createElement('button'); joinVoice.className = 'sv-button sv-button-small sv-game-voice';
         setDisplayText(joinVoice, msg('Unirse a la voz del juego'));
         let inVoice=false;joinVoice.onclick = () => { this.callbacks.actions.voiceCommand(inVoice?{action:'leave'}:{ action: 'game', game: kind });inVoice=!inVoice;setDisplayText(joinVoice,msg(inVoice?'Salir de la voz del juego':'Unirse a la voz del juego')); };
         this.activityOverlay.append(joinVoice);
-        this.cameraDock.mount(this.activityOverlay);
-        this.callbacks.actions.setCameraActivity(kind);
+        if(kind==='tetris'){const controls=el('div','sv-tetris-voice');for(const [label,run]of [['Micrófono',()=>{void this.callbacks.actions.toggleMicrophone().catch(e=>this.callbacks.notify(String(e)));}],['Silenciar',()=>this.callbacks.actions.setMuted(!this.callbacks.getView()?.network.media.muted)],['Dejar de escuchar',()=>this.callbacks.actions.setDeafened(!this.callbacks.getView()?.network.media.deafened)]] as const){const b=document.createElement('button');b.className='sv-button';setDisplayText(b,msg(label));b.onclick=run;controls.append(b);}const ptt=document.createElement('button');ptt.className='sv-button';setDisplayText(ptt,msg('Pulsar para hablar'));ptt.onpointerdown=e=>{ptt.setPointerCapture(e.pointerId);this.callbacks.actions.setPushToTalk(true);this.callbacks.actions.setTalking(true);};ptt.onpointerup=ptt.onpointercancel=()=>this.callbacks.actions.setTalking(false);controls.append(ptt);this.activityOverlay.append(controls);}
+        if(kind!=='tetris'){this.cameraDock.mount(this.activityOverlay);this.callbacks.actions.setCameraActivity(kind);}
         const current = this.callbacks.getView(); if (current) this.cameraDock.update(current);
       }
       return;
@@ -494,6 +502,7 @@ export class WorldExpansionUIController {
     this.callbacks.actions.setCameraActivity('village');
     this.activityUnsubscribe?.();
     this.activityUnsubscribe = null;
+    this.tetrisPanel.unmount();
     this.werewolvesPanel.unmount();
     this.garticPanel.unmount();
     this.ollamaSetup.unmount();
@@ -703,6 +712,6 @@ export class WorldExpansionUIController {
   }
 
   dispose(): void {
-    this.closeModal(); this.garticBots.dispose(); this.werewolvesRoom.dispose(); this.garticRoom.dispose(); for (const apps of this.scoped.values()) { apps.studyRoom.dispose(); apps.projectsRoom.dispose(); } this.environment.dispose(); this.sharedAi.dispose(); this.spriteTransfer.dispose(); this.ollamaGateway.dispose();
+    this.closeModal(); this.garticBots.dispose(); this.tetrisRoom.dispose();this.werewolvesRoom.dispose(); this.garticRoom.dispose(); for (const apps of this.scoped.values()) { apps.studyRoom.dispose(); apps.projectsRoom.dispose(); } this.environment.dispose(); this.sharedAi.dispose(); this.spriteTransfer.dispose(); this.ollamaGateway.dispose();
   }
 }

@@ -426,6 +426,7 @@ export function drawWorld(
   people: readonly DrawPerson[],
   dt = 0,
   nearbyPortalId: string | null = null,
+  editing=false,
 ): void {
   ctx.imageSmoothingEnabled = false;
   const calm = reducedMotion();
@@ -471,7 +472,5 @@ export function drawWorld(
   sprites.sort((a, b) => a.baseline - b.baseline);
   for (const sprite of sprites) sprite.paint();
 
-  if (!calm) paintAmbience(ctx, time);
-  paintVignette(ctx);
-  paintSceneFade(ctx, 'world', W, H);
+  if(!editing){if (!calm) paintAmbience(ctx, time);paintVignette(ctx);paintSceneFade(ctx, 'world', W, H);}
 }

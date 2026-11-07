@@ -1,3 +1,4 @@
+import {TetrisGame} from '../../packages/core/src/minigames/tetris';
 /**
  * StudyVillage self-hosted server. The owner installs and operates it; it
  * needs only Node 24 (built-in SQLite) and stores everything in DATA_DIR.
@@ -25,6 +26,7 @@ import { World, type RoomEngine, type WorldOptions } from './world';
 
 export const VERSION = '1.0.0';
 export const ENGINES: WorldOptions['engines'] = {
+  tetris: () => new TetrisGame() as unknown as RoomEngine,
   werewolves: () => new WerewolvesGame(undefined, SERVER_AUTHORITY) as unknown as RoomEngine,
   gartic: () => new GarticGame(undefined, SERVER_AUTHORITY) as unknown as RoomEngine,
   study: organizer => new StudyQuiz(() => organizer() ?? SERVER_AUTHORITY) as unknown as RoomEngine,

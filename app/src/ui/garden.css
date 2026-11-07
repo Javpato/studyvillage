@@ -23,3 +23,5 @@
  .sv-garden-tray.sv-garden-tray .sv-garden-count{font-size:10px;margin-right:2px;max-width:44px;line-height:1.2;}
  .sv-garden-tray.sv-garden-tray [role=status]{min-height:26px;line-height:13px;font-size:11px;margin:5px 0 0;}
 }
+.sv-garden-preview{position:fixed;z-index:70;inset:max(12px,env(safe-area-inset-top)) 12px 260px;background:#548652;border:4px solid #274935;border-radius:12px;overflow:auto;overscroll-behavior:contain;box-shadow:0 10px 40px #14271d80}.sv-garden-preview[hidden]{display:none}.sv-garden-preview canvas{display:block;touch-action:none;image-rendering:pixelated}.sv-garden-tray{z-index:71!important}.sv-garden-actions{flex-wrap:wrap}
+.sv-garden-zoom{display:flex;gap:4px;align-items:center}.sv-garden-zoom button{padding:4px 8px!important;min-width:32px}.sv-garden-tray header{flex-wrap:wrap!important}.sv-garden-tray .sv-garden-zoom{width:100%;justify-content:flex-end}.sv-garden-tray.sv-garden-tray .sv-garden-actions{grid-template-columns:auto repeat(3,minmax(0,1fr))}

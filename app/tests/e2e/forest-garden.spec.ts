@@ -1,0 +1,5 @@
+import {test,expect} from '@playwright/test';
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
+for(const width of [390,1440])test(`garden is an independent crisp editor at ${width}`,async({page})=>{
+ await page.setViewportSize({width,height:844});await page.goto('/');await openPhoneApp(page,'house');const before=await page.locator('.sv-hud-place h1').innerText();await openPhoneApp(page,'garden');await expect(page.locator('.sv-garden-preview')).toBeVisible();const canvas=page.locator('.sv-garden-preview canvas');expect(await canvas.evaluate((c:HTMLCanvasElement)=>c.width>=c.getBoundingClientRect().width)).toBe(true);await page.screenshot({path:`/tmp/studyvillage-garden-${width}.png`});await page.locator('.sv-garden-tray').getByRole('button',{name:'Cancelar',exact:true}).click();await expect(page.locator('.sv-hud-place h1')).toHaveText(before);await expect(page.locator('.sv-garden-preview')).toBeHidden();await openPhoneApp(page,'settings');await expect(page.getByRole('tab',{name:'Teléfono',exact:true})).toHaveCount(0);
+});

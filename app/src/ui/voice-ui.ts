@@ -3,7 +3,7 @@ import { msg, t, getLanguage, setDisplayText, type DisplayText } from '../i18n';
 import { emptyVoice, VOICE_GAMES } from '../../../packages/runtime/src/media/voice';
 const node = (tag: string, text?: DisplayText) => { const e = document.createElement(tag); if (text) setDisplayText(e, text); return e; };
 const button = (text: DisplayText, action: () => void) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sv-button sv-button-small'; setDisplayText(b, text); b.onclick = action; return b; };
-const games = { werewolves: msg('Hombres lobo'), gartic: msg('Gartic Phone'), study: msg('Quiz de estudio') };
+const games = { tetris:msg('Bloques del Bosque'), werewolves: msg('Hombres lobo'), gartic: msg('Gartic Phone'), study: msg('Quiz de estudio') };
 export class VoicePanel {
   readonly root = node('section');
   private signature = '';

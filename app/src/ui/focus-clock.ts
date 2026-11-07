@@ -33,7 +33,7 @@ export class FocusClock {
  private toggle():void{if(!this.valid)return;if(this.model.running)this.model.pause();else this.model.start();this.save();this.paint();this.placeHud();}
  private save():void{try{localStorage.setItem(FOCUS_CLOCK_KEY,JSON.stringify(this.model.state));}catch{setDisplayText(this.error,msg('El reloj sigue funcionando, pero no se pudo guardar su configuración.'));}}
  private visibilitySwitch():HTMLElement{const label=element('label','sv-desk-switch');const input=element('input');input.type='checkbox';input.checked=this.model.visible;setDisplayAttribute(input,'aria-label',msg('Mostrar reloj flotante'));input.onchange=()=>this.setHudVisible(input.checked);label.append(input,element('span','','Mostrar reloj flotante'));this.switches.add(input);return label;}
- private setHudVisible(show:boolean):void{this.model.state.hud=show;this.save();this.paint();this.placeHud();}
+ setHudVisible(show:boolean):void{this.model.state.hud=show;this.save();this.paint();this.placeHud();}
  /** Mounted by the application's Settings → Controls panel. */
  settingsControl():HTMLElement{const box=element('section','sv-focus-settings');box.append(this.visibilitySwitch(),element('p','sv-subtle','Arrastra el reloj por su asa. Ocultarlo no detiene la sesión.'),button('Recolocar reloj',()=>{this.model.state.position={x:1,y:.16};this.save();this.placeHud();},'sv-button'));return box;}
  private buildHud():void{

@@ -130,6 +130,31 @@ export const DEFAULT_AREA_OBJECTS: readonly InteractiveObjectConfig[] = [
     revision: 1,
   },
   {
+    id: 'community:arcade-tetris',
+    areaId: 'community',
+    kind: 'arcade_tetris',
+    defaultLabel: 'Bloques del Bosque',
+    displayName: 'Bloques del Bosque',
+    description: 'Una partida de bloques bajo los árboles.',
+    promptKey: 'E · Bloques del Bosque',
+    x: 620,
+    y: 90,
+    w: 44,
+    h: 60,
+    layer: 'object',
+    hasCollision: true,
+    interactionRadius: INTERACTION_REACH,
+    ownerId: null,
+    visibility: 'everyone',
+    usePermission: 'public',
+    editPermission: 'host_only',
+    allowedUsers: [],
+    customSpriteDataUrl: null,
+    customColor: null,
+    state: { activeGame: 'tetris' },
+    revision: 1,
+  },
+  {
     id: 'community:drawing-table-gartic',
     areaId: 'community',
     kind: 'drawing_table_gartic',
@@ -490,6 +515,11 @@ function paintStationObject(
         fill(ctx, ember4, x + w / 2 - 4, y + h / 2 - 14 + flicker, 8, 9);
         glowPool(ctx, x + w / 2, y + h / 2 + 4, 48, '255,180,95');
         break;
+      }
+      case 'arcade_tetris': {
+        fill(ctx,'#735438',x,y,w,h);fill(ctx,'#bdac77',x+3,y+3,w-6,8);fill(ctx,'#203d32',x+5,y+14,w-10,30);
+        for(let i=0;i<9;i++)fill(ctx,['#a4c775','#e9c76b','#ae8dc7'][i%3],x+7+(i%4)*7,y+35-Math.floor(i/4)*7,6,6);
+        fill(ctx,'#e9c76b',x+10,y+49,5,5);fill(ctx,'#b4664d',x+27,y+49,6,4);break;
       }
       case 'drawing_table_gartic': {
         // Large studio drawing table with easel, color pots & paper sheets

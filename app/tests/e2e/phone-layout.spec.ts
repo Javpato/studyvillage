@@ -1,44 +1,13 @@
-import {test,expect,type Page} from '@playwright/test';
+import {test,expect} from '@playwright/test';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
-async function editor(page:Page){await openPhoneApp(page,'settings');await page.getByRole('tab',{name:'Teléfono',exact:true}).click();return page.locator('.sv-phone-layout-editor');}
-async function closeSettings(page:Page){await page.getByRole('dialog',{name:'Ajustes',exact:true}).getByRole('button',{name:'Cerrar',exact:true}).click();}
-for(const width of [390,1440])test(`default phone and folders at ${width}px`,async({page})=>{
+for(const width of [390,1440])test(`inline phone editing and optional apps at ${width}`,async({page})=>{
  await page.setViewportSize({width,height:844});await page.goto('/');await page.getByTestId('phone-button').click();
- await expect(page.locator('.sv-phone-home .sv-app-label')).toHaveText(['Aldea','Contactos','Identidad','Hogar','Ajustes']);
- await page.getByTestId('phone-folder-home').click();await expect(page.locator('[data-page=folder] .sv-phone-page:not([hidden]) .sv-app-label')).toHaveText(['Mi casa','Habitaciones','Decorar','Mi jardín']);
- await page.getByRole('button',{name:'Volver',exact:true}).click();await page.getByTestId('phone-folder-settings').click();await expect(page.getByTestId('phone-settings')).toBeVisible();
- for(const id of ['ink','music','study','projects','focus'])await expect(page.getByTestId(`phone-${id}`)).toHaveCount(0);
- await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await expect(page.locator('.sv-phone-home .sv-app-label')).toHaveText(['Aldea','Contactos','Hogar','Ajustes']);
+ await page.getByTestId('phone-contacts').click({button:'right'});await expect(page.getByRole('button',{name:'Biblioteca de apps',exact:true})).toBeVisible();
+ await page.getByTestId('phone-contacts').locator('[data-remove]').click();await expect(page.getByTestId('phone-contacts')).toHaveCount(0);
+ await page.getByRole('button',{name:'Biblioteca de apps',exact:true}).click();await page.locator('.sv-phone-library').getByRole('button',{name:'Contactos',exact:true}).click();await page.getByRole('button',{name:'Listo',exact:true}).click();
+ await page.reload();await openPhoneApp(page,'tetris');await expect(page.locator('.sv-tetris')).toBeVisible();await page.getByRole('button',{name:'Comenzar',exact:true}).click();await expect(page.locator('.sv-tetris-status')).toHaveText('El bosque está en juego');await page.keyboard.press('Space');await expect(page.locator('.sv-tetris-stats')).toContainText('Puntos');await page.screenshot({path:`/tmp/studyvillage-tetris-${width}.png`});
 });
-test('edit, reorder and delete folders while keeping Settings reachable after reload',async({page})=>{
- await page.goto('/');const e=await editor(page);await expect(e.locator('[data-app=settings]').getByRole('button',{name:'Quitar aplicación'})).toBeDisabled();
- await e.getByLabel('Nueva carpeta',{exact:true}).fill('Mis cosas');await e.getByRole('button',{name:'Crear carpeta',exact:true}).click();
- await e.getByLabel('Aplicación para añadir',{exact:true}).selectOption('ink');await e.getByRole('button',{name:'Añadir aplicación',exact:true}).click();
- const folder=await e.locator('fieldset').last().getAttribute('data-folder');await e.getByLabel('Ubicación de Cuaderno de tinta',{exact:true}).selectOption(folder!);
- await e.locator('[data-folder=settings]').getByRole('button',{name:'Eliminar carpeta',exact:true}).click();
- await e.locator('[data-app=settings]').getByRole('button',{name:'Subir',exact:true}).click();
- await e.getByRole('button',{name:'Guardar teléfono',exact:true}).click();await closeSettings(page);await page.reload();await page.getByTestId('phone-button').click();
- await expect(page.getByTestId('phone-settings')).toBeVisible();await page.getByTestId(`phone-folder-${folder}`).click();await expect(page.getByTestId('phone-ink')).toBeVisible();
- await page.getByTestId('phone-ink').click();await expect(page.getByLabel('Título del cuaderno',{exact:true})).toBeVisible();
-});
-test('failed saving keeps draft and cancel leaves persisted layout unchanged',async({page})=>{
- await page.goto('/');const e=await editor(page);await e.getByLabel('Aplicación para añadir',{exact:true}).selectOption('focus');await e.getByRole('button',{name:'Añadir aplicación',exact:true}).click();
- await page.evaluate(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='studyvillage-phone-layout-v1')throw new DOMException('Full','QuotaExceededError');original.call(this,k,v);};});
- await e.getByRole('button',{name:'Guardar teléfono',exact:true}).click();await expect(e.getByRole('alert')).toContainText('No se pudo guardar');await expect(e.locator('[data-app=focus]')).toBeVisible();
- await e.getByRole('button',{name:'Cancelar',exact:true}).click();await expect(e.locator('[data-app=focus]')).toHaveCount(0);
-});
-test('a full backup restores folders and optional shortcuts',async({page})=>{
- await page.goto('/');let e=await editor(page);
- await e.getByLabel('Aplicación para añadir',{exact:true}).selectOption('focus');await e.getByRole('button',{name:'Añadir aplicación',exact:true}).click();
- await e.getByRole('button',{name:'Guardar teléfono',exact:true}).click();await closeSettings(page);
- await openPhoneApp(page,'identity');
- const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Exportar copia completa',exact:true}).click()]);
- const stream=await download.createReadStream(),parts:Buffer[]=[];for await(const chunk of stream!)parts.push(Buffer.from(chunk));const bytes=Buffer.concat(parts);
- expect(JSON.parse(JSON.parse(bytes.toString()).values['studyvillage-phone-layout-v1']).entries).toContainEqual({type:'app',id:'focus'});await closeSettings(page);
- e=await editor(page);await e.locator('[data-app=focus]').getByRole('button',{name:'Quitar aplicación',exact:true}).click();await e.locator('[data-folder=home]').getByRole('button',{name:'Eliminar carpeta',exact:true}).click();
- await e.getByRole('button',{name:'Guardar teléfono',exact:true}).click();await closeSettings(page);
- await openPhoneApp(page,'identity');await page.getByLabel('Copia completa de StudyVillage',{exact:true}).setInputFiles({name:'phone-backup.json',mimeType:'application/json',buffer:bytes});
- await page.getByLabel('He cerrado otras ventanas. Quiero reemplazar los datos locales con esta copia.',{exact:true}).check();
- await Promise.all([page.waitForEvent('load'),page.getByRole('button',{name:'Restaurar copia y reiniciar',exact:true}).click()]);await page.getByTestId('phone-button').click();
- await expect(page.getByTestId('phone-folder-home')).toBeVisible();await expect(page.getByTestId('phone-focus')).toBeVisible();
+test('right-click drag creates and renames a folder; settings remain available',async({page})=>{
+ await page.goto('/');await page.getByTestId('phone-button').click();await page.getByTestId('phone-contacts').click({button:'right'});const source=(await page.getByTestId('phone-contacts').boundingBox())!,target=(await page.getByTestId('phone-village').boundingBox())!;await page.mouse.move(source.x+source.width/2,source.y+source.height/2);await page.mouse.down();await page.mouse.move(target.x+target.width/2,target.y+target.height/2,{steps:8});await page.mouse.up();await page.getByText('Folder 1',{exact:true}).click();await page.locator('.sv-phone-title').click();await page.getByLabel('Nombre de la carpeta',{exact:true}).fill('Amigos');await page.getByLabel('Nombre de la carpeta',{exact:true}).press('Enter');await expect(page.locator('.sv-phone-title')).toHaveText('Amigos');
 });

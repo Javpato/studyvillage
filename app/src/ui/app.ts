@@ -492,8 +492,10 @@ class StudyUI {
       {id:'deafen',label:msg('Dejar de escuchar'),element:this.hudDeafen},
       {id:'camera',label:msg('Cámara'),element:this.hudCamera},
       {id:'screen',label:msg('Compartir pantalla'),element:this.hudScreen},
+      {id:'clock',label:msg('Reloj flotante'),element:this.focusClock.hud,apply:visible=>this.focusClock.setHudVisible(visible)},
       {id:'location',label:msg('Ubicación'),element:this.shell.querySelector<HTMLElement>('.sv-hud-place')!},
-    ],()=>{this.stopMoving();this.actions.setTalking(false);},mobile=>{this.hudEditTile.hidden=!mobile;});
+    ],()=>{this.stopMoving();this.actions.setTalking(false);},()=>{this.hudEditTile.hidden=false;});
+
     this.shell.append(this.mobileHud.root);
     this.offAi = this.expansion.ollamaGateway.subscribe(() => this.refreshAiControls());
     this.refreshAiControls();
@@ -604,7 +606,7 @@ class StudyUI {
     document.removeEventListener('visibilitychange',this.boardHidden);window.removeEventListener('orientationchange',this.boardRotated);
     this.boardEditor?.dispose();
     cancelAnimationFrame(this.raf); this.offAi?.();
-    this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();
+    this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();this.phoneEditor?.dispose();
     this.mobileHud.dispose();
     this.expansion.dispose();
     window.removeEventListener('keydown', this.onKeyDown);
@@ -648,13 +650,15 @@ class StudyUI {
     this.offLanguage = subscribeLanguage(language => { languageSelect.value = language; this.forgetSignatures(); this.lastStageRenderSig = ''; this.lastBoardRenderSig = ''; this.boardExtraFrames = 3; if (this.view) this.update(this.view); });
     this.servers = new ServersPanel({ actions: this.actions, notify: message => this.notify(message), ownBoards: () => this.ownBoardsForImport() });
     this.settingsSection('Servidores').append(this.servers.root);
+    const advanced=document.createElement('details'),summary=document.createElement('summary');setDisplayText(summary,msg('Conexión avanzada'));advanced.append(summary,...Array.from(this.connectionPanel.root.children));this.settingsSection('Servidores').append(advanced);
     const controls = this.settingsSection('Controles');
     append(controls, node('h3', '', msg('A tu ritmo')), node('p', '', msg('WASD o flechas para caminar · Shift para correr · Doble clic o doble toque para abrir casas, muebles y portales · E para usar lo que tengas cerca · M para abrir el menú · Escape para volver. Con los controles táctiles activados, un toque te acerca caminando.')), node('p', '', msg('Pizarra: Mano para desplazarte, rueda para mover el lienzo y Ctrl + rueda para acercarte. En pantallas táctiles puedes usar dos dedos para acercar y desplazar.')));
     const touch = select([{value:'auto',label:msg('Automáticos')},{value:'on',label:msg('Siempre visibles')},{value:'off',label:msg('Ocultos')}]);
     touch.value = this.controlPrefs.touch;
     touch.addEventListener('change', () => { this.setTouchPreference(touch.value as ControlPreferences['touch']); });
     this.touchSelect = touch;
-    controls.append(field(msg('Controles táctiles'), touch),this.focusClock.settingsControl(),this.speech.settingsControl());
+    const editControls=button(msg('Editar controles'),'sv-button');editControls.onclick=()=>{this.settingsDialog.close();this.mobileHud.open();};controls.append(editControls);
+    controls.append(field(msg('Controles táctiles'), touch),this.speech.settingsControl());
 
     const main = node('main', 'sv-main');
     const session = node('div', 'sv-phone-section');
@@ -824,7 +828,7 @@ class StudyUI {
       append(item, face, node('span', 'sv-app-label', label));
       if (testid) item.dataset.testid = testid;
       item.addEventListener('click', onClick);
-      if(testid)this.phoneTiles.set(testid.replace('phone-','') as PhoneAppId,item);
+      if(testid){item.dataset.phoneApp=testid.replace('phone-','');this.phoneTiles.set(item.dataset.phoneApp as PhoneAppId,item);}
       return item;
     };
     this.phoneHouseTile = tile(msg('Mi casa'), 'house', '#e8894f', () => {
@@ -845,15 +849,8 @@ class StudyUI {
     }, 'phone-decorate');
     tile(msg('Contactos'), 'contacts', '#c9654f', () => this.openPhone('contacts'), 'phone-contacts');
     tile(msg('Ajustes'), 'gear', '#7c8a7a', () => { this.closePhone(); this.settingsDialog.showModal(); }, 'phone-settings');
-    tile(msg('Identidad'), 'contacts', '#8d70ae', () => {
-      this.closePhone(); this.settingsDialog.showModal();
-      const section = this.settingsSection('Identidad');
-      for (const panel of this.settingsSections.values()) panel.hidden = panel !== section;
-      const tabs = this.settingsTabs.querySelectorAll<HTMLButtonElement>('button');
-      tabs.forEach(tab => { const selected=tab.getAttribute('aria-controls')===section.id; tab.setAttribute('aria-selected',String(selected)); tab.tabIndex=selected?0:-1; });
-    }, 'phone-identity');
-    tile(msg('Conexión'),'gear','#7c8a7a',()=>{this.closePhone();this.stopMoving();this.connectionPanel.open();},'phone-connection');
-    tile(msg('Mi jardín'),'brush','#729a84',()=>{this.closePhone();this.stopMoving();this.endDecoration();this.navigate('world');this.changeWorldArea('residential',WORLD_SPAWN);this.garden.open();const p=occupiedParcels(this.view!).find(p=>p.isOwn)?.parcel;if(p)this.localPosition={x:p.doorX,y:p.slot<3?p.doorY+40:p.doorY-26,direction:'down',moving:false};},'phone-garden');
+    tile(msg('Mi jardín'),'brush','#729a84',()=>{this.closePhone();this.stopMoving();this.endDecoration();this.garden.open();},'phone-garden');
+    tile(msg('Bloques del Bosque'),'projects','#729a84',()=>{this.closePhone();this.expansion.openActivity('tetris');},'phone-tetris');
     tile(msg('Música'),'mic','#af7657',()=>{this.closePhone();this.stopMoving();this.jukebox.open();},'phone-music');
     tile(msg('Concentración'),'gear','#729a84',()=>{this.closePhone();this.stopMoving();this.focusClock.open();},'phone-focus');
     tile(msg('Cuaderno de tinta'), 'notes', '#729a84', () => { this.closePhone(); this.stopMoving(); this.notebooks.open(); }, 'phone-ink');
@@ -872,9 +869,8 @@ class StudyUI {
     this.phonePages = new Map<PhonePage, HTMLElement>([['home', home], ['folder',folder], ['village', village], ['voice', voice], ['decorate', decorate], ['contacts', contacts]]);
     append(this.phoneScreen, head, ...this.phonePages.values());
     this.phone.append(this.phoneScreen);
-    this.phoneEditor=new PhoneLayoutEditor(layout=>{this.phoneLayout=layout;this.renderPhoneLayout();});
-    this.settingsSection('Teléfono').append(this.phoneEditor.root);
-    this.settingsDialog.addEventListener('toggle',()=>{if(this.settingsDialog.open)this.phoneEditor.reset();});
+    this.phoneEditor=new PhoneLayoutEditor(this.phoneScreen,layout=>{this.phoneLayout=layout;this.renderPhoneLayout();if(this.phonePage==='folder')this.openPhone('folder');},()=>this.phoneFolder);
+    this.phoneScreen.append(this.phoneEditor.root);
     this.renderPhoneLayout();
   }
 
@@ -884,7 +880,7 @@ class StudyUI {
     for(const tile of this.phoneTiles.values())tile.remove();
     for(const entry of this.phoneLayout.entries){
       if(entry.type==='app'){this.phoneGrid.append(this.phoneTiles.get(entry.id)!);continue;}
-      const item=button('','sv-app-tile');item.dataset.testid=`phone-folder-${entry.id}`;
+      const item=button('','sv-app-tile');item.dataset.testid=`phone-folder-${entry.id}`;item.dataset.phoneFolder=entry.id;
       const face=node('span','sv-app-icon');face.style.setProperty('--tile','#b38a55');face.append(monoIcon('house',26));
       append(item,face,node('span','sv-app-label',entry.builtin?msg(entry.name):entry.name));
       item.onclick=()=>{this.phoneFolder=entry.id;this.openPhone('folder');};this.phoneGrid.append(item);
@@ -906,6 +902,7 @@ class StudyUI {
     setText(this.phoneTitle, titles[page]);
     show(this.phoneBack, page !== 'home');
     for (const [key, el] of this.phonePages) show(el, key === page);
+    this.phoneEditor?.decorate();
     this.refresh();
   }
 
@@ -913,7 +910,7 @@ class StudyUI {
     if (this.phone.hidden) return;
     this.phone.hidden = true;
     this.phonePage = null;
-    this.phoneFolder=null;
+    this.phoneFolder=null;this.phoneEditor?.finish();
     // Hand the keyboard back to the world (not to the Menú button, where Space would reopen it).
     const focused = document.activeElement;
     if (focused instanceof HTMLElement && (this.phone.contains(focused) || focused === this.phoneButton)) focused.blur();

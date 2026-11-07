@@ -26,7 +26,7 @@ import type { Socket } from './ws';
 
 export interface RoomEngine { apply(actor: string, action: unknown, now: number): void; tick(now: number): boolean; viewFor(viewer: string, now: number): unknown; audience(): string[]; cancel?(now: number): void; setController?(id:string|null):void; canBroadcastCamera?(id:string):boolean; canReceiveCamera?(viewerId:string,senderId:string):boolean }
 export type EngineFactory = (organizer: () => string | null) => RoomEngine;
-export interface WorldOptions { name: string; ai?:AiProvider; engines: Partial<Record<'werewolves' | 'gartic' | 'study' | 'projects', EngineFactory>>; now?: () => number; log?: (line: string) => void }
+export interface WorldOptions { name: string; ai?:AiProvider; engines: Partial<Record<'werewolves' | 'tetris' | 'gartic' | 'study' | 'projects', EngineFactory>>; now?: () => number; log?: (line: string) => void }
 
 /** People present in one neighbourhood at once; keeps each scene's media mesh small. */
 export const NEIGHBORHOOD_PRESENCE = 12;
@@ -449,7 +449,7 @@ export class World {
     return changed;
   }
 
-  private relayApp(c: Connection, channel: 'werewolves' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'sprites', to: string | null, data: string): null {
+  private relayApp(c: Connection, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'sprites', to: string | null, data: string): null {
     const me = c.identity!.fingerprint;
     if(channel==='camera'&&this.byFingerprint(me)!==c)throw new Reject('forbidden');
     if(channel==='ink'){if(to!==SERVER_AUTHORITY)throw new Reject('forbidden');void this.ink.receive(c.id,me,String(c.neighborhood),data);return null;}
@@ -485,7 +485,7 @@ export class World {
     }catch(error){reply={t:'error',id:request.id,code:error instanceof AiError?error.code:'ai-response'};}
     if(this.connections.get(c.id)===c)this.send(c,{t:'app',channel:'ai',from:SERVER_AUTHORITY,data:JSON.stringify(reply)});
   }
-  private room(neighborhood: number, channel: 'werewolves' | 'gartic' | 'projects' | 'study', scope = ''): ActivityRoom {
+  private room(neighborhood: number, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study', scope = ''): ActivityRoom {
     const key = `${neighborhood}:${channel}${scope ? `:${scope}` : ''}`;
     let room = this.rooms.get(key);
     if (!room) {
@@ -606,11 +606,14 @@ class ActivityRoom {
   }
   private ensureTimer(): void {
     if (this.timer) return;
-    this.timer = setInterval(() => { const now = this.now(); if (this.engine.tick(now)) this.publish(now); void this.pumpBots(); }, 400);
+    this.timer = setInterval(() => { const now = this.now(); if (this.engine.tick(now)) this.publish(now); void this.pumpBots(); }, this.channel==='tetris'?50:400);
     this.timer.unref?.();
   }
   private sendView(id: string, now: number): void { this.deliver(id, JSON.stringify({ t: 'view', v: this.engine.viewFor(id, now), lead: id === this.organizer() })); }
+  private lastTetrisPublish=0;
   private publish(now: number): void {
+    if(this.channel==='tetris'&&(this.engine.viewFor('',now) as {phase:string}).phase==='playing'&&now-this.lastTetrisPublish<100)return;
+    this.lastTetrisPublish=now;
     this.ensureTimer();
     const recipients = new Set([...this.engine.audience(), ...this.watchers]);
     for (const id of recipients) if (this.present(id)) this.sendView(id, now);

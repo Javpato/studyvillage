@@ -1,40 +1,30 @@
-import {PHONE_APPS,defaultPhoneLayout,movePhoneApp,removePhoneApp,removePhoneFolder,type PhoneAppId,type PhoneLayout,type PhoneFolder} from '../../../packages/core/src/phone/layout';
+import {PHONE_APPS,dropPhoneApp,movePhoneApp,removePhoneApp,normalizePhoneLayout,type PhoneAppId,type PhoneLayout} from '../../../packages/core/src/phone/layout';
 import {loadPhoneLayout,savePhoneLayout} from '../../../packages/runtime/src/storage/phone-layout';
-import {msg,setDisplayText,setDisplayAttribute,type DisplayText} from '../i18n';
+import {msg,setDisplayText,setDisplayAttribute} from '../i18n';
+/** Pointer editing lives on the phone; browser dragging is deliberately not used on touch. */
 export class PhoneLayoutEditor {
- readonly root=document.createElement('div');
- private draft=loadPhoneLayout();
- constructor(private saved:(layout:PhoneLayout)=>void){this.root.className='sv-phone-layout-editor';this.render();}
- reset(){this.draft=loadPhoneLayout();this.render();}
- private text(tag:string,label:DisplayText){const e=document.createElement(tag);setDisplayText(e,label);return e;}
- private button(label:DisplayText,run:()=>void){const b=document.createElement('button');b.type='button';b.className='sv-button';setDisplayText(b,label);b.onclick=run;return b;}
- private destination(id:PhoneAppId,folder:string|null){const select=document.createElement('select');setDisplayAttribute(select,'aria-label',msg('Ubicación de {app}',{app:msg(PHONE_APPS[id])}));
-  for(const [value,label] of [['',msg('Inicio')],...this.draft.entries.filter((e):e is PhoneFolder=>e.type==='folder').map(e=>[e.id,e.builtin?msg(e.name):e.name] as const)] as const){const o=document.createElement('option');o.value=value as string;setDisplayText(o,label);select.append(o);}
-  select.value=folder??'';select.onchange=()=>{this.draft=movePhoneApp(this.draft,id,select.value||null);this.render();};return select;
+ readonly root=document.createElement('div'); editing=false;
+ private draft=loadPhoneLayout();private library=false;private error='';private timer:ReturnType<typeof setTimeout>|null=null;
+ private gesture:{id:number,x:number,y:number,app:PhoneAppId|null,moved:boolean}|null=null;private suppress=false;
+ constructor(private screen:HTMLElement,private saved:(layout:PhoneLayout)=>void,private folder:()=>string|null){
+  this.root.className='sv-phone-edit-tools';this.screen.addEventListener('contextmenu',e=>{if(this.tile(e.target)){e.preventDefault();this.enter();}});
+  screen.addEventListener('pointerdown',e=>this.down(e));screen.addEventListener('pointermove',e=>this.move(e));screen.addEventListener('pointerup',e=>this.up(e));screen.addEventListener('pointercancel',()=>this.cancel());
+  screen.addEventListener('click',e=>{if(this.suppress){e.preventDefault();e.stopImmediatePropagation();this.suppress=false;return;}const tile=this.tile(e.target);if(this.editing&&tile?.dataset.phoneApp){e.preventDefault();e.stopImmediatePropagation();if((e.target as HTMLElement).closest('[data-remove]'))this.change(removePhoneApp(this.draft,tile.dataset.phoneApp as PhoneAppId));}},true);
+  screen.addEventListener('keydown',e=>{const tile=this.tile(e.target),id=tile?.dataset.phoneApp as PhoneAppId|undefined;if(e.key==='Escape'&&this.editing){e.preventDefault();e.stopPropagation();this.finish();}if(!id)return;if(e.key==='F2'){e.preventDefault();this.enter();}if(this.editing&&e.key==='Delete'){e.preventDefault();this.change(removePhoneApp(this.draft,id));}if(this.editing&&e.altKey&&e.key==='ArrowUp'){e.preventDefault();this.change(movePhoneApp(this.draft,id,null));}},true);
+  this.render();
  }
- private reorder<T>(items:T[],index:number,row:HTMLElement){for(const [delta,key]of [[-1,'Subir'],[1,'Bajar']]as const){const b=this.button(msg(key),()=>{[items[index],items[index+delta]]=[items[index+delta],items[index]];this.render();});b.disabled=index+delta<0||index+delta>=items.length;row.append(b);}}
- private appRow(id:PhoneAppId,folder:string|null,index:number,items:PhoneAppId[]|PhoneLayout['entries']){
-  const row=this.text('div',msg(PHONE_APPS[id]));row.className='sv-phone-layout-row';row.dataset.app=id;
-  row.append(this.destination(id,folder));this.reorder(items as unknown[],index,row);
-  const remove=this.button(msg('Quitar aplicación'),()=>{this.draft=removePhoneApp(this.draft,id);this.render();});remove.disabled=id==='settings';row.append(remove);return row;
- }
- private render(){
-  this.root.replaceChildren(this.text('h3',msg('Organizar teléfono')),this.text('p',msg('Quitar una aplicación solo oculta su acceso. Tus datos se conservan. Ajustes siempre permanece disponible.')));
-  this.draft.entries.forEach((entry,index)=>{
-   if(entry.type==='app'){this.root.append(this.appRow(entry.id,null,index,this.draft.entries));return;}
-   const group=document.createElement('fieldset');group.dataset.folder=entry.id;group.append(this.text('legend',entry.builtin?msg(entry.name):entry.name));
-   const name=document.createElement('input');name.value=entry.name;name.maxLength=48;setDisplayAttribute(name,'aria-label',msg('Nombre de la carpeta'));
-   name.onchange=()=>{if(name.value.trim()){entry.name=name.value.trim();entry.builtin=false;this.render();}else name.value=entry.name;};group.append(name);
-   this.reorder(this.draft.entries,index,group);group.append(this.button(msg('Eliminar carpeta'),()=>{this.draft=removePhoneFolder(this.draft,entry.id);this.render();}));
-   entry.apps.forEach((id,i)=>group.append(this.appRow(id,entry.id,i,entry.apps)));this.root.append(group);
-  });
-  const installed=new Set(this.draft.entries.flatMap(e=>e.type==='app'?[e.id]:e.apps));
-  const available=document.createElement('select');setDisplayAttribute(available,'aria-label',msg('Aplicación para añadir'));
-  for(const id of Object.keys(PHONE_APPS)as PhoneAppId[])if(!installed.has(id)){const o=document.createElement('option');o.value=id;setDisplayText(o,msg(PHONE_APPS[id]));available.append(o);}
-  const add=this.button(msg('Añadir aplicación'),()=>{if(available.value){this.draft=movePhoneApp(this.draft,available.value as PhoneAppId,null);this.render();}});add.disabled=!available.options.length;
-  const folderName=document.createElement('input');folderName.maxLength=48;setDisplayAttribute(folderName,'aria-label',msg('Nueva carpeta'));
-  this.root.append(available,add,folderName,this.button(msg('Crear carpeta'),()=>{const name=folderName.value.trim();if(name&&this.draft.entries.length<48){this.draft.entries.push({type:'folder',id:crypto.randomUUID(),name,apps:[]});this.render();}}));
-  const error=this.text('p','');error.setAttribute('role','alert');
-  this.root.append(this.button(msg('Guardar teléfono'),()=>{try{savePhoneLayout(this.draft);this.saved(structuredClone(this.draft));setDisplayText(error,msg('Teléfono guardado.'));}catch{setDisplayText(error,msg('No se pudo guardar el teléfono. Tus cambios siguen aquí.'));}}),this.button(msg('Cancelar'),()=>this.reset()),this.button(msg('Restablecer distribución'),()=>{this.draft=defaultPhoneLayout();this.render();}),error);
- }
+ private tile(target:EventTarget|null){return target instanceof Element?target.closest<HTMLElement>('[data-phone-app],[data-phone-folder]'):null;}
+ private cancel(){if(this.timer)clearTimeout(this.timer);this.timer=null;this.gesture=null;this.screen.querySelectorAll('.sv-drop-target').forEach(e=>e.classList.remove('sv-drop-target'));}
+ private down(e:PointerEvent){if(e.button!==0||(e.target as Element).closest('[data-remove]'))return;const tile=this.tile(e.target);if(!tile)return;this.gesture={id:e.pointerId,x:e.clientX,y:e.clientY,app:(tile.dataset.phoneApp as PhoneAppId)||null,moved:false};if(!this.editing)this.timer=setTimeout(()=>{this.enter();this.suppress=true;this.gesture=null;},3000);else if(this.gesture.app){this.screen.setPointerCapture(e.pointerId);}}
+ private move(e:PointerEvent){const g=this.gesture;if(!g||g.id!==e.pointerId)return;if(Math.hypot(g.x-e.clientX,g.y-e.clientY)<8)return;if(this.timer)clearTimeout(this.timer);this.timer=null;if(!this.editing){this.cancel();return;}g.moved=true;e.preventDefault();this.screen.querySelectorAll('.sv-drop-target').forEach(n=>n.classList.remove('sv-drop-target'));this.tile(document.elementFromPoint(e.clientX,e.clientY))?.classList.add('sv-drop-target');}
+ private up(e:PointerEvent){const g=this.gesture;if(g&&g.id===e.pointerId&&g.moved&&g.app){const tile=this.tile(document.elementFromPoint(e.clientX,e.clientY));const r=tile?.getBoundingClientRect();const group=!!r&&e.clientX>r.left+r.width*.25&&e.clientX<r.right-r.width*.25;this.change(dropPhoneApp(this.draft,g.app,tile?.dataset.phoneApp??tile?.dataset.phoneFolder??null,group));this.suppress=true;setTimeout(()=>{this.suppress=false;},0);}if(this.screen.hasPointerCapture(e.pointerId))this.screen.releasePointerCapture(e.pointerId);this.cancel();}
+ enter(){this.editing=true;this.render();this.decorate();}
+ finish(){this.cancel();this.editing=false;this.library=false;this.render();this.decorate();}
+ private change(layout:PhoneLayout){this.draft=normalizePhoneLayout(layout);try{savePhoneLayout(this.draft);this.error='';}catch{this.error='No se pudo guardar el teléfono. Tus cambios siguen aquí.';}this.saved(this.draft);this.render();this.decorate();}
+ private button(label:string,run:()=>void){const b=document.createElement('button');b.type='button';b.className='sv-button';setDisplayText(b,msg(label));b.onclick=run;return b;}
+ decorate(){this.screen.classList.toggle('is-editing',this.editing);for(const tile of this.screen.querySelectorAll<HTMLElement>('[data-phone-app]')){tile.querySelector('[data-remove]')?.remove();const id=tile.dataset.phoneApp;if(this.editing&&id!=='settings'){const x=document.createElement('span');x.dataset.remove='';x.className='sv-phone-remove';x.textContent='×';setDisplayAttribute(x,'aria-label',msg('Quitar aplicación'));tile.append(x);}}
+ const title=this.screen.querySelector<HTMLElement>('.sv-phone-title');if(title){title.onclick=()=>{if(!this.editing||!this.folder())return;const folder=this.draft.entries.find(e=>e.type==='folder'&&e.id===this.folder());if(folder?.type!=='folder')return;const input=document.createElement('input');input.maxLength=48;input.value=folder.name;setDisplayAttribute(input,'aria-label',msg('Nombre de la carpeta'));title.replaceChildren(input);input.focus();input.select();const done=()=>{if(input.value.trim()){folder.name=input.value.trim();folder.builtin=false;this.change(this.draft);}};input.onblur=done;input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')input.blur();};};}}
+ private render(){this.root.hidden=!this.editing;this.root.replaceChildren();if(!this.editing)return;this.root.append(this.button('Listo',()=>this.finish()),this.button('Biblioteca de apps',()=>{this.library=!this.library;this.render();}));if(this.error){const error=document.createElement('p');error.setAttribute('role','alert');setDisplayText(error,msg(this.error));this.root.append(error,this.button('Reintentar',()=>this.change(this.draft)));}
+ if(this.library){const box=document.createElement('div');box.className='sv-phone-library';const installed=new Set(this.draft.entries.flatMap(e=>e.type==='app'?[e.id]:e.apps));for(const id of Object.keys(PHONE_APPS)as PhoneAppId[]){if(id==='identity'||id==='connection')continue;const b=this.button(PHONE_APPS[id],()=>this.change(movePhoneApp(this.draft,id,null)));b.disabled=installed.has(id);b.setAttribute('aria-pressed',String(installed.has(id)));box.append(b);}this.root.append(box);}}
+ dispose(){this.cancel();}
 }

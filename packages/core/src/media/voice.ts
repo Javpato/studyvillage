@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const person = z.string().regex(/^[a-f0-9]{64}$/);
 const id = z.string().regex(/^[A-Za-z0-9:_-]{1,100}$/);
-export const VOICE_GAMES = ['werewolves', 'gartic', 'study'] as const;
+export const VOICE_GAMES = ['werewolves', 'tetris', 'gartic', 'study'] as const;
 export const voiceCommandSchema = z.discriminatedUnion('action', [
   z.strictObject({ action: z.literal('call'), target: person.nullable() }),
   z.strictObject({ action: z.literal('create'), name: z.string().trim().min(1).max(48) }),

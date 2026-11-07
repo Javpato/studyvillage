@@ -18,9 +18,9 @@ export const LIMITS = {
   appData: 56_000,
 } as const;
 
-export type AppChannel = 'werewolves' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'sprites' | 'mailbox';
-export type CameraActivity = 'werewolves' | 'gartic' | 'village';
-export interface GameCameraPolicy {canSend:boolean;canReceive:boolean;audience:string[]|null;epoch?:string}
+export type AppChannel = 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'sprites' | 'mailbox';
+export type CameraActivity = 'werewolves' | 'tetris' | 'gartic' | 'village';
+export interface GameCameraPolicy {canSend:boolean;canReceive:boolean;audience:string[]|null;receiveAudience?:string[];epoch?:string}
 export interface GameCameraView {
   local: MediaStream | null; pending: boolean; error: string | null;
   remote: { identityId: IdentityId; stream: MediaStream }[];

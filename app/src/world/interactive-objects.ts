@@ -17,6 +17,7 @@ export type WorldAreaKind = 'residential' | 'community' | 'study' | 'house';
 export type InteractiveObjectKind =
   | 'whiteboard'
   | 'computer_project'
+  | 'arcade_tetris'
   | 'drawing_table_gartic'
   | 'campfire_werewolves'
   | 'bookshelf_notes'
@@ -32,7 +33,7 @@ export type InteractiveObjectKind =
   | 'portal';
 
 const ACTION_KINDS: ReadonlySet<InteractiveObjectKind> = new Set([
-  'whiteboard', 'computer_project', 'drawing_table_gartic', 'campfire_werewolves',
+  'arcade_tetris', 'whiteboard', 'computer_project', 'drawing_table_gartic', 'campfire_werewolves',
   'bookshelf_notes', 'flashcard_podium', 'ai_tutor_console', 'study_desk', 'voice_table', 'guide',
 ]);
 /** Rendering/configuration also supports ornaments; only these open a real activity. */
@@ -85,6 +86,7 @@ export const interactiveObjectSchema = z.object({
   kind: z.enum([
     'whiteboard',
     'computer_project',
+    'arcade_tetris',
     'drawing_table_gartic',
     'campfire_werewolves',
     'bookshelf_notes',

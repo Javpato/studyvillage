@@ -3,7 +3,7 @@ import {z} from 'zod';
 export const PHONE_APPS = {
  village:'Aldea', contacts:'Contactos', identity:'Identidad', house:'Mi casa', rooms:'Habitaciones',
  decorate:'Decorar', garden:'Mi jardín', settings:'Ajustes', connection:'Conexión', voice:'Voz',
- 'hud-editor':'Editar controles', ink:'Cuaderno de tinta', music:'Música', study:'Estudio', projects:'Proyectos', focus:'Concentración',
+ 'hud-editor':'Editar controles', ink:'Cuaderno de tinta', music:'Música', study:'Estudio', projects:'Proyectos', focus:'Concentración', tetris:'Bloques del Bosque',
 } as const;
 export type PhoneAppId = keyof typeof PHONE_APPS;
 const appId=z.enum(Object.keys(PHONE_APPS) as [PhoneAppId,...PhoneAppId[]]);
@@ -17,9 +17,9 @@ export const phoneLayoutSchema=z.strictObject({version:z.literal(1),entries:z.ar
 export type PhoneLayout=z.infer<typeof phoneLayoutSchema>;
 export type PhoneFolder=Extract<PhoneLayout['entries'][number],{type:'folder'}>;
 export function defaultPhoneLayout():PhoneLayout{return {version:1,entries:[
- {type:'app',id:'village'},{type:'app',id:'contacts'},{type:'app',id:'identity'},
+ {type:'app',id:'village'},{type:'app',id:'contacts'},
  {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden']},
- {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','connection','voice','hud-editor']},
+ {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor']},
 ]};}
 export function removePhoneFolder(layout:PhoneLayout,id:string):PhoneLayout{
  const found=layout.entries.find(e=>e.type==='folder'&&e.id===id);
@@ -36,4 +36,26 @@ export function movePhoneApp(layout:PhoneLayout,id:PhoneAppId,destination:string
 export function removePhoneApp(layout:PhoneLayout,id:PhoneAppId):PhoneLayout{
  if(id==='settings')return layout;
  return {...layout,entries:layout.entries.filter(e=>e.type!=='app'||e.id!==id).map(e=>e.type==='folder'?{...e,apps:e.apps.filter(a=>a!==id)}:e)};
+}
+
+/** Also used when importing older backups. Removed shortcuts never delete app data. */
+export function normalizePhoneLayout(layout:PhoneLayout):PhoneLayout {
+ const retired=new Set(['identity','connection']);
+ return {...layout,entries:layout.entries.flatMap<PhoneLayout['entries'][number]>(e=>e.type==='app'?(retired.has(e.id)?[]:[e]):[{...e,apps:e.apps.filter(id=>!retired.has(id))}]).filter(e=>e.type==='app'||e.apps.length>0)};
+}
+export function dropPhoneApp(layout:PhoneLayout,id:PhoneAppId,target:string|null,group=false):PhoneLayout {
+ if(id===target)return layout;
+ const next=structuredClone(layout);
+ const source=next.entries.find(e=>e.type==='app'?e.id===id:e.apps.includes(id));
+ const destination=next.entries.find(e=>e.type==='app'?e.id===target:e.id===target||e.apps.includes(target as PhoneAppId));
+ if(!source)return layout;
+ if(source.type==='app')next.entries.splice(next.entries.indexOf(source),1);else source.apps=source.apps.filter(a=>a!==id);
+ if(!destination)next.entries.push({type:'app',id});
+ else if(destination.type==='folder'){
+  const at=destination.apps.indexOf(target as PhoneAppId);destination.apps.splice(at<0?destination.apps.length:at,0,id);
+ }else if(group){
+  let n=1;while(next.entries.some(e=>e.type==='folder'&&e.name===`Folder ${n}`))n++;
+  next.entries.splice(next.entries.indexOf(destination),1,{type:'folder',id:crypto.randomUUID(),name:`Folder ${n}`,apps:[destination.id,id]});
+ }else next.entries.splice(next.entries.indexOf(destination),0,{type:'app',id});
+ return normalizePhoneLayout(next);
 }

@@ -91,7 +91,7 @@ export class SharedRoom<Action, View, Engine extends RoomEngine<Action, View> = 
     this.publish();
   }
   private stopVoice(): void {
-    if (this.channel === 'werewolves' || this.channel === 'gartic' || this.channel === 'study') this.actions.voiceCommand?.({ action: 'game.end', game: this.channel });
+    if (this.channel === 'tetris' || this.channel === 'werewolves' || this.channel === 'gartic' || this.channel === 'study') this.actions.voiceCommand?.({ action: 'game.end', game: this.channel });
   }
   /** Organiser command, applied here when this device is the authority, otherwise sent to it. */
   command(command: RoomCommand, data?: unknown): void {
@@ -143,14 +143,17 @@ export class SharedRoom<Action, View, Engine extends RoomEngine<Action, View> = 
     if (this.engine && !this.timer) {
       this.timer = setInterval(() => {
         if (this.engine?.tick(Date.now())) this.publish();
-      }, TICK_MS);
+      }, this.channel==='tetris'?50:TICK_MS);
     } else if (!this.engine && this.timer) {
       clearInterval(this.timer);
       this.timer = null;
     }
   }
 
+  private lastTetrisPublish=0;
   private publish(): void {
+    if(this.channel==='tetris'&&(this.engine?.viewFor('',Date.now()) as {phase:string})?.phase==='playing'&&Date.now()-this.lastTetrisPublish<100)return;
+    this.lastTetrisPublish=Date.now();
     const engine = this.engine;
     if (!engine) return;
     const now = Date.now();
