@@ -28,23 +28,24 @@ An arbitrary HTTP LAN address is not a secure iPad camera/PWA route. Use HTTPS w
 
 ## Downloads and Releases
 
-Download the five development packages from [GitHub Releases](https://github.com/Javpato/studyvillage/releases). A version tag matching package.json triggers the Releases workflow. Alternatively, run it manually from the desired commit with the matching release tag; a new tag is created only after all checks pass, and existing tags cannot be redirected to a different commit. In both cases, one validated web build is packaged on Linux, Windows, Intel macOS, Apple Silicon macOS and Android runners. Each package is compared byte-for-byte with that web build. Desktop startup/storage/file/notebook smoke tests run on their corresponding OS; the APK is installed and launched in an Android API 35 emulator, without physical-device certification. All five must succeed before the pre-release is published with SHA-256 checksums and build metadata. Disable `publish_release` for a manual verification-only run that does not create or modify a Release. The complete deterministic Chromium suite runs before packaging; external-signaling and environment-specific fixtures remain explicitly opt-in.
+Download one self-contained delivery per OS from [GitHub Releases](https://github.com/Javpato/studyvillage/releases): Windows Setup EXE, Linux AppImage, universal macOS DMG, or Android APK. The same DMG runs on Intel and Apple Silicon. No ZIP/tar application folders are published. Windows includes its runtime in the installer and installs for the current user; uninstalling preserves the separate player-data profile.
 
-Desktop archives contain the complete application folder and must be unpacked together. These development packages have no commercial signing or macOS notarization. Android is debug signed; CI's generated debug key can change between builds, so upgrade continuity is not guaranteed. Export backups before uninstalling an older APK. iOS continues to use the installable web app.
+A matching version tag triggers the Releases workflow. A manual run can create the tag only after all checks pass; disable `publish_release` for verification without publication. One validated web build is shared by all four deliveries. Windows installation/uninstallation, extracted AppImage startup, copied DMG application startup on both Mac architectures and APK installation/startup are required before publication. The release verifier checks native-test receipts against each installer's SHA-256, version and source commit. Checksums and consolidated provenance accompany the four installers.
+
+These development installers have no commercial signing certificate or Apple notarization. Android is debug signed, and CI's generated key can change between builds: export backups before uninstalling an old APK. iOS continues to use the installable web app.
 
 ## Desktop and Android
 
 Build and launch paths:
 
-| Target | Command | Output |
+| Target | Command (on that OS) | Single release file |
 |---|---|---|
-| Linux x64 | `npm run linux:build` | `deliverables/linux-current/StudyVillage/studyvillage` |
-| Windows x64 | `npm run windows:build` | `deliverables/windows-current/StudyVillage-win32-x64/StudyVillage.exe` |
-| macOS Intel | `npm run mac:build` | `deliverables/macos-current/StudyVillage-darwin-x64/StudyVillage.app` |
-| macOS Apple Silicon | `npm run mac:arm64:build` | `deliverables/macos-current/StudyVillage-darwin-arm64/StudyVillage.app` |
+| Windows x64 | `npm run windows:build` | `deliverables/release-current/StudyVillage-Setup-x64.exe` |
+| Linux x64 | `npm run linux:build` | `deliverables/release-current/StudyVillage-linux-x64.AppImage` |
+| macOS Intel + Apple Silicon | `npm run mac:build` | `deliverables/release-current/StudyVillage-macos-universal.dmg` |
 | Android | `npm run android:apk` | `deliverables/android-current/StudyVillage-development.apk` |
 
-Keep the complete desktop folder, including resources/DLLs. Windows/macOS packages are unsigned; OS execution policy may restrict them. Linux retains Chromium sandboxing and can use an installed root-owned Chrome sandbox helper. Wayland screen sharing requires a functioning system portal and actual-session testing. Electron 45 requires **macOS 13 Ventura or later**; the owner's older Mac version is unknown ([Electron support change](https://www.electronjs.org/docs/latest/breaking-changes#removed-macos-12-support)). See VERIFICATION.md for built versus runtime-tested targets.
+Windows: run the EXE and choose the destination. macOS: open the DMG and drag StudyVillage to Applications; macOS 13 or later is required. Linux: run `chmod +x StudyVillage-linux-x64.AppImage`, then launch that file. AppImage requires the host's graphical libraries and FUSE 2; systems without FUSE can extract it with `--appimage-extract` and run `squashfs-root/AppRun`. Chromium sandbox requirements still apply: do not add `--no-sandbox`. CI tests an extracted AppImage with a properly owned sandbox helper. Wayland screen sharing also needs a working system portal. Physical-device/media certification remains outside automated coverage.
 
 Desktop data uses the separate `local.studyvillage.rebuild` profile (Linux: `$XDG_DATA_HOME`, falling back to `~/.local/share`; Windows/macOS: Electron's application-data location). The original profile is never imported automatically.
 
@@ -142,6 +143,6 @@ npx electron scripts/export-legacy-profile.cjs /absolute/path/to/original-profil
 
 Use the installed Chrome sandbox helper via `CHROME_DEVEL_SANDBOX` if your Linux environment requires it. The script reads `studyvillage.sqlite3` and legacy WebKit storage read-only. If Chromium storage exists, it opens only a temporary copy with networking disabled. The source and an existing output file are never overwritten; unknown legacy storage keys are retained under `references` in the archive and are **not activated** by the new app. Import the resulting archive through Identity in the rebuild. Browser/Android profiles need an explicit export from their own accessible storage; this desktop reader is not an automatic extractor for those platforms. Only synthetic profiles have been migrated and reopened in testing; no original personal profile was accessed. Preserve the old app/profile until you have checked your own archive and any retained references.
 
-Current compressed desktop packages live beside their unpacked folders. `deliverables/SHA256SUMS` records hashes; `BUILD_INFO.json` records the shared PWA version. On Linux, `sh scripts/archive-current.sh` regenerates the current archives after packaging.
+Current single-file deliveries live in `deliverables/release-current/`; unpacked current build folders remain only for development. `SHA256SUMS` and `BUILD_INFO.json` in the Release identify the tested installers and shared web build. Build each installer on its corresponding OS; macOS produces one universal DMG.
 
 The current client and persistent server use protocol 7 for cancellable access requests and private mailbox commands. Update both together; incompatible older servers are rejected before joining.

@@ -10,19 +10,18 @@ on:
         required: true
         type: string
       publish_release:
-        description: Publish a new Release after verification (disable to audit current code)
+        description: Publish a Release after verification (disable to audit)
         type: boolean
         default: true
 
 permissions:
   contents: read
-
 concurrency:
   group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
-
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+  CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
 jobs:
   validate:
@@ -50,9 +49,9 @@ jobs:
           xvfb-run -a npm run linux:test
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:pages
-      - name: Verify complete deterministic Chromium regression suite
+      - name: Complete Chromium regression suite
         run: xvfb-run -a npm run test:e2e
-      - name: Verify phone and starter house in WebKit
+      - name: Phone and starter house in WebKit
         run: npm run test:webkit -- phone-layout.spec.ts initial-house.spec.ts
       - uses: actions/upload-artifact@v7
         with:
@@ -69,19 +68,12 @@ jobs:
         include:
           - key: linux
             os: ubuntu-24.04
-            label: Linux x64
           - key: windows
             os: windows-2025
-            label: Windows x64
-          - key: intel
-            os: macos-15-intel
-            label: macOS Intel
-          - key: arm64
+          - key: macos
             os: macos-15
-            label: macOS Apple Silicon
           - key: android
             os: ubuntu-24.04
-            label: Android debug
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -99,23 +91,9 @@ jobs:
         with:
           name: release-web
           path: app/dist
-      - name: Linux application
-        if: matrix.key == 'linux'
-        run: |
-          unset ELECTRON_SKIP_BINARY_DOWNLOAD
-          node node_modules/electron/install.js
-          node scripts/build-linux.mjs
-          sudo chown root:root deliverables/linux-current/StudyVillage/chrome-sandbox
-          sudo chmod 4755 deliverables/linux-current/StudyVillage/chrome-sandbox
-      - name: Windows application
-        if: matrix.key == 'windows'
-        run: node scripts/package-platform.mjs win32 x64
-      - name: Intel Mac application
-        if: matrix.key == 'intel'
-        run: node scripts/package-platform.mjs darwin x64
-      - name: Apple Silicon application
-        if: matrix.key == 'arm64'
-        run: node scripts/package-platform.mjs darwin arm64
+      - name: Build desktop single-file installer
+        if: matrix.key != 'android'
+        run: node scripts/build-installer.mjs '${{ matrix.key }}'
       - uses: actions/setup-java@v5
         if: matrix.key == 'android'
         with:
@@ -126,16 +104,28 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
-      - name: Android application
+      - name: Build self-contained Android APK
         if: matrix.key == 'android'
         run: |
           npx cap sync android
           bash android/gradlew -p android assembleDebug
           node scripts/collect-android.mjs
-      - name: Enable hardware acceleration for Android smoke test
+          node scripts/build-installer.mjs android
+      - name: Compare packaged web files and native bridge
+        run: node scripts/verify-packages.mjs '${{ matrix.key }}'
+      - name: Verify actual Linux AppImage payload with sandbox
+        if: matrix.key == 'linux'
+        run: xvfb-run -a node scripts/test-installer.mjs linux
+      - name: Install, test and uninstall the Windows EXE
+        if: matrix.key == 'windows'
+        run: node scripts/test-installer.mjs windows
+      - name: Mount universal DMG and test on Apple Silicon
+        if: matrix.key == 'macos'
+        run: node scripts/test-installer.mjs macos
+      - name: Enable Android emulator hardware acceleration
         if: matrix.key == 'android'
         run: sudo chmod a+rw /dev/kvm
-      - name: Install and launch the actual APK in Android emulator
+      - name: Install and launch actual APK
         if: matrix.key == 'android'
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -146,28 +136,6 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: node scripts/test-android.mjs
-      - name: Compare packaged web files and desktop bridge
-        run: node scripts/verify-packages.mjs '${{ matrix.label }}'
-      - name: Linux startup, storage and native file smoke test
-        if: matrix.key == 'linux'
-        run: xvfb-run -a node scripts/test-linux.mjs
-      - name: Windows startup, storage and native file smoke test
-        if: matrix.key == 'windows'
-        env:
-          SV_DESKTOP_EXECUTABLE: deliverables/windows-current/StudyVillage-win32-x64/StudyVillage.exe
-        run: node scripts/test-linux.mjs
-      - name: Intel Mac startup, storage and native file smoke test
-        if: matrix.key == 'intel'
-        env:
-          SV_DESKTOP_EXECUTABLE: deliverables/macos-current/StudyVillage-darwin-x64/StudyVillage.app/Contents/MacOS/StudyVillage
-        run: node scripts/test-linux.mjs
-      - name: Apple Silicon startup, storage and native file smoke test
-        if: matrix.key == 'arm64'
-        env:
-          SV_DESKTOP_EXECUTABLE: deliverables/macos-current/StudyVillage-darwin-arm64/StudyVillage.app/Contents/MacOS/StudyVillage
-        run: node scripts/test-linux.mjs
-      - name: Archive current package
-        run: node scripts/archive-platform.mjs '${{ matrix.key }}'
       - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.key }}
@@ -175,8 +143,37 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-  publish:
+  test-macos-intel:
     needs: package
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-web
+          path: app/dist
+      - uses: actions/download-artifact@v8
+        with:
+          name: package-macos
+          path: deliverables/release-current
+      - name: Test the identical universal DMG on Intel
+        run: node scripts/test-installer.mjs macos
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-macos-intel-check
+          path: deliverables/release-current/INSTALL_CHECK-macos-x64.json
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    needs: [package, test-macos-intel]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -192,12 +189,11 @@ jobs:
           pattern: package-*
           path: deliverables/release-current
           merge-multiple: true
-      - name: Verify all archives and generate checksums
+      - name: Require four installers and native verification receipts
         run: node scripts/verify-release.mjs
-      - name: Publish complete development release
+      - name: Publish four installers with checksums and provenance
         if: github.event_name != 'workflow_dispatch' || inputs.publish_release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-        run: |
-          gh release create "$RELEASE_TAG" deliverables/release-current/* --target "$GITHUB_SHA" --prerelease --title "StudyVillage $RELEASE_TAG" --notes-file docs/RELEASE_NOTES.md
+        run: node scripts/publish-release.mjs

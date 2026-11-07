@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {mkdir,writeFile} from 'node:fs/promises';
+import {recordInstallerCheck} from './installer-receipt.mjs';
 const pkg='com.studyvillage.rebuild',out='test-results/android-smoke';
 await mkdir(out,{recursive:true});
 const adb=(...args)=>execFileSync('adb',args,{timeout:45000,maxBuffer:8*1024*1024});
@@ -31,6 +32,7 @@ try{
  shell('am','force-stop',pkg);launch();await node('Abrir menú (M)');assert(shell('pidof',pkg).trim());
  const crashes=adb('logcat','-d','-s','AndroidRuntime:E').toString('utf8');assert(!crashes.includes('FATAL EXCEPTION'),crashes);
  console.log('PASS Android API 35 emulator: APK installation, WebView startup, default phone folders, house navigation and process restart.');
+ await recordInstallerCheck('android',{installation:true,startup:true,phone:true,house:true,restart:true});
 }finally{
  await writeFile(`${out}/ui.xml`,lastXml);await writeFile(`${out}/logcat.txt`,adb('logcat','-d','-t','400').toString('utf8'));
  shell('am','force-stop',pkg);

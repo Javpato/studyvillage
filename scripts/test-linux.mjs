@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-const executablePath = path.resolve(process.env.SV_DESKTOP_EXECUTABLE||'deliverables/linux-current/StudyVillage/studyvillage');
+const executablePath = path.resolve(process.env.SV_DESKTOP_EXECUTABLE||'deliverables/linux-current/linux-unpacked/studyvillage');
 const directory = mkdtempSync(path.join(tmpdir(), 'studyvillage-linux-test-'));
 const apps = [];
 async function launch(name) {

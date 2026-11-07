@@ -24,7 +24,7 @@ Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra 
 
 ## Empezar a jugar
 
-Abre el enlace web o descarga el paquete de tu plataforma en Releases. En escritorio, descomprime y conserva la carpeta completa antes de abrir el ejecutable. Hay paquetes para **Windows x64, Linux x64, macOS Intel, macOS Apple Silicon y Android**. Las entregas de desarrollo de escritorio no tienen firma comercial; Android se distribuye como APK de desarrollo.
+Abre el enlace web o descarga un único archivo para tu sistema en Releases: **Windows x64 (.exe), Linux x64 (.AppImage), macOS Intel y Apple Silicon (un mismo .dmg universal), o Android (.apk)**. En Windows, ejecuta el instalador. En Linux, da permiso de ejecución al AppImage y ábrelo. En macOS, abre el DMG y arrastra StudyVillage a Aplicaciones. Las entregas de desarrollo de escritorio no tienen firma comercial ni notarización; Android usa firma de desarrollo.
 
 En iPhone y iPad, abre la web en Safari y usa **Compartir → Añadir a pantalla de inicio**. No se distribuye una aplicación nativa de iOS. Consulta [instalación y compatibilidad](docs/SETUP.md) para requisitos de cada sistema.
 
@@ -51,13 +51,13 @@ Abre http://127.0.0.1:3100.
 npm run check          # Tipos, pruebas, traducciones y builds web/servidor
 npm run test:e2e       # Recorridos de navegador
 npm run test:pages     # Paquete web, instalación offline y escritura
-npm run windows:build # Carpeta ejecutable de Windows
-npm run linux:build   # Carpeta ejecutable de Linux; ejecutar desde Linux
-npm run mac:build     # Aplicación macOS Intel
+npm run windows:build # Instalador único .exe de Windows
+npm run linux:build   # AppImage único; ejecutar desde Linux
+npm run mac:build     # DMG universal; ejecutar desde macOS
 npm run android:apk   # APK; requiere JDK 21 y Android SDK 36
 ```
 
-Las Releases se construyen desde una etiqueta de versión: los cinco paquetes comparten el mismo cliente web y solo se publican cuando terminan sus verificaciones. Se adjuntan información de compilación y sumas SHA-256. Los scripts de empaquetado mantienen únicamente la entrega local vigente en `deliverables/`.
+Las Releases se construyen desde una etiqueta de versión: los cuatro instaladores comparten el mismo cliente web y solo se publican cuando terminan sus verificaciones. Se adjuntan información de compilación y sumas SHA-256. Los scripts de empaquetado mantienen únicamente la entrega local vigente en `deliverables/`.
 
 Más información: [funciones](docs/FEATURES.md), [arquitectura](docs/ARCHITECTURE.md), [cuadernos y tinta](docs/INK.md), [recursos gráficos](docs/SPRITES.md) y [verificaciones y límites](docs/VERIFICATION.md). Las pruebas automatizadas y una compilación correcta no sustituyen las comprobaciones en dispositivos físicos.
 

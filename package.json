@@ -1,6 +1,6 @@
 {
   "name": "studyvillage",
-  "version": "1.0.0-dev.6",
+  "version": "1.0.0-dev.7",
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
@@ -15,7 +15,7 @@
     "test:pages": "node scripts/verify-pages.mjs",
     "build": "npm run typecheck && vite build --config app/vite.config.ts && node scripts/build-pwa.mjs",
     "preview": "vite preview --config app/vite.config.ts --host 127.0.0.1 --port 3100",
-    "desktop:dev": "npm run build && node scripts/build-linux.mjs && deliverables/linux-current/StudyVillage/studyvillage",
+    "desktop:dev": "npm run linux:build && deliverables/linux-current/linux-unpacked/studyvillage",
     "desktop:build": "npm run linux:build",
     "check": "npm run typecheck && npm test && npm run i18n:check && npm run build && npm run server:build",
     "server:build": "node server/build.mjs",
@@ -26,13 +26,13 @@
     "dev:lan": "node scripts/lan-https.mjs",
     "android:apk": "npm run build && node scripts/build-android.mjs",
     "i18n:audit": "AUDIT_OUT=test-results/i18n-audit.json playwright test --config app/playwright.config.ts audit/crawl.spec.ts && python3 scripts/i18n-audit-report.py test-results/i18n-audit.json",
-    "linux:build": "node node_modules/electron/install.js && npm run build && node scripts/build-linux.mjs",
+    "linux:build": "npm run build && node scripts/build-installer.mjs linux",
     "linux:test": "node --test app/linux/*.test.cjs",
     "linux:smoke": "node scripts/test-linux.mjs",
-    "windows:build": "npm run build && node scripts/package-platform.mjs win32 x64",
-    "mac:build": "npm run build && node scripts/package-platform.mjs darwin x64",
+    "windows:build": "npm run build && node scripts/build-installer.mjs windows",
+    "mac:build": "npm run build && node scripts/build-installer.mjs macos",
     "test:webkit": "playwright test --config app/playwright.webkit.config.ts",
-    "mac:arm64:build": "npm run build && node scripts/package-platform.mjs darwin arm64"
+    "mac:arm64:build": "npm run build && node scripts/build-installer.mjs macos"
   },
   "dependencies": {
     "@capacitor/core": "8.6.0",
@@ -46,11 +46,12 @@
   "devDependencies": {
     "@capacitor/android": "8.6.0",
     "@capacitor/cli": "8.6.0",
-    "@electron/packager": "20.3.0",
+    "@electron/asar": "3.4.1",
     "@playwright/test": "1.64.1",
     "@tauri-apps/cli": "2.12.4",
     "@types/node": "26.6.6",
     "electron": "45.2.1",
+    "electron-builder": "26.18.0",
     "typescript": "7.0.2",
     "vite": "8.3.5",
     "vitest": "5.0.5"

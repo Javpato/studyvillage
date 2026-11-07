@@ -1,3 +1,14 @@
+# Single-file installers — 7 November 2026
+
+Candidate **1.0.0-dev.7** replaces desktop ZIP/tar folders with one delivery per OS: Windows NSIS Setup EXE, Linux AppImage, universal macOS DMG (Intel and Apple Silicon), and the existing Android APK. The application keeps its current player-data paths.
+
+- Local validation: application/server types, **458 app tests across 53 files**, **31 server tests**, translations and production builds pass. Six new installer checks reject missing Intel DMG verification, changed installer hashes, renamed ZIP executables, stale commits and missing Windows data-preservation checks.
+- Windows Setup EXE built successfully. Its unpacked application matches all 163 shared web files and native bridges, and passes sandboxed startup, storage, restart, native file export and notebook persistence. Real install/uninstall runs only in disposable CI; it checks that an existing player-data sentinel survives uninstall.
+- Release automation now tests the delivered EXE/AppImage/DMG payload, requires testing the identical universal DMG on both Mac architectures, and binds native-test receipts to the installer's hash, source and version. Only four installers, consolidated build metadata and checksums are published. The previous release remains available until the complete new pipeline succeeds.
+- Pending: run the release workflow manually with tag input `v1.0.0-dev.7`; collect native installer tests and the Intel DMG result; inspect failures before rerunning; verify the published downloads and clean generated task output. Do not repoint old tags.
+
+---
+
 # Expanded platform audit — 7 November 2026
 
 Version **1.0.0-dev.6**, source `519aa12`, includes the phone, starter house and mailbox changes described below. This audit also corrected the pending-access banner covering phone buttons on small screens and prevents editing or saving a sprite before its asynchronous PNG import finishes. Server action buttons now stay disabled until an operation is acknowledged, including after an intermediate house update.
