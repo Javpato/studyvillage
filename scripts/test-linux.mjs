@@ -39,6 +39,22 @@ try {
   await host.page.reload();await expect(host.page.getByTestId('phone-button')).toBeVisible();
   expect(await host.page.evaluate(() => localStorage.getItem('studyvillage-migration-test'))).toBe('Apuntes 📝');
   console.log('PASS: restart preserves imported settings and SQLite data');
+  await phone(host.page,'ink');
+  const notebook=host.page.locator('.sv-notebook');
+  const pageOptions=async()=>{
+    await notebook.getByRole('button',{name:'Opciones del cuaderno',exact:true}).click();
+    await notebook.getByRole('tab',{name:'Página',exact:true}).click();
+  };
+  await pageOptions();
+  const text=notebook.getByLabel('Texto de la página',{exact:true});
+  await text.fill('Native notebook — synthetic persistence check');await text.blur();
+  await expect(notebook.getByText('Guardado en este dispositivo',{exact:true})).toBeVisible();
+  await host.page.reload();await expect(host.page.getByTestId('phone-button')).toBeVisible();
+  await host.page.getByTestId('phone-button').click();await expect(host.page.getByTestId('phone-ink')).toBeVisible();
+  await host.page.getByTestId('phone-ink').click();await pageOptions();
+  await expect(text).toHaveValue('Native notebook — synthetic persistence check');
+  console.log('PASS: optional phone shortcut and private notebook content persist in the native application');
+  await notebook.locator('.sv-ink-header').getByRole('button',{name:'Cerrar',exact:true}).click();
   if (process.env.STUDYVILLAGE_LIVE === '1') {
     const guest = await launch('guest');
     await phone(host.page, 'village');await host.page.getByRole('button', { name: 'Abrir mi aldea a otras personas' }).click();

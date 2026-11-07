@@ -64,14 +64,19 @@ async function verify(name,engine){
  const errors=[];
  try{
   const context=await browser.newContext({viewport:{width:1024,height:768},hasTouch:true,isMobile:true});
-  const page=await context.newPage();page.setDefaultTimeout(20000);
+  let page=await context.newPage();page.setDefaultTimeout(20000);
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(address);await expect(page.getByTestId('phone-button')).toBeVisible();
   await expect(page.getByTestId('board-pencil-mode')).toHaveAttribute('aria-label','Modo lápiz');
   // `active` can already exist while its activate event is still running. A reload
   // during that interval may remain uncontrolled because this app does not claim open tabs.
   await page.waitForFunction(async()=>(await navigator.serviceWorker.getRegistration())?.active?.state==='activated');
-  await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  // Open a new client after installation. An existing document can remain
+  // uncontrolled across a reload in Chromium; the app deliberately never claims
+  // open editors or forces a reload while someone is writing.
+  await page.close();page=await context.newPage();page.setDefaultTimeout(20000);
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(address);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
   const installed=await page.evaluate(async key=>(await (await caches.open(key)).keys()).map(request=>new URL(request.url).pathname),cache);
   assert.deepEqual(installed.sort(),precache.map(name=>mount+name.slice(2)).sort(),'Incomplete offline package');
   await openNotebook(page);await options(page,'Página');
