@@ -110,7 +110,7 @@ export class ServersPanel {
       }
       this.devices.append(el('small',msg('Una sola casa y hasta tres dispositivos. La voz y la cámara se activan en uno a la vez.')));
     }
-    if (!connected || !server) return;
+    if (!connected || !server) { this.syncBusy(); return; }
     const roles = { admin: msg('Administración'), resident: msg('Residente'), visitor: msg('Visitante') } as const;
     setDisplayText(this.placeLine, msg('{name} · {role} · Barrio {n} de {total} · {online}/{max} conectadas', {
       name: server.name, role: server.role ? roles[server.role] : '', n: server.neighborhood + 1, total: server.neighborhoods, online: server.online, max: server.maxOnline,
@@ -122,11 +122,17 @@ export class ServersPanel {
     if (server.neighborhood < server.neighborhoods - 1) this.travelRow.append(button(msg('Barrio {n} →', { n: server.neighborhood + 2 }), () => void this.run(() => this.ctx.actions.travel(server.neighborhood + 1))));
     if (server.role !== this.lastRole || document.activeElement !== this.capacity) { this.capacity.value = String(server.maxOnline); this.capacityPreview(); }
     this.lastRole = server.role;
+    this.syncBusy();
+  }
+
+  private syncBusy(): void {
+    this.root.setAttribute('aria-busy', String(this.busy));
+    for (const button of this.root.querySelectorAll('button')) button.disabled = this.busy;
   }
 
   private async run(work: () => Promise<unknown>): Promise<void> {
-    if (this.busy) return; this.busy = true;
-    try { await work(); } catch (error) { this.ctx.notify(errorMessage(error)); } finally { this.busy = false; }
+    if (this.busy) return; this.busy = true; this.syncBusy();
+    try { await work(); } catch (error) { this.ctx.notify(errorMessage(error)); } finally { this.busy = false; this.syncBusy(); }
   }
 
   private renderSaved(): void {
@@ -141,6 +147,7 @@ export class ServersPanel {
       li.append(use, forget); list.append(li);
     }
     this.savedList.append(el('h4', msg('Servidores guardados')), list);
+    this.syncBusy();
   }
 
   private async check(): Promise<boolean> {
@@ -195,6 +202,7 @@ export class ServersPanel {
       const box = el('textarea', '', 'sv-input'); box.readOnly = true; box.rows = 2; box.value = text; setDisplayAttribute(box, 'aria-label', msg('Invitación creada'));
       const copy = button(msg('Copiar invitación'), () => { void navigator.clipboard.writeText(text).then(() => this.ctx.notify(t('Invitación copiada.'))).catch(() => { box.select(); this.ctx.notify(t('Selecciona y copia el texto.')); }); });
       this.created.append(el('p', msg('Compártela solo con quien quieras invitar. No se volverá a mostrar.'), 'sv-subtle'), box, copy);
+      this.syncBusy();
       await this.loadInvites();
     });
   }
@@ -212,5 +220,6 @@ export class ServersPanel {
         this.invitesList.append(li);
       }
     } catch (error) { this.ctx.notify(errorMessage(error)); }
+    finally { this.syncBusy(); }
   }
 }
