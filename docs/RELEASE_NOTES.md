@@ -1,6 +1,6 @@
 Una aldea más personal: organiza el teléfono y empieza con una casa sencilla.
 
-Esta revisión corrige un aviso de solicitud de acceso que tapaba aplicaciones del teléfono en pantallas pequeñas. Amplía las pruebas nativas con guardado y reapertura del cuaderno, añade instalación y arranque del APK en un emulador Android API 35 y actualiza las acciones de artefactos a Node.js 24. La batería de regresión de Chromium se ejecuta antes de publicar.
+Esta revisión corrige un aviso de solicitud de acceso que tapaba aplicaciones del teléfono en pantallas pequeñas. Evita editar o guardar un personaje mientras todavía se importa su PNG y mantiene desactivadas las acciones del servidor hasta que termina la operación pendiente. Amplía las pruebas nativas con guardado y reapertura del cuaderno, añade instalación y arranque del APK en un emulador Android API 35 y actualiza las acciones de artefactos a Node.js 24. La batería de regresión de Chromium se ejecuta antes de publicar.
 
 - Inicio con Aldea, Contactos e Identidad; carpetas Hogar y Ajustes.
 - Añade o quita accesos, crea carpetas y cambia su orden desde Ajustes → Teléfono. Ajustes siempre permanece accesible; quitar aplicaciones conserva sus datos.
