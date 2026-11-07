@@ -79,7 +79,7 @@ for (const profile of [{ name: 'desktop', width: 1440, height: 1000, touch: fals
       expect(bounds.y).toBeGreaterThanOrEqual(0);
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(profile.width);
       expect(bounds.y + bounds.height).toBeLessThanOrEqual(profile.height);
-      await page.screenshot({ path: `docs/verification/npc-speech${profile.touch ? '-phone' : ''}.png`, animations: 'disabled' });
+      await page.screenshot({ path:test.info().outputPath(`npc-speech${profile.touch ? '-phone' : ''}.png`), animations: 'disabled' });
       const parts: string[] = [];
       for (let count = 0; count < 20 && await speech.isVisible(); count++) {
         await expect(next).toHaveText(/^(Siguiente|Listo)$/);
@@ -101,7 +101,7 @@ for (const profile of [{ name: 'desktop', width: 1440, height: 1000, touch: fals
       await settings.getByLabel('Texto por burbuja', { exact: true }).selectOption('3');
       await settings.getByLabel('Texto progresivo', { exact: true }).uncheck();
       await expect(opacity).toHaveValue('60');
-      if (!profile.touch) { await settings.locator('.sv-npc-settings').scrollIntoViewIfNeeded(); await page.screenshot({ path: 'docs/verification/npc-dialogue-settings.png', animations: 'disabled' }); }
+      if (!profile.touch) { await settings.locator('.sv-npc-settings').scrollIntoViewIfNeeded(); await page.screenshot({ path:test.info().outputPath('npc-dialogue-settings.png'), animations: 'disabled' }); }
       await page.reload();
       settings = await dialogueSettings(page);
       await expect(settings.getByLabel('Opacidad del fondo', { exact: true })).toHaveValue('60');

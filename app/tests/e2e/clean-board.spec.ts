@@ -29,7 +29,7 @@ for (const [device, width, height] of [['phone', 390, 844], ['iPad', 820, 1180],
     await expect(page.getByTestId('board-rename-input')).not.toBeVisible();
     await expect(primary.getByRole('button', { name: 'Lápiz', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await canvas.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: `/tmp/clean-board-${device}.png`, fullPage: true });
+    await page.screenshot({ path:test.info().outputPath(`clean-board-${device}.png`), fullPage: true });
     const box = (await canvas.boundingBox())!;
     const pixels = () => canvas.evaluate(el => (el as HTMLCanvasElement).toDataURL());
     const empty = await pixels();
@@ -53,7 +53,7 @@ for (const [device, width, height] of [['phone', 390, 844], ['iPad', 820, 1180],
     await expect(options.getByRole('button', { name: 'Mano', exact: true })).toHaveCount(0);
     await options.locator('summary', { hasText: 'Formas' }).click();
     await expect(page.getByTestId('board-tool-circle')).toBeVisible();
-    await page.screenshot({ path: `/tmp/organized-board-${device}.png`, fullPage: true });
+    await page.screenshot({ path:test.info().outputPath(`organized-board-${device}.png`), fullPage: true });
     await page.keyboard.press('Escape');
     await expect(options).not.toBeVisible();
     await expect(canvas).toBeVisible();

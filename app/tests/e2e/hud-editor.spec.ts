@@ -27,7 +27,7 @@ for(const[device,width,height]of[['phone',390,844],['tablet',820,1180]]as const)
    await editor.getByRole('button',{name:'Guardar controles',exact:true}).click();await expect(action).toHaveCSS('background-color','rgb(18, 52, 86)');
    await page.setViewportSize({width:height,height:width});await expect(action).toHaveCSS('background-color','rgb(101, 67, 33)');await page.setViewportSize({width,height});await expect(action).toHaveCSS('background-color','rgb(18, 52, 86)');
    await open();await editor.getByLabel('Control para editar').selectOption('interact');await editor.getByLabel('Mostrar en pantalla').uncheck();await editor.getByRole('button',{name:'Cancelar',exact:true}).click();await expect(action).toBeVisible();
-   await page.screenshot({path:`/tmp/studyvillage-hud-${device}.png`,fullPage:true});
+   await page.screenshot({path:test.info().outputPath(`studyvillage-hud-${device}.png`),fullPage:true});
   });
  });
 }

@@ -15,7 +15,7 @@ for(const [device,width,height] of [['phone',390,844],['iPad',820,1180],['deskto
     await video.evaluate(v=>{(window as any).cameraTrack=((v as HTMLVideoElement).srcObject as MediaStream).getVideoTracks()[0];});
     const tile=(await page.locator('.sv-game-camera-tile').boundingBox())!;expect(Math.abs(tile.width-tile.height)).toBeLessThan(2);
     await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    await page.screenshot({path:`/tmp/camera-${game}-${device}.png`,animations:'disabled'});
+    await page.screenshot({path:test.info().outputPath(`camera-${game}-${device}.png`),animations:'disabled'});
     await page.getByRole('button',{name:'Apagar cámara',exact:true}).click();await expect(page.locator('.sv-game-camera-tile')).toHaveCount(0);expect(await page.evaluate(()=>(window as any).cameraTrack.readyState)).toBe('ended');
     await page.getByRole('button',{name:'Activar cámara',exact:true}).click();await expect(video).toBeVisible();await video.evaluate(v=>{(window as any).cameraTrack=((v as HTMLVideoElement).srcObject as MediaStream).getVideoTracks()[0];});
     await page.getByTestId('expansion-modal-close').click();await expect(page.locator('.sv-game-camera')).toHaveCount(0);expect(await page.evaluate(()=>(window as any).cameraTrack.readyState)).toBe('ended');

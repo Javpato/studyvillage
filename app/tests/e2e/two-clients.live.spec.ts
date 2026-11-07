@@ -225,7 +225,7 @@ test('game cameras share video only inside the same open game and stop when it c
     await expect.poll(()=>guest.getByLabel('Cámara de Cámara anfitrión',{exact:true}).evaluate(v=>(v as HTMLVideoElement).videoWidth)).toBeGreaterThan(0);
     await guest.getByTestId('expansion-modal-overlay').getByRole('button',{name:'Activar cámara',exact:true}).click();await expect(host.locator('.sv-game-camera-tile')).toHaveCount(2,{timeout:25000});
     await expect.poll(()=>host.getByLabel('Cámara de Cámara invitado',{exact:true}).evaluate(v=>(v as HTMLVideoElement).videoWidth)).toBeGreaterThan(0);
-    await host.screenshot({path:'/tmp/camera-two-clients.png',animations:'disabled'});
+    await host.screenshot({path:test.info().outputPath('camera-two-clients.png'),animations:'disabled'});
     await guest.getByTestId('expansion-modal-close').click();await expect(host.locator('.sv-game-camera-tile')).toHaveCount(1,{timeout:15000});
     await host.getByTestId('expansion-modal-close').click();await expect(host.locator('.sv-game-camera')).toHaveCount(0);
   } finally {await Promise.all(contexts.map(c=>c.close()));}

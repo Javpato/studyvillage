@@ -74,7 +74,7 @@ test('Excalifont renders in the editor, survives offline reload and exports with
  if(await page.evaluate(()=>navigator.serviceWorker.getRegistration().then(Boolean))){await page.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));await page.context().setOffline(true);}
  await page.reload();await openBoard(page);expect((await strokes(page))[0].textStyle?.fontFamily).toBe('excalifont');
  await expect.poll(()=>page.evaluate(()=>[...document.fonts].filter(f=>f.family==='Excalifont'&&f.status==='loaded').length)).toBe(7);
- await page.screenshot({path:`/tmp/studyvillage-excalifont-${browserName}.png`});
+ await page.screenshot({path:test.info().outputPath(`studyvillage-excalifont-${browserName}.png`)});
  await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await page.locator('.sv-board-options-panel summary').filter({hasText:/^Pizarra y archivo$/}).click();
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'↓ Exportar PNG',exact:true}).click();expect((await download).suggestedFilename()).toMatch(/\.png$/);
 });

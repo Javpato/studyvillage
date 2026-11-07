@@ -7,7 +7,7 @@ for(const [device,width,height]of [['phone',390,844],['tablet',820,1180],['deskt
   await expect(root.locator('.sv-study-portal')).toHaveCount(3);await expect(root.locator('.sv-study-portal svg')).toHaveCount(3);
   const size=await root.boundingBox();expect(size!.width).toBe(width);expect(size!.height).toBe(height);
   await expect(root.getByText(/Ollama|IA local|Configurar IA/)).toHaveCount(0);
-  await page.screenshot({path:`/tmp/study-home-${device}.png`,animations:'disabled'});
+  await page.screenshot({path:test.info().outputPath(`study-home-${device}.png`),animations:'disabled'});
   await root.getByRole('button',{name:/^Flashcards/}).click();await root.getByRole('button',{name:/Repasar mis flashcards/}).click();await root.getByRole('button',{name:'Crear mi primer mazo'}).click();await root.getByLabel('Nombre del mazo').fill('Mi repaso');await root.getByRole('button',{name:'Crear',exact:true}).click();
   await root.getByRole('button',{name:'Añadir tarjeta',exact:true}).click();await expect(root.getByRole('alert')).toContainText('Escribe la pregunta');await expect(root.getByText(/too_small|ZodError|string too small/)).toHaveCount(0);
   await root.getByLabel('Pregunta',{exact:true}).fill('¿Capital de Francia?');await root.getByLabel('Respuesta',{exact:true}).fill('París');await root.getByRole('button',{name:'Añadir tarjeta',exact:true}).click();await expect(root.getByText('1. ¿Capital de Francia?')).toBeVisible();await expect(root.getByText('Usar en concursos')).toHaveCount(0);
