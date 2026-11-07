@@ -1,3 +1,29 @@
+# Expanded platform audit — 7 November 2026
+
+Candidate **1.0.0-dev.6**, source `519aa12`, includes the phone, starter house and mailbox changes described below. This audit also corrected the pending-access banner covering phone buttons on small screens and prevents editing or saving a sprite before its asynchronous PNG import finishes. Server action buttons now stay disabled until an operation is acknowledged, including after an intermediate house update.
+
+- Local application/server types, **452 application tests across 52 files**, **31 server tests**, **2,483 ES/EN/FR entries**, production web/PWA and server builds pass. Syntax checks pass for 37 JavaScript build, server and native-bridge files.
+- The eight Chromium garden/language/sprite regression cases pass. Fourteen applicable WebKit phone/house/garden/language/sprite cases pass; the CDP-only continuous-touch case runs in Chromium. Both engines pass production PWA installation, offline reopening, saved ink and finger navigation without writing or erasure.
+- The rebuilt Windows application matches all **163 current web files** and native bridge files byte-for-byte. Its sandboxed startup, secure context/WebRTC API, synthetic legacy import, server configuration, native file export, restart, optional phone shortcut and private notebook persistence checks pass.
+- Earlier verification-only [run 42377485242](https://github.com/Javpato/studyvillage/actions/runs/42377485242) passed all four desktop runners and installed/launched the APK in an Android API 35 emulator. It did not modify a Release. The expanded native checks now run on every release.
+- Release validation runs the complete Chromium suite under Xvfb so its Electron-backed backup fixture has a display. Language preservation compares stored editable strokes rather than font-dependent PNG bytes. The raw-CDP garden case uses the mouse driver to finish saving; a separate touch-only case verifies tap placement and saving.
+
+## Active verification checkpoint
+
+- Candidate code and version are pushed: `519aa125f3cfc68f74d1279fccd707e4fbd48bc8` on `main`.
+- [Release verification 42381429243](https://github.com/Javpato/studyvillage/actions/runs/42381429243) is running with tag input `v1.0.0-dev.6`. It creates the tag and Release only after validation and all five package jobs succeed. Do not repoint earlier tags.
+- The preceding full Windows Chromium run passed **174 tests**, with **14 intentional opt-in/environment skips**. The corresponding Linux run passed 173 and exposed the server-action race above. All four earlier Linux regressions passed after their fixes.
+- The new deterministic delayed-import regression passes in Chromium and WebKit. Focused Chromium server/access coverage passes **7 tests**, with 2 external-signaling skips. Application/server types, 483 unit tests, translations and builds pass after the server-action change.
+- A rebuilt local Windows candidate and production PWA/server WebKit checks are running or awaiting final collection. The current executable is `deliverables/windows-current/StudyVillage-win32-x64/StudyVillage.exe`.
+- Remaining: collect the current workflow result; inspect any failure before rerunning; confirm all five native packages, published downloads and SHA-256 metadata; replace this checkpoint with observed final results; remove task-generated `deliverables/.audit`, `test-results`, root `debug.log` and `scripts/.audit-github.ps1`. Preserve the current build, source, dependencies, reference images and user data.
+- Read-only local helper while this task is active: `powershell -File scripts/.audit-github.ps1 -RunId 42381429243`. The helper reads existing Git credentials without printing them. Completed job logs can be collected with its `-JobId` option.
+
+This checkpoint is deliberately saved before the final CI result so work can resume after a usage-limit reset.
+
+These checks cover automated execution on the named runners and emulator. Physical-device permissions, external-network multimedia, Apple Pencil and OS signing/notarization are not certified.
+
+---
+
 # Phone, starter house and release automation — 7 November 2026
 
 Version **1.0.0-dev.3** adds the customizable phone, minimal new-house furniture and removable starter mailbox. Saved houses are preserved, including deleted wardrobes and mailboxes. The main README now describes the social-village vision.
