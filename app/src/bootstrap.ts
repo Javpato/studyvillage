@@ -6,7 +6,7 @@ import { errorMessage, userError } from './errors/messages';
 import { t } from './i18n';
 import { getAvatarCustomization, setAvatarCustomization } from './assets/custom-assets';
 import { appearanceSchema } from './assets/appearance';
-import { installWardrobe } from './house/wardrobe';
+import { initialHouse } from './house/initial';
 import { decryptIdentity, encryptIdentity, exportContact, generateIdentity, parseContact, validatePublicIdentity } from '../../packages/core/src/identity';
 import { VillageClient } from '../../packages/runtime/src/session/client';
 import { ServerVillageClient, checkServer, serverHttpUrl } from '../../packages/runtime/src/server/client';
@@ -18,20 +18,6 @@ import { newLocalData, openLocalStore, publicHouse, SaveQueue, type LocalData } 
 import type { AppActions, AppMessage, AppView, PublicHouse, CameraActivity } from '../../packages/core/src/protocol/types';
 
 const activePhases = new Set(['SIGNALING', 'CONNECTING', 'AUTHENTICATING', 'PENDING_APPROVAL', 'JOINED', 'RECONNECTING']);
-function initialHouse(ownerId: string): PublicHouse {
-  return { ownerId, revision: 1, name: 'Mi rincón de estudio', access: 'ask', theme: 'mint', furniture: [
-    { id: 'clock', kind: 'clock', x: 65, y: 270, publicAlias: 'Reloj de concentración' },
-    { id: 'jukebox', kind: 'jukebox', x: 140, y: 270, publicAlias: 'Jukebox de estudio' },
-    { id: 'guide', kind: 'guide', x: 600, y: 285, publicAlias: 'Guía de la casa' },
-    { id: 'inkdesk', kind: 'inkdesk', x: 240, y: 270, publicAlias: 'Cuaderno de tinta' },
-    { id: 'desk', kind: 'desk', x: 130, y: 150, publicAlias: 'Mi proyecto' },
-    { id: 'library', kind: 'bookshelf', x: 55, y: 100, publicAlias: 'Lecturas' },
-    { id: 'board', kind: 'board', x: 340, y: 95, publicAlias: 'Ideas compartidas' },
-    { id: 'table', kind: 'table', x: 430, y: 240, publicAlias: 'Mesa de estudio' },
-    { id: 'plant', kind: 'plant', x: 660, y: 120, publicAlias: 'Un poco de verde' },
-    { id: 'frame', kind: 'frame', x: 560, y: 100, publicAlias: 'Inspiración' },
-  ] };
-}
 
 export async function startApp(root: HTMLElement): Promise<() => void> {
   const store = await openLocalStore();
@@ -43,11 +29,6 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
   let lockedIdentity = !!data.encryptedIdentity;
   let ownHouse = data.house ? publicHouse(data.house, identity.public.fingerprint) : initialHouse(identity.public.fingerprint);
   if (data.profile.appearance) setAvatarCustomization(data.profile.appearance);
-  const wardrobeMigration = !data.profile.wardrobeAdded;
-  if (wardrobeMigration) {
-    ownHouse = installWardrobe(ownHouse);
-    if (ownHouse.furniture.some(f => f.kind === 'cabinet')) data.profile.wardrobeAdded = true;
-  }
   let client: VillageClient | ServerVillageClient = new VillageClient(identity, ownHouse, { appearance: getAvatarCustomization(), mailboxLocalAlias: !data.encryptedIdentity, mailboxPreviousOwner: data.house?.ownerId });
   let network = client.view;
   let notice: string | null = lockedIdentity ? 'Desbloquea tu identidad guardada para conectar. Tu casa sigue disponible sin conexión.' : null;
@@ -281,7 +262,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
     dismissNotice: () => { notice = null; update(); },
   };
   ui = createStudyUI(root, actions); subscribe(); actions.setCameraActivity('village');
-  if (!loaded || wardrobeMigration) await persist();
+  if (!loaded) await persist();
   update();
   const dispose = () => {
     if (closed) return;
