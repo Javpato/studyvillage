@@ -8,3 +8,12 @@
 .sv-tetris-media{display:flex;flex-direction:column;gap:10px;margin-top:12px}.sv-activity[data-kind=tetris] .sv-tetris-media .sv-game-camera{order:0;box-sizing:border-box;margin:0;padding:8px;max-width:100%}.sv-activity[data-kind=tetris] .sv-game-camera-gallery{max-height:180px}.sv-activity[data-kind=tetris] .sv-game-camera-tile{max-width:145px;flex-basis:120px}
 .sv-activity[data-kind=tetris] .sv-game-voice{order:1;margin:0;align-self:stretch}.sv-tetris-voice{order:2;display:grid;grid-template-columns:1fr 1fr;margin:0;gap:6px}.sv-tetris-voice button{font-size:12px;padding:8px;min-width:0}.sv-activity[data-kind=tetris]{display:block}
 @media(max-width:600px){.sv-tetris-arena{grid-template-columns:minmax(0,1fr);gap:12px}.sv-tetris-center>canvas{height:58dvh;max-height:620px;width:auto;max-width:100%}.sv-tetris-side{display:grid;grid-template-columns:minmax(120px,1fr) minmax(100px,1fr);gap:8px;align-items:start}.sv-tetris-side>canvas{width:160px;height:auto;margin:0 auto}.sv-tetris-rivals{grid-column:1/-1;grid-template-columns:repeat(3,1fr);max-height:160px}.sv-tetris-media{grid-column:1/-1}.sv-tetris-keyboard{display:none}.sv-tetris-controls{gap:5px}.sv-tetris-controls button{padding:7px;min-width:38px}.sv-tetris-powers button{font-size:11px}}
+@media(max-width:600px){
+ .sv-tetris-arena{grid-template-columns:minmax(0,1fr) 104px;gap:10px;align-items:start}
+ .sv-tetris-center,.sv-tetris-side{display:contents}
+ .sv-tetris-center>canvas{grid-column:1;grid-row:1/4;width:100%;height:auto;max-height:60dvh;border-width:3px}
+ .sv-tetris-side>canvas{grid-column:2;grid-row:1;width:104px;height:auto;margin:0}
+ .sv-tetris-stats{grid-column:2;grid-row:2}.sv-tetris-rivals{grid-column:2;grid-row:3;grid-template-columns:1fr 1fr;max-height:150px}
+ .sv-tetris-controls{grid-column:1/-1;grid-row:4;margin:0}.sv-tetris-powers{grid-column:1/-1;grid-row:5}.sv-tetris-media{grid-column:1/-1;grid-row:6;margin:0}
+ .sv-tetris-controls button{min-width:38px;padding:7px}.sv-tetris-stats>div{gap:4px}.sv-tetris-status{margin:8px 0}
+}

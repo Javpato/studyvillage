@@ -316,6 +316,8 @@ class StudyUI {
   private enterDecorationButton!: HTMLButtonElement;
   private editGuideButton!:HTMLButtonElement;
   private selectedSpritePreview!:HTMLCanvasElement;
+  private kindSpritePreview!:HTMLCanvasElement;
+  private kindSpriteDescription!:HTMLElement;
   private renameFurnitureButton!: HTMLButtonElement;
   private furnitureNameDialog!: HTMLDialogElement;
   private furnitureNameInput!: HTMLInputElement;
@@ -1516,7 +1518,8 @@ class StudyUI {
       else { this.selectedFurnitureId = house.furniture[house.furniture.length - 1].id; this.commitDecoration(house, this.selectedFurnitureId); }
     });
     const addRow = node('div', 'sv-inline');
-    append(addRow, this.furnitureKindSelect, addButton);
+    this.kindSpritePreview=node('canvas','sv-selected-sprite');this.kindSpritePreview.width=120;this.kindSpritePreview.height=90;this.kindSpriteDescription=node('small');this.furnitureKindSelect.addEventListener('change',()=>this.refreshFurnitureKindPreview());
+    append(addRow,this.kindSpritePreview,this.furnitureKindSelect, addButton,this.kindSpriteDescription);
     this.furnitureDetail = node('div', 'sv-furniture-detail');
     this.furnitureUseButton = button(msg('⚡ Usar mueble (E)'), 'sv-button sv-button-small sv-button-primary sv-wide');
     this.furnitureUseButton.style.marginBottom = '8px';
@@ -1563,7 +1566,7 @@ class StudyUI {
       const reader = new FileReader();
       reader.onload = async () => {
         if (typeof reader.result === 'string') {
-          if(!await confirmSprite(reader.result).catch(()=>false))return;
+          if(!await confirmSprite(reader.result).catch(()=>{this.notify(t('No se pudo leer la imagen.'));return false;}))return;
           if (item.kind === 'board') {
             const bId = this.localBoardFor(item.id);
             this.expansion.boardRegistry.ensureBoard(bId, item.publicAlias || 'Pizarra de estudio', 'house', this.view!.identity.fingerprint);
@@ -1920,6 +1923,7 @@ class StudyUI {
     setInput(this.houseAccessSelect, house.access);
     setInput(this.houseThemeSelect, house.theme);
     setText(this.furnitureCount, `${house.furniture.length}/${LIMITS.furniture}`);
+    this.refreshFurnitureKindPreview();
     const selected = house.furniture.find((item) => item.id === this.selectedFurnitureId) || null;
     show(this.furnitureDetail, !!selected);
     this.renameFurnitureButton.disabled=!selected;this.editGuideButton.hidden=selected?.kind!=='guide';
@@ -2260,6 +2264,10 @@ class StudyUI {
     const id=this.localBoardFor(item.id),name=item.publicAlias.trim()||'Pizarra de estudio',owner=this.view.identity.fingerprint;
     const metadata=this.expansion.boardRegistry.ensureBoard(id,name,'house',owner);
     if(metadata.displayName!==name)this.expansion.boardRegistry.renameBoard(id,name,owner,true);
+  }
+  private refreshFurnitureKindPreview():void {
+    const kind=this.furnitureKindSelect.value as FurnitureKind;if(!FURNITURE_LABELS[kind])return;
+    drawFurniturePreview(this.kindSpritePreview.getContext('2d')!,kind,0,undefined,!!this.localPosition.space);setDisplayText(this.kindSpriteDescription,msg(FURNITURE_DESCRIPTIONS[kind]));
   }
   private openGuideText():void {
     if(!this.view)return;const house=this.ownDecoratedHouse(),item=house.furniture.find(f=>f.id===this.selectedFurnitureId);
@@ -3416,7 +3424,7 @@ class StudyUI {
     if (this.decorating && key === 'escape') { if (this.pendingFurniture || this.drag || this.doorDrag || this.previewHouse) { this.pendingFurniture = null; this.drag = null; this.doorDrag=null; this.previewHouse = null; this.decorationInvalid = null; } else this.endDecoration(); event.preventDefault(); return; }
     if (this.decorating) return;
     if (key === 'escape' && this.activityOpen && !this.isTypingTarget(event.target)) { this.expansion.closeModal(); event.preventDefault(); return; }
-    if (key === 'escape' && !this.phone.hidden) { this.closePhone(); event.preventDefault(); return; }
+    if (key === 'escape' && !this.phone.hidden) { if(!this.phoneEditor.handleEscape())this.closePhone(); event.preventDefault(); return; }
     if (this.spaces.root.open || this.roomWorkspace.root.open || this.mobileHud?.root.open) return;
     if (this.isTypingTarget(event.target) || this.activityOpen) return;
     if(this.pane==='board'&&this.boardEditor.key(event)){event.preventDefault();return;}

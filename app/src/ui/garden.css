@@ -31,3 +31,4 @@
 .sv-garden-tray .sv-garden-catalog span{font-size:11px;line-height:1.2}.sv-garden-tray .sv-garden-catalog small{display:block;font-size:10px;font-weight:normal;line-height:1.2}.sv-garden-tray.sv-garden-tray .sv-garden-catalog img{width:36px;max-width:36px;height:36px;object-fit:contain}
 
 .sv-garden-tray.sv-garden-tray .sv-garden-catalog button{touch-action:pan-x}
+@media(max-width:600px){.sv-garden-tray.sv-garden-tray .sv-garden-catalog{max-height:100px}.sv-garden-tray.sv-garden-tray .sv-garden-catalog button{flex-basis:132px;padding:4px;gap:2px}.sv-garden-tray.sv-garden-tray .sv-garden-catalog img{width:28px;height:28px;max-width:28px}.sv-garden-tray.sv-garden-tray .sv-garden-catalog span{font-size:10px}}

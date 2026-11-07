@@ -306,3 +306,12 @@ describe('Part 10 — Honest Local Ollama Gateway & Manual Flashcards', () => {
 
   });
 });
+
+it('protects guide text configuration and mirrors the forest arcade across the plaza center',()=>{
+ const registry=new InteractiveObjectRegistry(DEFAULT_AREA_OBJECTS),guide=registry.get('guide:tetris')!;
+ expect(()=>registry.updateState(guide.id,{guideText:'Changed'},'visitor',false)).toThrow();
+ expect(()=>registry.updateState(guide.id,{guideText:'x'.repeat(321)},'host',true)).toThrow();
+ expect(registry.updateState(guide.id,{guideText:'My own words'},'host',true).state.guideText).toBe('My own words');
+ const arcade=registry.get('community:arcade-tetris')!,drawing=registry.get('community:drawing-table-gartic')!;
+ expect(arcade.x+arcade.w/2).toBe(768-(drawing.x+drawing.w/2));expect(arcade.y+arcade.h/2).toBe(drawing.y+drawing.h/2);expect(guide.x).toBe(518);
+});

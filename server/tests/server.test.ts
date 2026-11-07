@@ -569,3 +569,14 @@ it('runs a 16-person Forest Blocks room across server neighborhoods with shared 
   await admin.request({op:'voice',command:{action:'game',game:'tetris'}});const voice=last.next(m=>m.t==='voice'&&m.voice.selected?.members.includes(admin.id)===true);await last.request({op:'voice',command:{action:'game',game:'tetris'}});expect((await voice as Extract<ServerMessage,{t:'voice'}>).voice.selected?.members).toContain(last.id);
  }finally{await Promise.all(clients.map(c=>c.close()));}
 },15000);
+
+it('broadcasts shared difficulty and authoritative NPC moves to human Forest Blocks clients',async()=>{
+ const r=await boot(),{admin,invite}=await adminAndInvite(r),guest=await TestClient.create('Forest guest');
+ try{
+  expect(await guest.connect(r.port,{invite:invite.code})).toBe('resident');const act=(client:TestClient,a:unknown)=>client.request({op:'app.send',channel:'tetris',to:SERVER_AUTHORITY,data:JSON.stringify({t:'act',a})});
+  await act(admin,{type:'join',name:'Host'});await act(guest,{type:'join',name:'Guest'});await act(admin,{type:'bot',operation:'add'});await act(admin,{type:'difficulty',difficulty:'hard'});
+  await act(admin,{type:'ready',ready:true});await act(guest,{type:'ready',ready:true});const countdown=guest.next(m=>m.t==='app'&&m.channel==='tetris'&&JSON.parse(m.data).v?.phase==='countdown');await act(admin,{type:'start'});
+  const view=JSON.parse((await countdown as {data:string}).data).v as {difficulty:string;players:{bot?:boolean;next:number[];piece:unknown}[]};expect(view.difficulty).toBe('hard');expect(view.players).toHaveLength(3);expect(view.players.filter(p=>p.bot)).toHaveLength(1);expect(view.players.every(p=>p.next.length===1)).toBe(true);expect(new Set(view.players.map(p=>JSON.stringify([p.piece,p.next]))).size).toBe(1);
+  const move=guest.next(m=>m.t==='app'&&m.channel==='tetris'&&JSON.parse(m.data).v?.players.some((p:{bot?:boolean;seq:number})=>p.bot&&p.seq>=0));await move;
+ }finally{await guest.close();await admin.close();}
+},12000);
