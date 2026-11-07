@@ -43,19 +43,45 @@ export function normalizePhoneLayout(layout:PhoneLayout):PhoneLayout {
  const retired=new Set(['identity','connection']);
  return {...layout,entries:layout.entries.flatMap<PhoneLayout['entries'][number]>(e=>e.type==='app'?(retired.has(e.id)?[]:[e]):[{...e,apps:e.apps.filter(id=>!retired.has(id))}]).filter(e=>e.type==='app'||e.apps.length>0)};
 }
+/** Compatibility helper; interactive code uses typed references. */
 export function dropPhoneApp(layout:PhoneLayout,id:PhoneAppId,target:string|null,group=false):PhoneLayout {
- if(id===target)return layout;
+ const folder=layout.entries.find(e=>e.type==='folder'&&e.id===target);
+ if(folder)return dropPhoneItem(layout,{type:'app',id},{type:'group',target:{type:'folder',id:folder.id}});
+ const parent=layout.entries.find(e=>e.type==='folder'&&e.apps.includes(target as PhoneAppId));
+ if(group&&target)return dropPhoneItem(layout,{type:'app',id},{type:'group',target:{type:'app',id:target as PhoneAppId}});
+ const index=parent?.type==='folder'?parent.apps.indexOf(target as PhoneAppId):layout.entries.findIndex(e=>e.type==='app'&&e.id===target);
+ return dropPhoneItem(layout,{type:'app',id},{type:'insert',folder:parent?.id??null,index:index<0?layout.entries.length:index});
+}
+
+/** App and folder IDs occupy different namespaces, including the built-in Settings pair. */
+export type PhoneItemRef={type:'app';id:PhoneAppId}|{type:'folder';id:string};
+export type PhoneDrop={type:'insert';folder:string|null;index:number}|{type:'group';target:PhoneItemRef};
+export function dropPhoneItem(layout:PhoneLayout,item:PhoneItemRef,drop:PhoneDrop):PhoneLayout {
  const next=structuredClone(layout);
- const source=next.entries.find(e=>e.type==='app'?e.id===id:e.apps.includes(id));
- const destination=next.entries.find(e=>e.type==='app'?e.id===target:e.id===target||e.apps.includes(target as PhoneAppId));
+ const source=item.type==='folder'?next.entries.find(e=>e.type==='folder'&&e.id===item.id):next.entries.find(e=>e.type==='app'?e.id===item.id:e.apps.includes(item.id));
  if(!source)return layout;
- if(source.type==='app')next.entries.splice(next.entries.indexOf(source),1);else source.apps=source.apps.filter(a=>a!==id);
- if(!destination)next.entries.push({type:'app',id});
- else if(destination.type==='folder'){
-  const at=destination.apps.indexOf(target as PhoneAppId);destination.apps.splice(at<0?destination.apps.length:at,0,id);
- }else if(group){
-  let n=1;while(next.entries.some(e=>e.type==='folder'&&e.name===`Folder ${n}`))n++;
-  next.entries.splice(next.entries.indexOf(destination),1,{type:'folder',id:crypto.randomUUID(),name:`Folder ${n}`,apps:[destination.id,id]});
- }else next.entries.splice(next.entries.indexOf(destination),0,{type:'app',id});
+ if(drop.type==='group'&&(item.type==='folder'||(drop.target.type===item.type&&drop.target.id===item.id)))return layout;
+ if(drop.type==='insert'&&item.type==='folder'&&drop.folder!==null)return layout;
+ const destination=drop.type==='group'?next.entries.find(e=>e.type===drop.target.type&&e.id===drop.target.id||(e.type==='folder'&&drop.target.type==='app'&&e.apps.includes(drop.target.id))):drop.folder===null?null:next.entries.find(e=>e.type==='folder'&&e.id===drop.folder);
+ if((drop.type==='group'||drop.folder!==null)&&!destination)return layout;
+ if(destination?.type==='folder'&&item.type==='app'&&!destination.apps.includes(item.id)&&destination.apps.length>=16)return layout;
+ // Insertion indexes refer to the original packed grid, before lifting the source.
+ let index=drop.type==='insert'?drop.index:0;
+ if(drop.type==='insert'){
+  const oldIndex=drop.folder===null?next.entries.findIndex(e=>e.type===item.type&&e.id===item.id):source.type==='folder'&&source.id===drop.folder&&item.type==='app'?source.apps.indexOf(item.id):-1;
+  if(oldIndex>=0&&oldIndex<index)index--;
+ }
+ if(item.type==='folder'||source.type==='app')next.entries.splice(next.entries.indexOf(source),1);
+ else source.apps=source.apps.filter(id=>id!==item.id);
+ if(drop.type==='insert'){
+  if(destination?.type==='folder'&&item.type==='app')destination.apps.splice(Math.max(0,index),0,item.id);
+  else next.entries.splice(Math.max(0,index),0,item.type==='folder'?source:{type:'app',id:item.id});
+ }else if(item.type==='app'&&drop.target.type==='folder'&&destination?.type==='folder')destination.apps.push(item.id);
+ else if(item.type==='app'&&drop.target.type==='app'&&destination){
+  // Apps inside a folder reorder there; nesting folders is never allowed.
+  if(destination.type==='folder')destination.apps.splice(destination.apps.indexOf(drop.target.id),0,item.id);
+  else {let n=1;while(next.entries.some(e=>e.type==='folder'&&e.name===`Folder ${n}`))n++;
+   next.entries.splice(next.entries.indexOf(destination),1,{type:'folder',id:crypto.randomUUID(),name:`Folder ${n}`,apps:[destination.id,item.id]});}
+ }
  return normalizePhoneLayout(next);
 }

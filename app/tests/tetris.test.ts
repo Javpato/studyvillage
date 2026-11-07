@@ -23,3 +23,25 @@ it('reconciles 16 network clients with delayed messages and disconnects without 
  const rooms=Array.from({length:16},(_,i)=>new SharedRoom<TetrisAction,TetrisView,TetrisGame>('tetris',actions(String(i)),()=>({selfId:String(i),hostId:'0'}),()=>new TetrisGame(123)));
  try{rooms.forEach(r=>r.sync());rooms.forEach((r,i)=>r.act({type:'join',name:`Player ${i}`}));await vi.advanceTimersByTimeAsync(200);rooms.forEach(r=>r.act({type:'ready',ready:true}));await vi.advanceTimersByTimeAsync(200);rooms[0].act({type:'start'});await vi.advanceTimersByTimeAsync(3300);expect(rooms.every(r=>r.current()?.phase==='playing')).toBe(true);rooms[7].act({type:'input',round:1,seq:1,key:'left'});await vi.advanceTimersByTimeAsync(250);expect(rooms[0].current()!.players.find(p=>p.id==='7')!.piece.x).toBe(2);expect(rooms[7].current()!.players.find(p=>p.id==='7')!.seq).toBe(1);expect(deliveries).toBeLessThan(2500);listeners.delete('8');for(const r of rooms.filter((_,i)=>i!==8))r.act({type:'ping'});await vi.advanceTimersByTimeAsync(14000);for(const r of rooms.filter((_,i)=>i!==8))r.act({type:'ping'});await vi.advanceTimersByTimeAsync(2000);expect(rooms[0].current()!.players.find(p=>p.id==='8')!.alive).toBe(false);}finally{rooms.forEach(r=>r.dispose());vi.useRealTimers();}
 });
+
+import {TETRIS_DIFFICULTIES,type TetrisDifficulty,botMove} from '../../packages/core/src/minigames/tetris';
+for(const difficulty of ['easy','normal','hard'] as const)it(`uses ${difficulty} gravity, warning time and a shared bag with just one preview`,()=>{
+ const g=start();g.cancel();g.apply('0',{type:'difficulty',difficulty},4000);for(const id of ['0','1'])g.apply(id,{type:'ready',ready:true},4000);g.apply('0',{type:'start'},4000);g.tick(7000);
+ const a=player(g),b=player(g,'1');expect(a.next).toHaveLength(1);expect([a.piece,a.next]).toEqual([b.piece,b.next]);g.tick(7000+TETRIS_DIFFICULTIES[difficulty].gravity-1);expect(player(g).piece.y).toBe(a.piece.y);g.tick(7000+TETRIS_DIFFICULTIES[difficulty].gravity);expect(player(g).piece.y).toBe(a.piece.y+1);
+ fixture(g).energy=100;g.apply('0',{type:'input',round:2,seq:1,key:'roots',target:'1'},9000);expect(player(g,'1').pending[0].at).toBe(9000+TETRIS_DIFFICULTIES[difficulty].warning);
+ const engine=g as unknown as {number:(index:number)=>number};const bag=Array.from({length:difficulty==='hard'?13:7},(_,i)=>engine.number(i));expect(bag.filter(k=>k===0)).toHaveLength(1);expect(new Set(bag).size).toBe(7);
+});
+it('lets only the organizer set difficulty or bots before a round, resets human readiness and caps bots',()=>{
+ const g=new TetrisGame(42);for(const id of ['0','1']){g.apply(id,{type:'join',name:id},0);g.apply(id,{type:'ready',ready:true},0);}
+ expect(()=>g.apply('1',{type:'difficulty',difficulty:'hard'},1)).toThrow();expect(()=>g.apply('1',{type:'bot',operation:'add'},1)).toThrow();
+ for(let n=0;n<3;n++)g.apply('0',{type:'bot',operation:'add'},1);expect(()=>g.apply('0',{type:'bot',operation:'add'},1)).toThrow();g.apply('0',{type:'difficulty',difficulty:'hard'},1);
+ expect(g.viewFor('0',1).players.every(p=>p.ready===!!p.bot)).toBe(true);expect(g.audience()).toEqual(['0','1']);
+ for(const id of ['0','1'])g.apply(id,{type:'ready',ready:true},1);g.apply('0',{type:'start'},1);expect(()=>g.apply('0',{type:'difficulty',difficulty:'easy'},2)).toThrow();expect(()=>g.apply('0',{type:'bot',operation:'remove',id:'tetris-npc:1'},2)).toThrow();
+});
+it('NPCs execute legal moves, clear lines and survive heartbeats without a client',()=>{
+ const g=new TetrisGame(42,false,false,'hard');g.apply('human',{type:'join',name:'Human'},0);g.apply('human',{type:'bot',operation:'add'},0);g.apply('human',{type:'ready',ready:true},0);g.apply('human',{type:'start'},0);g.tick(3000);
+ const bot=fixture(g,'tetris-npc:1');bot.piece={kind:0,rotation:1,x:2,y:16};for(let y=16;y<20;y++)bot.board[y]=Array.from({length:10},(_,x)=>x===4?0:1);
+ expect(botMove(bot)).toBe('drop');g.tick(3120);expect(bot.lines).toBe(4);expect(bot.board.flat().some(Boolean)).toBe(false);
+ for(let now=3240;now<24000;now+=120){g.apply('human',{type:'ping'},now);g.tick(now);}expect(bot.alive).toBe(true);expect(bot.seq).toBeGreaterThan(20);expect(bot.board.every(r=>r.length===10)).toBe(true);expect(bot.next).toHaveLength(1);
+});
+it('never promotes an NPC to organizer and removes orphaned bots',()=>{const g=new TetrisGame(1);g.apply('host',{type:'join',name:'Host'},0);g.apply('host',{type:'bot',operation:'add'},0);g.apply('host',{type:'leave'},1);g.tick(2);expect(g.viewFor('host',2)).toMatchObject({host:null,players:[]});});

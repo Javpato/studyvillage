@@ -145,3 +145,9 @@ export function closestFurniture(position: Position, house: PublicHouse, maxDist
   return closest;
 }
 
+
+/** Visible catalogue descriptions; user-written names and dialogue remain literal. */
+export const FURNITURE_DESCRIPTIONS:Record<FurnitureKind,string>={
+ desk:'Organiza proyectos y abre tu editor de código.',bookshelf:'Guarda mazos y repasa tus tarjetas.',board:'Escribe y dibuja con otras personas.',plant:'Una planta pequeña para decorar el interior.',table:'Una mesa para estudiar y conversar por voz.',frame:'Un cuadro decorativo para la pared.',cabinet:'Prueba ropa y cambia tu personaje.',flashcards:'Practica preguntas y respuestas.',
+ oak:'Árbol de copa ancha y hojas verdes.',palm:'Palmera alta de ambiente tropical.',cherry:'Árbol de flores rosas.',flowerbed:'Flores de colores para el jardín.',lantern:'Un farol para iluminar el camino.',fountain:'Una fuente de agua ornamental.',picnic:'Mesa exterior con bancos.',hammock:'Un rincón de descanso entre árboles.',mailbox:'Consulta los mensajes de tu buzón.',birdbath:'Una fuente pequeña para las aves.',mushrooms:'Un grupo de setas decorativas.',stonepath:'Piedras para marcar un sendero.',inkdesk:'Abre tus cuadernos y escribe a mano.',guide:'Un NPC con un diálogo que puedes editar.',sketchboard:'Expón una imagen o un dibujo.',clock:'Prepara sesiones de concentración.',jukebox:'Escucha música mientras estudias.',vanity:'Dibuja o importa el sprite de tu personaje.',
+};

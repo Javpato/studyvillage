@@ -709,3 +709,13 @@
 .sv-app-tile.sv-phone-drag-preview{position:fixed;left:0;top:0;z-index:1000;margin:0;box-sizing:border-box;pointer-events:none!important;transform-origin:0 0;will-change:transform;outline:none;border-radius:14px;filter:drop-shadow(0 10px 9px #172b3545)}
 .sv-phone-drag-preview *{pointer-events:none!important}
 .sv-phone-drag-preview .sv-app-icon{transform:none!important;transition:none}
+.sv-phone-shifting{transition:transform 160ms ease;pointer-events:none}
+.sv-phone-insertion-marker{position:fixed;z-index:999;pointer-events:none;border:2px dashed #54784a;border-radius:12px;background:#b6cda333;box-sizing:border-box}
+.sv-folder-rename{cursor:text;animation:sv-folder-wiggle .35s ease-in-out infinite alternate}
+.sv-folder-rename::after{content:' ✎';font-size:.85em}
+.sv-folder-rename:has(input){animation:none}.sv-folder-rename:has(input)::after{content:none}
+@keyframes sv-folder-wiggle{from{text-indent:-2px}to{text-indent:2px}}
+@media(prefers-reduced-motion:reduce){.sv-folder-rename{animation:none;text-decoration:underline dotted}.sv-phone-shifting{transition:none}}
+.sv-furniture-catalog button{display:flex;flex-direction:column;align-items:center;gap:4px}.sv-furniture-catalog small,.sv-wardrobe-item small{display:block;font-size:11px;font-weight:normal;line-height:1.35;white-space:normal}
+.sv-selected-sprite{display:block;width:160px;max-width:100%;height:120px;background:repeating-conic-gradient(#ede5d2 0% 25%,#fff7e6 0% 50%) 0/16px 16px;image-rendering:pixelated;border-radius:12px}
+.sv-sprite-dialog{width:min(420px,calc(100vw - 32px));box-sizing:border-box;border:3px solid #9f8059;border-radius:18px;padding:20px;background:#fff7e6;color:#3d5138;font:inherit}.sv-sprite-dialog::backdrop{background:#182c2866}.sv-sprite-dialog>img{display:block;max-width:100%;width:200px;height:160px;object-fit:contain;margin:auto;image-rendering:pixelated;background:repeating-conic-gradient(#ede5d2 0% 25%,#fff7e6 0% 50%) 0/16px 16px}.sv-sprite-dialog p{font-size:13px;line-height:1.5}.sv-sprite-dialog textarea{width:100%;box-sizing:border-box}.sv-sprite-dialog small{display:block;margin:8px 0}.sv-sprite-dialog button{margin:6px}

@@ -258,3 +258,11 @@ Remaining at checkpoint: full unit/server rerun, delayed 16-client transport tes
 - WebKit: five garden/phone/game journeys passed. The sixth exposed clock overlap over the phone; corrected with a scoped visibility rule and awaiting targeted rerun.
 - `npm run test:pages`: PASS in Chromium and WebKit, including packaged subpath assets, offline cache, persistent ink, palm rejection and finger navigation.
 - Focused camera and game tests: 21 passed, including four-camera selection and track cleanup. No physical media hardware or WAN/NAT certification, and no new native installers or release tags. Existing native bundles predate this candidate; current working builds are `app/dist` and `server/dist`.
+
+## Forest, phone and sprite improvements — 2026-11-07
+
+Candidate scope: typed app/folder drag destinations, packed insertion feedback and folder renaming; visible sprite descriptions/previews and transactional guide dialogue; mirrored arcade and new guide; one-piece preview, keyboard hints, dynamic controls, media sidebar, three difficulties and authoritative local/room NPC opponents. ES/EN/FR strings updated.
+
+Completed before candidate push: app/server typecheck; 22 focused phone/engine tests including Settings folder collision, ordering, difficulty bags/gravity/attacks, bot permissions and legal play; 2586-message translation coverage. GitHub origin/main was checked and had no newer commits.
+
+Remaining at this checkpoint: Chromium and WebKit interaction journeys, visual inspection, full client/server checks and current production builds, Pages deployment verification and generated-output cleanup. This is a testable candidate, not a verified release. Existing user handbook edits are preserved separately. Workflow: https://github.com/Javpato/studyvillage/actions/workflows/pages.yml

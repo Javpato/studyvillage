@@ -99,6 +99,7 @@ export const WORLD_AREAS: Record<BuiltinAreaId, WorldAreaDefinition> = {
 export const DEFAULT_AREA_OBJECTS: readonly InteractiveObjectConfig[] = [
   {id:'guide:wolves',areaId:'community',kind:'guide',defaultLabel:'Guía de juegos',displayName:'Guía de juegos',description:'Guía de lobos: siéntate, elige cartas y añade bots si faltan jugadores. Solo quien dirige la partida puede iniciarla. La voz y la cámara se activan por separado.',promptKey:'E · Guía',x:452,y:188,w:32,h:42,layer:'object',hasCollision:true,interactionRadius:INTERACTION_REACH,ownerId:null,visibility:'everyone',usePermission:'public',editPermission:'host_only',allowedUsers:[],customSpriteDataUrl:null,customColor:null,state:{},revision:1},
   {id:'guide:drawing',areaId:'community',kind:'guide',defaultLabel:'Guía de dibujo',displayName:'Guía de dibujo',description:'Guía de dibujo: abre la mesa de Gartic, escribe una frase y dibuja por turnos. Tus amigos intentarán adivinarla.',promptKey:'E · Guía',x:218,y:98,w:32,h:42,layer:'object',hasCollision:true,interactionRadius:INTERACTION_REACH,ownerId:null,visibility:'everyone',usePermission:'public',editPermission:'host_only',allowedUsers:[],customSpriteDataUrl:null,customColor:null,state:{},revision:1},
+  {id:'guide:tetris',areaId:'community',kind:'guide',defaultLabel:'Guía de bloques',displayName:'Guía de bloques',description:'Completa líneas y protege tu tablero con Escudo y Musgo. Prueba una partida individual o juega contra NPC y amigos. E reserva; Shift hace caer la pieza.',promptKey:'E · Guía',x:518,y:98,w:32,h:42,layer:'object',hasCollision:true,interactionRadius:INTERACTION_REACH,ownerId:null,visibility:'everyone',usePermission:'public',editPermission:'host_only',allowedUsers:[],customSpriteDataUrl:null,customColor:null,state:{},revision:1},
   {id:'guide:ollama',areaId:'study',kind:'guide',defaultLabel:'Guía de Ollama',displayName:'Guía de Ollama',description:'Guía de Ollama: la IA es opcional. Puedes crear tarjetas y quizzes manualmente. No se descarga ningún modelo automáticamente.',promptKey:'E · Guía',x:677,y:125,w:32,h:42,layer:'object',hasCollision:true,interactionRadius:INTERACTION_REACH,ownerId:null,visibility:'everyone',usePermission:'public',editPermission:'host_only',allowedUsers:[],customSpriteDataUrl:null,customColor:null,state:{},revision:1},
   {id:'guide:study',areaId:'study',kind:'guide',defaultLabel:'Guía de estudio',displayName:'Guía de estudio',description:'Guía de estudio: crea un mazo, añade preguntas y respuestas y pulsa Terminar edición. El cuaderno de tinta está en el teléfono y en tu escritorio.',promptKey:'E · Guía',x:448,y:206,w:32,h:42,layer:'object',hasCollision:true,interactionRadius:INTERACTION_REACH,ownerId:null,visibility:'everyone',usePermission:'public',editPermission:'host_only',allowedUsers:[],customSpriteDataUrl:null,customColor:null,state:{},revision:1},
   // ---------------------------------------------------------------------------
@@ -137,8 +138,8 @@ export const DEFAULT_AREA_OBJECTS: readonly InteractiveObjectConfig[] = [
     displayName: 'Bloques del Bosque',
     description: 'Una partida de bloques bajo los árboles.',
     promptKey: 'E · Bloques del Bosque',
-    x: 620,
-    y: 90,
+    x: 577,
+    y: 83,
     w: 44,
     h: 60,
     layer: 'object',

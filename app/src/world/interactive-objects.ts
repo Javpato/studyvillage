@@ -295,6 +295,10 @@ export class InteractiveObjectRegistry {
     if (!this.canUse(obj, actorId, isHost)) {
       throw new Error('No tienes permiso para usar este objeto.');
     }
+    if(Object.hasOwn(statePatch,'guideText')){
+      if(obj.kind!=='guide'||!this.canConfigure(obj,actorId,isHost))throw new Error('No tienes permiso para configurar este objeto.');
+      if(typeof statePatch.guideText!=='string'||statePatch.guideText.length>320)throw new Error('El texto del guía admite hasta 320 caracteres.');
+    }
     const updated: InteractiveObjectConfig = {
       ...obj,
       state: { ...obj.state, ...statePatch },

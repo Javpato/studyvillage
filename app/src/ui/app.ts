@@ -1,3 +1,5 @@
+import {confirmSprite,editGuideText} from './sprite-dialogs';
+import {FURNITURE_DESCRIPTIONS} from '../house/model';
 import {PencilTouchGuard,pointerSamples} from '../../../packages/documents/src/pen';
 import {loadPhoneLayout} from '../../../packages/runtime/src/storage/phone-layout';
 import {type PhoneAppId} from '../../../packages/core/src/phone/layout';
@@ -312,6 +314,8 @@ class StudyUI {
   private furnitureCount!: HTMLElement;
   private furnitureCatalog!: HTMLElement;
   private enterDecorationButton!: HTMLButtonElement;
+  private editGuideButton!:HTMLButtonElement;
+  private selectedSpritePreview!:HTMLCanvasElement;
   private renameFurnitureButton!: HTMLButtonElement;
   private furnitureNameDialog!: HTMLDialogElement;
   private furnitureNameInput!: HTMLInputElement;
@@ -1557,8 +1561,9 @@ class StudyUI {
         return;
       }
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         if (typeof reader.result === 'string') {
+          if(!await confirmSprite(reader.result).catch(()=>false))return;
           if (item.kind === 'board') {
             const bId = this.localBoardFor(item.id);
             this.expansion.boardRegistry.ensureBoard(bId, item.publicAlias || 'Pizarra de estudio', 'house', this.view!.identity.fingerprint);
@@ -1591,7 +1596,8 @@ class StudyUI {
         this.notify(t("Aspecto original restaurado para {p0}.", { p0: t(FURNITURE_LABELS[item.kind]) }));
       }
     });
-    append(customRow, this.furnitureColorInput, uploadSpriteBtn, resetAssetBtn, spriteInput);
+    this.selectedSpritePreview=node('canvas','sv-selected-sprite');this.selectedSpritePreview.width=160;this.selectedSpritePreview.height=120;setDisplayAttribute(this.selectedSpritePreview,'aria-label',msg('Aspecto actual del objeto'));
+    append(customRow, this.selectedSpritePreview,this.furnitureColorInput, uploadSpriteBtn, resetAssetBtn, spriteInput);
 
     // Item 3: AI Pixel-Art Sprite Generator & Furniture AI Actions
     const aiSpriteBox = node('div', 'sv-ai-sprite-box'); aiSpriteBox.dataset.aiFeature = 'sprites';
@@ -1629,20 +1635,20 @@ class StudyUI {
     });
     this.guideTextInput=node('textarea','sv-input');this.guideTextInput.maxLength=320;this.guideTextInput.rows=4;
     setDisplayAttribute(this.guideTextInput,'aria-label',msg('Diálogo del guía'));
-    this.guideTextInput.onchange=()=>{const h=this.ownDecoratedHouse();this.actions.updateOwnHouse({...h,furniture:h.furniture.map(f=>f.id===this.selectedFurnitureId?{...f,guideText:this.guideTextInput.value.trim()}:f)});};
+    this.guideTextInput.onchange=()=>{const h=this.ownDecoratedHouse();if(this.selectedFurnitureId)this.commitDecoration({...h,furniture:h.furniture.map(f=>f.id===this.selectedFurnitureId?{...f,guideText:this.guideTextInput.value.trim()}:f)},this.selectedFurnitureId);};
     this.guideTextField=field(msg('Diálogo del guía'),this.guideTextInput);
     this.frameToggle=node('input');this.frameToggle.type='checkbox';
     this.frameToggle.onchange=()=>{const h=this.ownDecoratedHouse();this.actions.updateOwnHouse({...h,furniture:h.furniture.map(f=>f.id===this.selectedFurnitureId?{...f,showFrame:this.frameToggle.checked}:f)});};
     this.frameField=field(msg('Mostrar marco'),this.frameToggle);
     append(this.furnitureDetail,this.guideTextField,this.frameField, this.furnitureUseButton, field(msg('Alias visible para todos'), this.aliasInput),
-      node('span', 'sv-field-label', msg('Aspecto modificable (color / PNG)')), customRow, aiSpriteBox, deleteButton);
+      node('span', 'sv-field-label', msg('Aspecto modificable (color / PNG)')), node('small','',msg('Imagen de objeto · PNG, WebP o JPEG · hasta 512 KB. Se ajusta al tamaño del objeto.')),customRow, aiSpriteBox, deleteButton);
     const enterDecor = this.enterDecorationButton = button(msg('Decorar en la habitación'), 'sv-button sv-button-primary');
     enterDecor.onclick = () => this.beginDecoration();
     const catalog = this.furnitureCatalog = node('div', 'sv-furniture-catalog');
     for (const kind of FURNITURE_KINDS) {
       const tile = button('', 'sv-button'); tile.dataset.furnitureKind=kind; setDisplayAttribute(tile, 'aria-label', msg("Colocar {p0}", { p0: msg(FURNITURE_LABELS[kind]) }));
       const canvas = node('canvas'); canvas.width = 100; canvas.height = 90; drawFurniturePreview(canvas.getContext('2d')!, kind);
-      append(tile, canvas, node('span', '', msg(FURNITURE_LABELS[kind])));
+      append(tile, canvas, node('span', '', msg(FURNITURE_LABELS[kind])),node('small','',msg(FURNITURE_DESCRIPTIONS[kind])));
       tile.onclick = () => this.beginDecoration(kind); catalog.append(tile);
     }
     const advanced = node('details'); append(advanced, node('summary', '', msg('Más opciones de muebles')), furnitureHeader, this.furnitureList, addRow, this.furnitureDetail);
@@ -1650,6 +1656,7 @@ class StudyUI {
     this.decorationToolbar = node('div', 'sv-decoration-toolbar'); this.decorationToolbar.hidden = true;
     this.decorationToolbar.setAttribute('role', 'group'); setDisplayAttribute(this.decorationToolbar, 'aria-label', msg('Decorar habitación'));
     const catalogButton = button(msg('Catálogo'), 'sv-button'); catalogButton.onclick = () => this.openPhone('decorate');
+    this.editGuideButton=button(msg('Editar texto'),'sv-button');this.editGuideButton.onclick=()=>this.openGuideText();
     this.renameFurnitureButton=button(msg('Cambiar nombre'),'sv-button');this.renameFurnitureButton.onclick=()=>this.openFurnitureName();
     const rotate = button(msg('Girar'), 'sv-button'); rotate.onclick = () => {
       const house = (this.view ? this.ownDecoratedHouse() : undefined); const item = house?.furniture.find(f => f.id === this.selectedFurnitureId);
@@ -1663,7 +1670,7 @@ class StudyUI {
     const redo = button(msg('Rehacer'), 'sv-button'); redo.onclick = () => { const h = (this.view ? this.ownDecoratedHouse() : undefined); if (h) { const next = this.decorationHistory.redo(h); if (next) this.actions.updateOwnHouse(next); } };
     const grid = button(msg('Cuadrícula: sí'), 'sv-button'); grid.onclick = () => { this.decorationGrid = !this.decorationGrid; setDisplayText(grid, msg("Cuadrícula: {p0}", { p0: this.decorationGrid ? msg('sí') : msg('no') })); this.lastStageRenderSig = ''; };
     const done = button(msg('Terminar'), 'sv-button sv-button-primary'); done.onclick = () => this.endDecoration();
-    append(this.decorationToolbar, catalogButton, this.renameFurnitureButton, rotate, remove, undo, redo, grid, done);
+    append(this.decorationToolbar, catalogButton, this.renameFurnitureButton,this.editGuideButton, rotate, remove, undo, redo, grid, done);
     this.furnitureNameDialog=node('dialog','sv-furniture-name');setDisplayAttribute(this.furnitureNameDialog,'aria-label',msg('Nombre del mueble'));
     const form=node('form');this.furnitureNameInput=node('input','sv-input');this.furnitureNameInput.maxLength=40;this.furnitureNameInput.autocomplete='off';setDisplayAttribute(this.furnitureNameInput,'aria-label',msg('Nombre del mueble'));
     const cancel=button(msg('Cancelar'),'sv-button');cancel.onclick=()=>this.furnitureNameDialog.close();const save=button(msg('Guardar'),'sv-button sv-button-primary');save.type='submit';const actions=node('div','sv-inline');actions.append(cancel,save);
@@ -1915,9 +1922,11 @@ class StudyUI {
     setText(this.furnitureCount, `${house.furniture.length}/${LIMITS.furniture}`);
     const selected = house.furniture.find((item) => item.id === this.selectedFurnitureId) || null;
     show(this.furnitureDetail, !!selected);
-    this.renameFurnitureButton.disabled=!selected;
+    this.renameFurnitureButton.disabled=!selected;this.editGuideButton.hidden=selected?.kind!=='guide';
+    for(const canvas of this.furnitureCatalog.querySelectorAll<HTMLCanvasElement>('canvas')){const kind=canvas.parentElement!.dataset.furnitureKind as FurnitureKind;drawFurniturePreview(canvas.getContext('2d')!,kind,0,undefined,!!this.localPosition.space);}
     this.guideTextField.hidden=selected?.kind!=='guide';this.frameField.hidden=selected?.kind!=='sketchboard';
     if (selected) {
+      drawFurniturePreview(this.selectedSpritePreview.getContext('2d')!,selected.kind,selected.rotation,selected,!!this.localPosition.space,(selected.kind==='board'||selected.kind==='sketchboard')?this.expansion.boardRegistry.getDecodedBoardSprite(this.localBoardFor(selected.id)):null);
       if(document.activeElement!==this.guideTextInput)this.guideTextInput.value=selected.guideText??'';this.frameToggle.checked=selected.showFrame!==false;
       setInput(this.aliasInput, defaultText(selected.publicAlias));
       show(this.furnitureUseButton, isInteractiveFurniture(selected.kind));
@@ -2251,6 +2260,12 @@ class StudyUI {
     const id=this.localBoardFor(item.id),name=item.publicAlias.trim()||'Pizarra de estudio',owner=this.view.identity.fingerprint;
     const metadata=this.expansion.boardRegistry.ensureBoard(id,name,'house',owner);
     if(metadata.displayName!==name)this.expansion.boardRegistry.renameBoard(id,name,owner,true);
+  }
+  private openGuideText():void {
+    if(!this.view)return;const house=this.ownDecoratedHouse(),item=house.furniture.find(f=>f.id===this.selectedFurnitureId);
+    if(!item||item.kind!=='guide'||house.ownerId!==this.view.identity.fingerprint)return;
+    this.stopMoving();const scope=JSON.stringify(this.localPosition.space??null);
+    editGuideText(item.guideText??'',text=>{const current=this.ownDecoratedHouse();if(!this.view||current.ownerId!==this.view.identity.fingerprint||scope!==JSON.stringify(this.localPosition.space??null)||!current.furniture.some(f=>f.id===item.id))throw Error('El objeto ya no está disponible.');this.decorationHistory.remember(current);this.actions.updateOwnHouse({...current,revision:current.revision+1,furniture:current.furniture.map(f=>f.id===item.id?{...f,guideText:text}:f)});});
   }
   private openFurnitureName():void {
     if(!this.view)return;const item=this.ownDecoratedHouse().furniture.find(f=>f.id===this.selectedFurnitureId);if(!item)return;

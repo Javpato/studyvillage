@@ -571,7 +571,10 @@ export function drawHouseInterior(
   paintSceneFade(ctx, `house:${house.ownerId}`, W, H, '22,16,10');
 }
 
-export function drawFurniturePreview(ctx: CanvasRenderingContext2D, kind: Furniture['kind'], rotation: Furniture['rotation']=0): void {
-  ctx.clearRect(0, 0, 100, 90); ctx.imageSmoothingEnabled = false;
-  paintFurniture(ctx, { id: 'preview', kind, rotation, x: 12, y: 10, publicAlias: '' }, false, false, 0);
+export function drawFurniturePreview(ctx: CanvasRenderingContext2D, kind: Furniture['kind'], rotation: Furniture['rotation']=0, item?:Furniture,privateSpace=false,perItemSprite?:HTMLImageElement|null): void {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.imageSmoothingEnabled = false;
+  const furniture={id:'preview',kind,rotation,publicAlias:'',...item,x:0,y:0},rect=furnitureRect(furniture);
+  const scale=Math.min((ctx.canvas.width-16)/rect.w,(ctx.canvas.height-16)/rect.h);
+  ctx.save();ctx.translate((ctx.canvas.width-rect.w*scale)/2,(ctx.canvas.height-rect.h*scale)/2);ctx.scale(scale,scale);
+  paintFurniture(ctx,furniture,false,false,0,perItemSprite,privateSpace);ctx.restore();
 }

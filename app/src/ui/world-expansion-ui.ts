@@ -1,3 +1,5 @@
+import {confirmSprite,editGuideText} from './sprite-dialogs';
+import {paintStationSource} from '../world/areas';
 import {TetrisGame,type TetrisAction,type TetrisView} from '../../../packages/core/src/minigames/tetris';
 import {TetrisPanel} from './tetris-ui';
 import {browserKeyValue} from '../../../packages/runtime/src/storage/key-value';
@@ -165,7 +167,7 @@ export class WorldExpansionUIController {
     };
     const me = () => { const a = this.getActor(); return { name: a.displayName, color: a.color }; };
     this.tetrisRoom=new SharedRoom('tetris',callbacks.actions,context,()=>new TetrisGame());
-    this.tetrisPanel=new TetrisPanel({send:a=>this.tetrisRoom.act(a),close:()=>this.closeModal(),me:()=>({id:context().selfId,name:me().name}),cameras:ids=>callbacks.actions.setGameCameraPolicy?.({canSend:true,canReceive:true,audience:null,receiveAudience:ids}),media:battle=>{this.activityOverlay.dataset.tetrisMode=battle?'battle':'solo';if(!battle)callbacks.actions.setTalking(false);if(battle){this.cameraDock.mount(this.activityOverlay);callbacks.actions.setCameraActivity('tetris');}else{this.cameraDock.unmount();callbacks.actions.setGameCameraPolicy?.(null);callbacks.actions.setCameraActivity('village');const selected=callbacks.getView()?.network.voice?.selected;if(selected?.game==='tetris')callbacks.actions.voiceCommand({action:'leave'});}}});
+    this.tetrisPanel=new TetrisPanel({send:a=>this.tetrisRoom.act(a),close:()=>this.closeModal(),me:()=>({id:context().selfId,name:me().name}),cameras:ids=>callbacks.actions.setGameCameraPolicy?.({canSend:true,canReceive:true,audience:null,receiveAudience:ids}),media:battle=>{this.activityOverlay.dataset.tetrisMode=battle?'battle':'solo';if(!battle)callbacks.actions.setTalking(false);if(battle){this.cameraDock.mount(this.tetrisPanel.mediaRoot);callbacks.actions.setCameraActivity('tetris');}else{this.cameraDock.unmount();callbacks.actions.setGameCameraPolicy?.(null);callbacks.actions.setCameraActivity('village');const selected=callbacks.getView()?.network.voice?.selected;if(selected?.game==='tetris')callbacks.actions.voiceCommand({action:'leave'});}}});
     this.werewolvesRoom = new SharedRoom('werewolves', callbacks.actions, context, () => new WerewolvesGame(undefined, context().selfId));
     this.garticRoom = new SharedRoom('gartic', callbacks.actions, context, () => new GarticGame(undefined, context().selfId));
     this.garticBots = new OllamaGarticBots(this.ollamaGateway, this.garticRoom, m => callbacks.notify(m));
@@ -427,7 +429,7 @@ export class WorldExpansionUIController {
     }
 
     switch (obj.kind) {
-      case 'guide': this.callbacks.speak(t(obj.description),obj.x+obj.w/2,obj.y);break;
+      case 'guide': this.callbacks.speak(typeof obj.state.guideText==='string'&&obj.state.guideText?obj.state.guideText:t(obj.description),obj.x+obj.w/2,obj.y);break;
       case 'campfire_werewolves':
         this.openModal('werewolves');
         break;
@@ -485,8 +487,8 @@ export class WorldExpansionUIController {
         const joinVoice = document.createElement('button'); joinVoice.className = 'sv-button sv-button-small sv-game-voice';
         setDisplayText(joinVoice, msg('Unirse a la voz del juego'));
         let inVoice=false;joinVoice.onclick = () => { this.callbacks.actions.voiceCommand(inVoice?{action:'leave'}:{ action: 'game', game: kind });inVoice=!inVoice;setDisplayText(joinVoice,msg(inVoice?'Salir de la voz del juego':'Unirse a la voz del juego')); };
-        this.activityOverlay.append(joinVoice);
-        if(kind==='tetris'){const controls=el('div','sv-tetris-voice');for(const [label,run]of [['Micrófono',()=>{void this.callbacks.actions.toggleMicrophone().catch(e=>this.callbacks.notify(String(e)));}],['Silenciar',()=>this.callbacks.actions.setMuted(!this.callbacks.getView()?.network.media.muted)],['Dejar de escuchar',()=>this.callbacks.actions.setDeafened(!this.callbacks.getView()?.network.media.deafened)]] as const){const b=document.createElement('button');b.className='sv-button';setDisplayText(b,msg(label));b.onclick=run;controls.append(b);}const ptt=document.createElement('button');ptt.className='sv-button';setDisplayText(ptt,msg('Pulsar para hablar'));ptt.onpointerdown=e=>{ptt.setPointerCapture(e.pointerId);this.callbacks.actions.setPushToTalk(true);this.callbacks.actions.setTalking(true);};ptt.onpointerup=ptt.onpointercancel=()=>this.callbacks.actions.setTalking(false);controls.append(ptt);this.activityOverlay.append(controls);}
+        (kind==='tetris'?this.tetrisPanel.mediaRoot:this.activityOverlay).append(joinVoice);
+        if(kind==='tetris'){const controls=el('div','sv-tetris-voice');for(const [label,run]of [['Micrófono',()=>{void this.callbacks.actions.toggleMicrophone().catch(e=>this.callbacks.notify(String(e)));}],['Silenciar',()=>this.callbacks.actions.setMuted(!this.callbacks.getView()?.network.media.muted)],['Dejar de escuchar',()=>this.callbacks.actions.setDeafened(!this.callbacks.getView()?.network.media.deafened)]] as const){const b=document.createElement('button');b.className='sv-button';setDisplayText(b,msg(label));b.onclick=run;controls.append(b);}const ptt=document.createElement('button');ptt.className='sv-button';setDisplayText(ptt,msg('Pulsar para hablar'));ptt.onpointerdown=e=>{ptt.setPointerCapture(e.pointerId);this.callbacks.actions.setPushToTalk(true);this.callbacks.actions.setTalking(true);};ptt.onpointerup=ptt.onpointercancel=()=>this.callbacks.actions.setTalking(false);controls.append(ptt);this.tetrisPanel.mediaRoot.append(controls);}
         if(kind!=='tetris'){this.cameraDock.mount(this.activityOverlay);this.callbacks.actions.setCameraActivity(kind);}
         const current = this.callbacks.getView(); if (current) this.cameraDock.update(current);
       }
@@ -510,7 +512,7 @@ export class WorldExpansionUIController {
     this.activeModalKind = null;
     this.modalOverlay.hidden = true;
     this.activityOverlay.hidden = true;
-    this.activityOverlay.querySelectorAll('.sv-game-voice,.sv-tetris-voice').forEach(el=>el.remove());
+    this.activityOverlay.querySelectorAll('.sv-game-voice,.sv-tetris-voice').forEach(el=>el.remove());this.tetrisPanel.mediaRoot.querySelectorAll('.sv-game-voice,.sv-tetris-voice').forEach(el=>el.remove());
     this.modalCard.replaceChildren();
     if (wasOpen) this.callbacks.activityChanged(false);
   }
@@ -558,9 +560,13 @@ export class WorldExpansionUIController {
       msg('Configurar: {name}', { name: defaultText(obj.displayName) }),
     );
 
-    const desc = el('p', 'sv-subtle', obj.description);
+    const desc = el('p', 'sv-subtle', msg(obj.description));
 
-    const form = el('div', 'sv-stack');
+    const preview=el('canvas','sv-selected-sprite');preview.width=160;preview.height=120;setDisplayAttribute(preview,'aria-label',msg('Aspecto actual del objeto'));
+    const draw=()=>{const c=preview.getContext('2d')!;c.clearRect(0,0,160,120);c.imageSmoothingEnabled=false;const scale=Math.min(140/obj.w,100/obj.h);c.save();c.translate((160-obj.w*scale)/2,(120-obj.h*scale)/2);c.scale(scale,scale);paintStationSource(c,{...obj,x:0,y:0},this.objectRegistry);c.restore();};draw();
+    const form = el('div', 'sv-stack');form.append(preview,el('small','',msg('Imagen de objeto · PNG, WebP o JPEG · hasta 512 KB. Se ajusta al tamaño del objeto.')));
+    if(obj.kind==='guide'){const edit=btn(msg('Editar texto'));edit.disabled=!canEdit;edit.onclick=()=>editGuideText(typeof obj.state.guideText==='string'?obj.state.guideText:t(obj.description),value=>{this.objectRegistry.updateState(obj.id,{guideText:value},actor.id,actor.isHost);this.callbacks.requestStageRedraw();this.renderActiveModal();});form.append(edit);}
+
     const nameInput = el('input', 'sv-input');
     nameInput.value = obj.displayName;
     nameInput.maxLength = 48;
@@ -611,9 +617,10 @@ export class WorldExpansionUIController {
         return;
       }
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         if (typeof reader.result === 'string') {
           try {
+            if(!await confirmSprite(reader.result))return;
             this.objectRegistry.assignCustomSprite(obj.id, reader.result, colorInput.value, actor.id, actor.isHost);
             this.callbacks.requestStageRedraw();
             this.callbacks.notify(t("Sprite PNG aplicado a «{p0}».", { p0: obj.displayName }));

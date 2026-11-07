@@ -38,7 +38,7 @@ export class WardrobePanel {
     this.preview.width=480;this.preview.height=540;setDisplayAttribute(this.preview, 'aria-label', msg('Vista previa del look'));
     const turn=node('div','sv-wardrobe-turn');turn.append(button('↶',()=>this.rotate(-1)),node('span','',msg('Girar')),button('↷',()=>this.rotate(1)));
     setDisplayAttribute(turn.querySelectorAll('button')[0], 'aria-label', msg('Girar personaje a la izquierda'));setDisplayAttribute(turn.querySelectorAll('button')[1], 'aria-label', msg('Girar personaje a la derecha'));
-    mirror.append(this.preview,turn,node('p','sv-wardrobe-hint',msg('Prueba lo que quieras. Guarda cuando te guste.')));
+    mirror.append(this.preview,node('p','sv-wardrobe-hint',msg('Personaje animado · PNG de 192 × 256 · 12 fotogramas de 64 × 64 · hasta 512 KB.')),turn,node('p','sv-wardrobe-hint',msg('Prueba lo que quieras. Guarda cuando te guste.')));
     const wardrobe=node('section','sv-wardrobe-options');setDisplayAttribute(this.tabs, 'aria-label', msg('Categorías de ropa'));wardrobe.append(this.tabs,this.catalog);body.append(mirror,wardrobe);
     const foot=node('footer','sv-wardrobe-foot');this.error.setAttribute('role','alert');this.error.hidden=true;
     this.discard=button(msg('Descartar'),()=>this.close());this.save=button(msg('Guardar look'),()=>{void this.commit();});this.save.classList.add('is-primary');const sheetInput=node('input');sheetInput.type='file';sheetInput.accept='image/png';sheetInput.hidden=true;
@@ -83,7 +83,7 @@ export class WardrobePanel {
     for(const [value,label] of Object.entries(options)){
       const patch={...this.draft,[category]:value,useCustomSheet:false};
       const b=button('',()=>this.change({[category]:value}));b.classList.add('sv-wardrobe-item');setDisplayAttribute(b,'aria-label',msg(label));b.setAttribute('aria-pressed',String(this.draft[category]===value));
-      const canvas=node('canvas');canvas.width=176;canvas.height=192;this.draw(canvas,normalizeAppearance(patch));b.append(canvas,node('span','',msg(label)));grid.append(b);
+      const canvas=node('canvas');canvas.width=176;canvas.height=192;this.draw(canvas,normalizeAppearance(patch));b.append(canvas,node('span','',msg(label)),node('small','',msg(({body:'Forma del personaje.',headwear:'Accesorio para la cabeza.',eyewear:'Accesorio para los ojos.',outfit:'Conjunto de ropa.',jacket:'Prenda sobre la ropa.'} as const)[category])));grid.append(b);
     }
     this.catalog.append(grid);
     if(category==='headwear')this.colorControl('Color del sombrero','headwearColor');

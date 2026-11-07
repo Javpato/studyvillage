@@ -3,7 +3,7 @@ import {gardenBounds,gardenDoorway,gardenHouseFootprint,gardenItemRect,gardenOri
 import type {AppView,PublicHouse} from '../../../packages/core/src/protocol/types';
 import {occupiedParcels,type OccupiedParcel} from '../world/model';
 import {sprite} from '../assets/sprite-catalog';
-import {FURNITURE_LABELS} from '../house/model';
+import {FURNITURE_LABELS,FURNITURE_DESCRIPTIONS} from '../house/model';
 import {errorMessage} from '../errors/messages';
 import {msg,setDisplayText,setDisplayAttribute} from '../i18n';
 import './garden.css';
@@ -21,7 +21,7 @@ export class GardenPanel {
  private floating=document.createElement('img');private saving=false;private feedback=document.createElement('p');private catalogue=document.createElement('div');private count=document.createElement('span');private undo:GardenItem[][]=[];
  private undoButton:HTMLButtonElement;private removeButton:HTMLButtonElement;private doneButton:HTMLButtonElement;
  constructor(private readonly view:()=>AppView|null,private readonly save:(house:PublicHouse)=>Promise<void>,_stage:()=>HTMLCanvasElement){
-  this.viewport.className='sv-garden-preview';this.viewport.hidden=true;this.canvas.setAttribute('aria-label','Jardín');this.viewport.append(this.canvas);document.body.append(this.viewport);
+  this.viewport.className='sv-garden-preview';this.viewport.hidden=true;setDisplayAttribute(this.canvas,'aria-label',msg('Jardín'));this.viewport.append(this.canvas);document.body.append(this.viewport);
   this.canvas.onpointerdown=e=>{if(e.button!==0)return;if(this.pan){this.panStart={x:e.clientX,y:e.clientY,left:this.viewport.scrollLeft,top:this.viewport.scrollTop};this.canvas.setPointerCapture(e.pointerId);return;}this.pointerDown(this.point(e));this.canvas.setPointerCapture(e.pointerId);};this.canvas.onpointermove=e=>{if(this.panStart){this.viewport.scrollLeft=this.panStart.left+this.panStart.x-e.clientX;this.viewport.scrollTop=this.panStart.top+this.panStart.y-e.clientY;}else this.pointerMove(this.point(e));};this.canvas.onpointerup=e=>{this.panStart=null;this.pointerUp();if(this.canvas.hasPointerCapture(e.pointerId))this.canvas.releasePointerCapture(e.pointerId);};this.canvas.onpointercancel=()=>this.pointerUp(true);
   this.root.className='sv-garden-tray';this.root.hidden=true;setDisplayAttribute(this.root,'aria-label',msg('Decoración exterior'));
   const button=(key:string,run:()=>void)=>{const b=document.createElement('button');b.type='button';b.className='sv-button';setDisplayText(b,msg(key));b.onclick=run;return b;};
@@ -30,7 +30,7 @@ export class GardenPanel {
   this.catalogue.className='sv-garden-catalog';for(const kind of gardenItemSchema.shape.kind.options){
    const b=button('',()=>{if(this.suppressClick){this.suppressClick=false;return;}if(this.saving)return;this.pending=kind;this.selected=null;this.ghost=null;this.feedback.textContent='';this.selectButtons();});
    b.dataset.kind=kind;setDisplayAttribute(b,'aria-label',msg(FURNITURE_LABELS[kind]));setDisplayAttribute(b,'title',msg(FURNITURE_LABELS[kind]));
-   const img=document.createElement('img');img.src=sprite(kind)?.src??`sprites/${kind}.png`;img.alt='';img.draggable=false;b.append(img);
+   const img=document.createElement('img');img.src=sprite(kind)?.src??`sprites/${kind}.png`;img.alt='';img.draggable=false;const name=document.createElement('span'),description=document.createElement('small');setDisplayText(name,msg(FURNITURE_LABELS[kind]));setDisplayText(description,msg(FURNITURE_DESCRIPTIONS[kind]));b.append(img,name,description);
    b.addEventListener('dragstart',event=>event.preventDefault());b.addEventListener('pointerdown',event=>this.startCatalogueDrag(event,b,kind));b.addEventListener('pointermove',event=>this.moveCatalogueDrag(event));b.addEventListener('pointerup',event=>this.finishCatalogueDrag(event));b.addEventListener('pointercancel',event=>this.finishCatalogueDrag(event,true));
    this.catalogue.append(b);
   }
