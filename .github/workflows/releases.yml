@@ -116,10 +116,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: android-actions/setup-android@v4
+        if: matrix.key == 'android'
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: false
       - name: Android application
         if: matrix.key == 'android'
         run: |
-          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
           npx cap sync android
           bash android/gradlew -p android assembleDebug
           node scripts/collect-android.mjs

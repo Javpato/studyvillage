@@ -15,7 +15,7 @@ try{
  if(key==='android')await copyFile(path.join(base,source),temporary);
  else if(key==='linux')execFileSync('tar',['-C',base,'-czf',temporary,source]);
  else if(process.platform==='darwin')execFileSync('ditto',['-c','-k','--sequesterRsrc','--keepParent',path.join(base,source),temporary]);
- else if(process.platform==='win32')execFileSync('tar',['-a','-cf',temporary,'-C',base,source]);
+ else if(process.platform==='win32')execFileSync(path.join(process.env.SystemRoot||'C:\\Windows','System32','tar.exe'),['-a','-cf',temporary,'-C',base,source]);
  else execFileSync('zip',['-q','-r','-y',temporary,source],{cwd:base});
  await rename(temporary,final);
  const info=JSON.parse(await readFile('deliverables/BUILD_INFO.json','utf8'));info.archive=name;
