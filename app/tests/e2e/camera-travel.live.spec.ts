@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, type Page } from '@playwright/test';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -33,7 +34,7 @@ test.afterAll(async () => {
 async function phone(page: Page, app: string) {
   if (await page.locator('.sv-phone').isHidden()) await page.getByTestId('phone-button').click();
   else if (await page.locator('.sv-phone-head [aria-label="Volver"]').isVisible()) await page.locator('.sv-phone-head [aria-label="Volver"]').click();
-  await page.getByTestId(`phone-${app}`).click();
+  await openPhoneApp(page,app);
 }
 
 for (const mode of ['temporary', 'server'] as const) test(`floating camera keeps its original stream across world, house, floor and room travel in ${mode} mode`, async ({ page }) => {

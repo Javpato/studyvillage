@@ -1,8 +1,9 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect} from '@playwright/test';
 import {notebookOptions,closeNotebookOptions} from './notebook-ui';
 for(const [device,width,height]of [['phone',390,844],['tablet',820,1180],['desktop',1440,1000]]as const){
  test(`${device}: notebook leaves room to write and reveals document controls on demand`,async({page})=>{
-  await page.setViewportSize({width,height});await page.goto('/');await page.getByTestId('phone-button').click();await page.getByTestId('phone-ink').click();
+  await page.setViewportSize({width,height});await page.goto('/');await page.getByTestId('phone-button').click();await openPhoneApp(page,'ink');
   const root=page.locator('.sv-notebook'),paper=root.locator('.sv-notebook-scroll');await expect(page.getByText('Guardado en este dispositivo',{exact:true})).toBeVisible();
   expect((await paper.boundingBox())!.height).toBeGreaterThan(height*.55);
   expect(await root.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);

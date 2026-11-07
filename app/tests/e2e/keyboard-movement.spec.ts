@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { expect, test } from '@playwright/test';
 
 for (const savedIdentity of [false, true]) {
@@ -7,7 +8,7 @@ for (const savedIdentity of [false, true]) {
       await expect(page.locator('.sv-stage-pane canvas')).toBeVisible();
       if (savedIdentity) {
         await page.getByTestId('phone-button').click();
-        await page.getByTestId('phone-settings').click();
+        await openPhoneApp(page,'settings');
         const settings = page.getByRole('dialog', { name: 'Ajustes' });
         await settings.getByRole('tab', { name: 'Identidad', exact: true }).click();
         await settings.getByLabel('Contraseña (12+ caracteres)').fill('keyboard-regression-password');

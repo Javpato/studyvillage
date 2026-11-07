@@ -1,6 +1,7 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect } from '@playwright/test';
 test('walking to the wardrobe picks the feminine body, combines hat, glasses, suit and jacket, and the look survives a reload', async ({ page }) => {
-  await page.goto('/'); await page.getByTestId('phone-button').click(); await page.getByTestId('phone-house').click();
+  await page.goto('/'); await page.getByTestId('phone-button').click(); await openPhoneApp(page,'house');
   const canvas = page.locator('.sv-stage-pane canvas'); const box = (await canvas.boundingBox())!;
   await canvas.dblclick({ position: { x: box.width * 644 / 768, y: box.height * 182 / 432 } });
   const dialog = page.getByRole('dialog', { name: 'Mi armario' }); await expect(dialog).toBeVisible({ timeout: 15_000 });
@@ -16,7 +17,7 @@ test('walking to the wardrobe picks the feminine body, combines hat, glasses, su
   expect(look).toMatchObject({ body: 'feminine', headwear: 'explorer', eyewear: 'round', outfit: 'suit', jacket: 'blazer',accessory:'headphones',headphonesColor:'#123456' });
 });
 test('discarding the wardrobe keeps the previous look', async ({ page }) => {
-  await page.goto('/'); await page.getByTestId('phone-button').click(); await page.getByTestId('phone-house').click();
+  await page.goto('/'); await page.getByTestId('phone-button').click(); await openPhoneApp(page,'house');
   const canvas = page.locator('.sv-stage-pane canvas'); const box = (await canvas.boundingBox())!;
   await canvas.dblclick({ position: { x: box.width * 644 / 768, y: box.height * 182 / 432 } });
   const dialog = page.getByRole('dialog', { name: 'Mi armario' }); await expect(dialog).toBeVisible({ timeout: 15_000 });

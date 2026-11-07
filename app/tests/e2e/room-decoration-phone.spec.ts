@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, type Page } from '@playwright/test';
 
 const plants = (page: Page) => page.evaluate(() => {
@@ -10,7 +11,7 @@ for (const [name, viewport] of [['portrait', { width: 390, height: 844 }], ['lan
     test.use({ viewport, hasTouch: true, isMobile: true });
     test('furniture can be placed inside a room from the catalogue and persists', async ({ page }) => {
       await page.goto('/');
-      const phone = async (app: string) => { await page.getByTestId('phone-button').click(); await page.getByTestId(`phone-${app}`).click(); };
+      const phone = async (app: string) => { await page.getByTestId('phone-button').click(); await openPhoneApp(page,app); };
       await phone('rooms');
       const spaces = page.getByRole('dialog', { name: 'Plantas y habitaciones' });
       await spaces.getByRole('button', { name: 'Añadir habitación', exact: true }).click();

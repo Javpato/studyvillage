@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page,type Browser,type BrowserContext} from '@playwright/test';
 import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -9,7 +10,7 @@ import {build} from 'rolldown';
 let directory='',bundle='';
 test.beforeAll(async()=>{directory=mkdtempSync(join(tmpdir(),'sv-access-ui-'));bundle=join(directory,'server.mjs');await build({input:resolve('server/src/main.ts'),platform:'node',external:[/^node:/],output:{file:bundle,format:'esm'},logLevel:'warn'});});
 test.afterAll(()=>{if(directory)rmSync(directory,{recursive:true,force:true});});
-async function phone(page:Page,app:string){if(await page.locator('.sv-phone').isHidden())await page.getByTestId('phone-button').click();else if(await page.locator('.sv-phone-head [aria-label="Volver"]').isVisible())await page.locator('.sv-phone-head [aria-label="Volver"]').click();await page.getByTestId(`phone-${app}`).click();}
+async function phone(page:Page,app:string){if(await page.locator('.sv-phone').isHidden())await page.getByTestId('phone-button').click();else if(await page.locator('.sv-phone-head [aria-label="Volver"]').isVisible())await page.locator('.sv-phone-head [aria-label="Volver"]').click();await openPhoneApp(page,app);}
 async function person(browser:Browser,contexts:BrowserContext[],name:string,mobile=false){const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:1000}});contexts.push(context);const page=await context.newPage();await page.goto('/');await phone(page,'settings');const settings=page.getByRole('dialog',{name:'Ajustes',exact:true});await settings.getByLabel('Nombre visible',{exact:true}).fill(name);await settings.getByRole('button',{name:'Guardar perfil',exact:true}).click();await settings.getByRole('button',{name:'Cerrar',exact:true}).click();return page;}
 for(const mode of ['server','temporary'] as const)for(const mobile of [false,true])test(`one pending access, explicit cancellation and decisions in ${mode} on ${mobile?'phone':'desktop'}`,async({browser})=>{
  test.skip(mode==='temporary'&&!process.env.STUDYVILLAGE_LIVE,'real PeerJS signaling is opt-in');test.setTimeout(120_000);

@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { existsSync } from 'node:fs';
 import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
@@ -23,7 +24,7 @@ const hearsSomeone = (page: Page) => page.waitForFunction(() => [...document.que
 async function phoneApp(page: Page, app: string): Promise<void> {
   if (await page.locator('.sv-phone').isHidden()) await page.getByTestId('phone-button').click();
   else if (await page.locator('.sv-phone-head [aria-label="Volver"]').isVisible()) await page.locator('.sv-phone-head [aria-label="Volver"]').click();
-  await page.getByTestId(`phone-${app}`).click();
+  await openPhoneApp(page,app);
 }
 
 /** Opens a named client in its own context and joins the first one's village. */

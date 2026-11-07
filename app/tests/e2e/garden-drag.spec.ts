@@ -1,7 +1,8 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page,type CDPSession} from '@playwright/test';
 import {savedHouse,worldPoint} from './root-polish-helpers';
 const tray=(page:Page)=>page.locator('.sv-garden-tray');
-async function openGarden(page:Page){await page.getByTestId('phone-button').click();await page.getByTestId('phone-garden').click();await expect(tray(page)).toBeVisible();}
+async function openGarden(page:Page){await page.getByTestId('phone-button').click();await openPhoneApp(page,'garden');await expect(tray(page)).toBeVisible();}
 async function dragFromCatalogue(page:Page,kind:string,x:number,y:number,valid:boolean){
  const tile=tray(page).getByRole('button',{name:kind,exact:true}),box=(await tile.boundingBox())!;await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();const before=(await page.locator('.sv-stage-pane canvas').boundingBox())!;await page.mouse.move(...await worldPoint(page,x,y),{steps:10});await expect(tray(page)).toHaveAttribute('data-preview',valid?'valid':'invalid');const after=(await page.locator('.sv-stage-pane canvas').boundingBox())!;expect(Math.abs(after.width-before.width)).toBeLessThan(2);expect(Math.abs(after.y-before.y)).toBeLessThan(2);await page.mouse.up();
 }

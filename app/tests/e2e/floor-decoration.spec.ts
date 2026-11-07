@@ -1,9 +1,10 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page} from '@playwright/test';
 import type {WorkspaceDocument} from '../../../packages/core/src/house/workspaces';
 import {readPersistedLocalData} from './helpers/persistence';
 import {worldPoint} from './root-polish-helpers';
 
-async function phone(page:Page,app:string){await page.getByTestId('phone-button').click();await page.getByTestId(`phone-${app}`).click();}
+async function phone(page:Page,app:string){await page.getByTestId('phone-button').click();await openPhoneApp(page,app);}
 const spaces=(page:Page)=>page.getByRole('dialog',{name:'Plantas y habitaciones'});
 const workspaceDocs=(page:Page)=>page.evaluate(()=>JSON.parse(localStorage.getItem('studyvillage-workspaces-v1')||'{}') as Record<string,WorkspaceDocument>);
 const ground=(page:Page)=>workspaceDocs(page).then(docs=>docs['own/ground/@floor']);

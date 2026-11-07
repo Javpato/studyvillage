@@ -1,3 +1,4 @@
+import {openPhoneApp} from './phone-ui.mjs';
 /** Exercise the actual static package at the GitHub Pages subpath, without Vite fallbacks. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -35,7 +36,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const address=`http://127.0.0.1:${server.address().port}${mount}`;
 
 async function openNotebook(page){
- await page.getByTestId('phone-button').click();await page.getByTestId('phone-ink').click();
+ await page.getByTestId('phone-button').click();await openPhoneApp(page,'ink');
  await expect(page.getByLabel('Título del cuaderno',{exact:true})).toHaveValue('Cuaderno');
 }
 async function options(page,tab){

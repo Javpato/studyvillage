@@ -1,8 +1,9 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, type Page } from '@playwright/test';
 
 async function openSettings(page: Page): Promise<void> {
   await page.getByTestId('phone-button').click();
-  await page.getByTestId('phone-settings').click();
+  await openPhoneApp(page,'settings');
 }
 
 for (const [device, width, height] of [['phone', 390, 844], ['iPad', 820, 1180], ['desktop', 1440, 1000]] as const) {
@@ -16,7 +17,7 @@ for (const [device, width, height] of [['phone', 390, 844], ['iPad', 820, 1180],
     await openSettings(page);
     const dialog = page.getByRole('dialog', { name: 'Ajustes' });
     await expect(dialog).toBeVisible();
-    await page.screenshot({ path: `/tmp/studyvillage-settings-${device}.png`, fullPage: true });
+    await page.screenshot({ path: test.info().outputPath(`settings-${device}.png`), fullPage: true });
     await dialog.getByLabel('Nombre del vecindario (en este equipo)').fill('Aldea de prueba');
     await dialog.getByLabel('Nombre del vecindario (en este equipo)').press('Tab');
     await dialog.getByLabel('Nombre de tu casa').fill('Casa del bosque');
@@ -67,7 +68,7 @@ test('closing the werewolves table always gives movement back', async ({ page })
   await expect(page.getByRole('heading', { name: 'La aldea', exact: true })).toBeVisible();
   // Home and back out: you land at your own door and can still walk.
   await page.getByTestId('phone-button').click();
-  await page.getByTestId('phone-house').click();
+  await openPhoneApp(page,'house');
   await page.keyboard.press('Escape');
   await expect(page.getByRole('heading', { name: 'La aldea', exact: true })).toBeVisible();
   await page.keyboard.down('s');

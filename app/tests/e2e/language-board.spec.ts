@@ -1,12 +1,13 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, type Page } from '@playwright/test';
 
 async function openSettings(page: Page): Promise<void> {
   await page.getByTestId('phone-button').click();
-  await page.getByTestId('phone-settings').click();
+  await openPhoneApp(page,'settings');
 }
 async function openHouseBoard(page: Page, name = 'Pizarra'): Promise<void> {
   await page.getByTestId('phone-button').click();
-  await page.getByTestId('phone-decorate').click();
+  await openPhoneApp(page,'decorate');
   if (!await page.locator('.sv-house-editor > details').evaluate(el => (el as HTMLDetailsElement).open)) await page.locator('.sv-house-editor > details > summary').click();
   await page.locator('.sv-furniture-item', { hasText: name }).first().dblclick();
 }

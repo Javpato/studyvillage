@@ -1,4 +1,7 @@
 import {PencilTouchGuard,pointerSamples} from '../../../packages/documents/src/pen';
+import {loadPhoneLayout} from '../../../packages/runtime/src/storage/phone-layout';
+import {type PhoneAppId} from '../../../packages/core/src/phone/layout';
+import {PhoneLayoutEditor} from './phone-layout-editor';
 import {boardFontGeneration} from '../whiteboard/fonts';
 import {installDrawingSurface} from '../input/drawing-surface';
 import {layoutViewport} from '../input/browser-viewport';
@@ -82,7 +85,7 @@ import { WorldExpansionUIController } from './world-expansion-ui';
 import { monoIcon } from './pixel-icons';
 
 type Pane = 'world' | 'house' | 'board' | 'contacts' | 'diagnostics';
-type PhonePage = 'home' | 'village' | 'voice' | 'decorate' | 'contacts';
+type PhonePage = 'home' | 'folder' | 'village' | 'voice' | 'decorate' | 'contacts';
 /** Where to walk to use something, and how to use it once there. */
 type Interaction = { x: number; y: number; near(): boolean; run(): void };
 type DiagnosticKind = Parameters<AppActions['runDiagnostic']>[0];
@@ -391,6 +394,11 @@ class StudyUI {
   private phoneButton!: HTMLButtonElement;
   private phoneBadge!: HTMLElement;
   private phoneHouseTile!: HTMLButtonElement;
+  private phoneLayout=loadPhoneLayout();
+  private phoneTiles=new Map<PhoneAppId,HTMLButtonElement>();
+  private phoneGrid!:HTMLElement;
+  private phoneFolder:string|null=null;
+  private phoneEditor!:PhoneLayoutEditor;
   private decorateHint!: HTMLElement;
   private hudVoice!: HTMLElement;
   private hudMic!: HTMLButtonElement;
@@ -791,7 +799,7 @@ class StudyUI {
     this.phoneBack = button('', 'sv-phone-icon-btn');
     this.phoneBack.append(monoIcon('back', 14));
     setDisplayAttribute(this.phoneBack, 'aria-label', msg('Volver'));
-    this.phoneBack.addEventListener('click', () => this.openPhone('home'));
+    this.phoneBack.addEventListener('click', () => {if(this.phonePage!=='folder'&&this.phoneFolder)this.openPhone('folder');else this.openPhone('home');});
     this.phoneTitle = node('h2', 'sv-phone-title', msg('Menú'));
     const close = button('', 'sv-phone-icon-btn');
     close.append(monoIcon('close', 12));
@@ -807,6 +815,7 @@ class StudyUI {
     append(meText, this.profileName, this.statusBadge);
     append(me, this.profileColor, meText);
     const grid = node('div', 'sv-app-grid');
+    this.phoneGrid=grid;
     const tile = (label: DisplayText, iconName: string, hue: string, onClick: () => void, testid?: string) => {
       const item = button('', 'sv-app-tile');
       item.style.setProperty('--tile', hue);
@@ -815,7 +824,7 @@ class StudyUI {
       append(item, face, node('span', 'sv-app-label', label));
       if (testid) item.dataset.testid = testid;
       item.addEventListener('click', onClick);
-      grid.append(item);
+      if(testid)this.phoneTiles.set(testid.replace('phone-','') as PhoneAppId,item);
       return item;
     };
     this.phoneHouseTile = tile(msg('Mi casa'), 'house', '#e8894f', () => {
@@ -841,7 +850,7 @@ class StudyUI {
       const section = this.settingsSection('Identidad');
       for (const panel of this.settingsSections.values()) panel.hidden = panel !== section;
       const tabs = this.settingsTabs.querySelectorAll<HTMLButtonElement>('button');
-      tabs.forEach((tab, index) => { tab.setAttribute('aria-selected', String(index === 4)); tab.tabIndex = index === 4 ? 0 : -1; });
+      tabs.forEach(tab => { const selected=tab.getAttribute('aria-controls')===section.id; tab.setAttribute('aria-selected',String(selected)); tab.tabIndex=selected?0:-1; });
     }, 'phone-identity');
     tile(msg('Conexión'),'gear','#7c8a7a',()=>{this.closePhone();this.stopMoving();this.connectionPanel.open();},'phone-connection');
     tile(msg('Mi jardín'),'brush','#729a84',()=>{this.closePhone();this.stopMoving();this.endDecoration();this.navigate('world');this.changeWorldArea('residential',WORLD_SPAWN);this.garden.open();const p=occupiedParcels(this.view!).find(p=>p.isOwn)?.parcel;if(p)this.localPosition={x:p.doorX,y:p.slot<3?p.doorY+40:p.doorY-26,direction:'down',moving:false};},'phone-garden');
@@ -849,6 +858,7 @@ class StudyUI {
     tile(msg('Concentración'),'gear','#729a84',()=>{this.closePhone();this.stopMoving();this.focusClock.open();},'phone-focus');
     tile(msg('Cuaderno de tinta'), 'notes', '#729a84', () => { this.closePhone(); this.stopMoving(); this.notebooks.open(); }, 'phone-ink');
     append(home, me, grid);
+    const folder=node('div','sv-phone-page sv-app-grid');
 
     const village = node('div', 'sv-phone-page');
     append(village, sessionControls, this.villageCard);
@@ -859,14 +869,35 @@ class StudyUI {
     append(decorate, this.decorateHint, this.houseEditBox);
     const contacts = node('div', 'sv-phone-page');
     contacts.append(this.contactsPane);
-    this.phonePages = new Map<PhonePage, HTMLElement>([['home', home], ['village', village], ['voice', voice], ['decorate', decorate], ['contacts', contacts]]);
+    this.phonePages = new Map<PhonePage, HTMLElement>([['home', home], ['folder',folder], ['village', village], ['voice', voice], ['decorate', decorate], ['contacts', contacts]]);
     append(this.phoneScreen, head, ...this.phonePages.values());
     this.phone.append(this.phoneScreen);
+    this.phoneEditor=new PhoneLayoutEditor(layout=>{this.phoneLayout=layout;this.renderPhoneLayout();});
+    this.settingsSection('Teléfono').append(this.phoneEditor.root);
+    this.settingsDialog.addEventListener('toggle',()=>{if(this.settingsDialog.open)this.phoneEditor.reset();});
+    this.renderPhoneLayout();
+  }
+
+  private renderPhoneLayout():void {
+    this.phoneGrid.replaceChildren();this.phonePages.get('folder')!.replaceChildren();
+    // Detach optional applications as well as apps which changed containers.
+    for(const tile of this.phoneTiles.values())tile.remove();
+    for(const entry of this.phoneLayout.entries){
+      if(entry.type==='app'){this.phoneGrid.append(this.phoneTiles.get(entry.id)!);continue;}
+      const item=button('','sv-app-tile');item.dataset.testid=`phone-folder-${entry.id}`;
+      const face=node('span','sv-app-icon');face.style.setProperty('--tile','#b38a55');face.append(monoIcon('house',26));
+      append(item,face,node('span','sv-app-label',entry.builtin?msg(entry.name):entry.name));
+      item.onclick=()=>{this.phoneFolder=entry.id;this.openPhone('folder');};this.phoneGrid.append(item);
+    }
   }
 
   private openPhone(page: PhonePage = 'home'): void {
     this.speech.clear();
-    const titles: Record<PhonePage, DisplayText> = { home: msg('Menú'), village: msg('Aldea'), voice: msg('Voz y pantalla'), decorate: msg(this.localPosition.space ? this.localPosition.space.roomId ? 'Decorar habitación' : 'Decorar planta' : 'Decorar mi casa'), contacts: msg('Contactos') };
+    if(page==='home')this.phoneFolder=null;
+    const folder=this.phoneLayout.entries.find(e=>e.type==='folder'&&e.id===this.phoneFolder);
+    if(page==='folder'&&folder?.type!=='folder'){page='home';this.phoneFolder=null;}
+    if(page==='folder'&&folder?.type==='folder'){const container=this.phonePages.get('folder')!;container.replaceChildren(...folder.apps.map(id=>this.phoneTiles.get(id)!));}
+    const titles: Record<PhonePage, DisplayText> = { home: msg('Menú'), folder:folder?.type==='folder'?(folder.builtin?msg(folder.name):folder.name):msg('Menú'), village: msg('Aldea'), voice: msg('Voz y pantalla'), decorate: msg(this.localPosition.space ? this.localPosition.space.roomId ? 'Decorar habitación' : 'Decorar planta' : 'Decorar mi casa'), contacts: msg('Contactos') };
     this.expansion.closeModal();
     this.phonePage = page;
     this.phone.hidden = false;
@@ -882,6 +913,7 @@ class StudyUI {
     if (this.phone.hidden) return;
     this.phone.hidden = true;
     this.phonePage = null;
+    this.phoneFolder=null;
     // Hand the keyboard back to the world (not to the Menú button, where Space would reopen it).
     const focused = document.activeElement;
     if (focused instanceof HTMLElement && (this.phone.contains(focused) || focused === this.phoneButton)) focused.blur();

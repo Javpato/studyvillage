@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page} from '@playwright/test';
 import {openDecorate} from './root-polish-helpers';
 import type {BoardStroke} from '../../../packages/core/src/protocol/types';
@@ -23,7 +24,7 @@ test('Pencil mode allows finger pan and zoom, persists and is shared with the no
  await pointer(page,'pointerdown',1,'touch',100,100);await pointer(page,'pointermove',1,'touch',180,140);await pointer(page,'pointerdown',2,'touch',280,140);await pointer(page,'pointermove',2,'touch',380,140);await pointer(page,'pointerup',2,'touch',380,140);await pointer(page,'pointerup',1,'touch',180,140);
  expect(await strokes(page)).toHaveLength(0);await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await page.locator('.sv-board-options-panel summary').filter({hasText:/^Vista$/}).click();await expect(page.locator('.sv-zoom-label')).toHaveText('200%');await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();
  await page.reload();await openBoard(page);await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await expect(page.getByTestId('board-pencil-mode')).toBeChecked();await page.locator('[data-testid=board-back]:visible, .sv-hud-back:visible').first().click();
- await page.getByTestId('phone-button').click();await page.getByTestId('phone-ink').click();await page.getByRole('button',{name:'Opciones del cuaderno',exact:true}).click();await page.getByRole('tab',{name:'Tinta y selección',exact:true}).click();await expect(page.locator('.sv-notebook').getByLabel('Modo lápiz',{exact:true})).toBeChecked();
+ await page.getByTestId('phone-button').click();await openPhoneApp(page,'ink');await page.getByRole('button',{name:'Opciones del cuaderno',exact:true}).click();await page.getByRole('tab',{name:'Tinta y selección',exact:true}).click();await expect(page.locator('.sv-notebook').getByLabel('Modo lápiz',{exact:true})).toBeChecked();
 });
 test('cancelled pen and lost capture discard drafts, and cancellation never erases saved ink',async({page})=>{
  await page.goto('/');await openBoard(page);await mode(page);

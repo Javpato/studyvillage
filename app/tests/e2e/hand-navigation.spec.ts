@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page,type Locator} from '@playwright/test';
 import {openDecorate} from './root-polish-helpers';
 import {notebookOptions,closeNotebookOptions} from './notebook-ui';
@@ -8,7 +9,7 @@ const preference=(page:Page)=>page.evaluate(()=>localStorage.getItem('studyvilla
 async function open(page:Page,s:Surface){
  await page.goto('/');
  if(s==='board'){const editor=await openDecorate(page);await editor.locator('.sv-furniture-item').filter({hasText:'Pizarra'}).dblclick();}
- else{await page.getByTestId('phone-button').click();await page.getByTestId('phone-ink').click();await expect(page.getByLabel('Título del cuaderno',{exact:true})).toHaveValue('Cuaderno');}
+ else{await page.getByTestId('phone-button').click();await openPhoneApp(page,'ink');await expect(page.getByLabel('Título del cuaderno',{exact:true})).toHaveValue('Cuaderno');}
  await expect(canvas(page,s)).toBeVisible();
  await page.locator(s==='board'?'.sv-board-pane':'.sv-notebook').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished.catch(()=>{}))));
 }

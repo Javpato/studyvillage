@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect } from '@playwright/test';
 
 // Browser-only evidence for the local village shell. These checks exercise the
@@ -10,7 +11,7 @@ type Page = import('@playwright/test').Page;
 /** Everything is reached from the phone, the way the player does it. */
 async function phoneApp(page: Page, app: string) {
   await page.getByTestId('phone-button').click();
-  await page.getByTestId(`phone-${app}`).click();
+  await openPhoneApp(page,app);
   if (app === 'decorate' && !await page.locator('.sv-house-editor > details').evaluate(el => (el as HTMLDetailsElement).open)) await page.locator('.sv-house-editor > details > summary').click();
 }
 

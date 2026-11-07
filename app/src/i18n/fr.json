@@ -2466,5 +2466,22 @@
   "Modo lápiz": "Mode stylet",
   "Excalifont (Excalidraw)": "Excalifont (Excalidraw)",
   "No se pudo cargar la fuente. Vuelve a intentarlo.": "Impossible de charger la police. Réessayez.",
-  "El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar.": "Le stylet écrit et efface. Les doigts déplacent, zooment et sélectionnent sans dessiner ni effacer."
+  "El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar.": "Le stylet écrit et efface. Les doigts déplacent, zooment et sélectionnent sans dessiner ni effacer.",
+  "Hogar": "Foyer",
+  "Teléfono": "Téléphone",
+  "Inicio": "Écran d’accueil",
+  "Organizar teléfono": "Organiser le téléphone",
+  "Quitar una aplicación solo oculta su acceso. Tus datos se conservan. Ajustes siempre permanece disponible.": "Retirer une application masque uniquement son raccourci. Vos données sont conservées. Les paramètres restent accessibles.",
+  "Ubicación de {app}": "Emplacement de {app}",
+  "Quitar aplicación": "Retirer l’application",
+  "Nombre de la carpeta": "Nom du dossier",
+  "Eliminar carpeta": "Supprimer le dossier",
+  "Aplicación para añadir": "Application à ajouter",
+  "Añadir aplicación": "Ajouter une application",
+  "Nueva carpeta": "Nouveau dossier",
+  "Crear carpeta": "Créer un dossier",
+  "Guardar teléfono": "Enregistrer le téléphone",
+  "Restablecer distribución": "Réinitialiser la disposition",
+  "Teléfono guardado.": "Téléphone enregistré.",
+  "No se pudo guardar el teléfono. Tus cambios siguen aquí.": "Impossible d’enregistrer le téléphone. Vos modifications sont conservées ici."
 }

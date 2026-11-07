@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect} from '@playwright/test';
 for(const[device,width,height]of[['phone',390,844],['tablet',820,1180]]as const){
  test.describe(device,()=>{
@@ -9,7 +10,7 @@ for(const[device,width,height]of[['phone',390,844],['tablet',820,1180]]as const)
    if(device==='phone'){const screen=(await page.locator('.sv-stage-pane canvas').boundingBox())!,pad=(await page.getByRole('group',{name:'Cruceta de movimiento táctil'}).boundingBox())!;expect(screen.y+screen.height).toBeLessThan(pad.y);expect(screen.y).toBeLessThan(height*.25);}
    expect((await page.getByRole('group',{name:'Cruceta de movimiento táctil'}).boundingBox())!.width).toBeLessThan(130);
    const menuBox=(await menu.boundingBox())!;expect(menuBox.y).toBeLessThan(30);expect(menuBox.x+menuBox.width).toBeGreaterThan(width-30);
-   const open=async()=>{await menu.click();await page.getByTestId('phone-hud-editor').click();};
+   const open=async()=>{await menu.click();await openPhoneApp(page,'hud-editor');};
    await open();const editor=page.getByRole('dialog',{name:'Editor de controles'});
    const preview=(await editor.locator('.sv-hud-layout-preview').boundingBox())!;expect(Math.abs(preview.width/preview.height-width/height)).toBeLessThan(.02);
    await expect(editor.locator('.sv-hud-layout-preview')).toHaveCSS('background-size',/^10% 10%(?:, 10% 10%)?$/);

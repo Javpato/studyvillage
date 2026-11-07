@@ -1,8 +1,9 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect } from '@playwright/test';
 test('precision sizes persist and a partial eraser drag is undone together', async ({ page }) => {
   await page.goto('/');
   const openBoard = async () => {
-    await page.getByTestId('phone-button').click(); await page.getByTestId('phone-decorate').click();
+    await page.getByTestId('phone-button').click(); await openPhoneApp(page,'decorate');
     const details = page.locator('.sv-house-editor > details');
     if (!await details.evaluate(el => (el as HTMLDetailsElement).open)) await details.locator(':scope > summary').click();
     await page.locator('.sv-furniture-item', { hasText: 'Pizarra' }).first().dblclick();

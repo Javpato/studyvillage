@@ -1,7 +1,8 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import{test,expect}from'@playwright/test';
 test.use({viewport:{width:390,height:844},hasTouch:true,isMobile:true,userAgent:'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36'});
 test('board back remains reachable in both orientations even with the location widget hidden',async({page})=>{
- await page.goto('/');const phone=async(app:string)=>{await page.getByTestId('phone-button').click();await page.getByTestId(`phone-${app}`).click();};
+ await page.goto('/');const phone=async(app:string)=>{await page.getByTestId('phone-button').click();await openPhoneApp(page,app);};
  await phone('hud-editor');const editor=page.getByRole('dialog',{name:'Editor de controles'});
  for(const orientation of ['portrait','landscape']){await editor.getByLabel('Orientación del diseño').selectOption(orientation);await editor.getByLabel('Control para editar').selectOption('location');await editor.getByLabel('Mostrar en pantalla').uncheck();}
  await editor.getByRole('button',{name:'Guardar controles',exact:true}).click();await phone('house');

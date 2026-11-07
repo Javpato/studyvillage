@@ -2464,5 +2464,22 @@
   "Modo lápiz": "Modo lápiz",
   "Excalifont (Excalidraw)": "Excalifont (Excalidraw)",
   "No se pudo cargar la fuente. Vuelve a intentarlo.": "No se pudo cargar la fuente. Vuelve a intentarlo.",
-  "El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar.": "El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar."
+  "El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar.": "El lápiz escribe y borra. Los dedos mueven, amplían y seleccionan sin dibujar ni borrar.",
+  "Hogar": "Hogar",
+  "Teléfono": "Teléfono",
+  "Inicio": "Inicio",
+  "Organizar teléfono": "Organizar teléfono",
+  "Quitar una aplicación solo oculta su acceso. Tus datos se conservan. Ajustes siempre permanece disponible.": "Quitar una aplicación solo oculta su acceso. Tus datos se conservan. Ajustes siempre permanece disponible.",
+  "Ubicación de {app}": "Ubicación de {app}",
+  "Quitar aplicación": "Quitar aplicación",
+  "Nombre de la carpeta": "Nombre de la carpeta",
+  "Eliminar carpeta": "Eliminar carpeta",
+  "Aplicación para añadir": "Aplicación para añadir",
+  "Añadir aplicación": "Añadir aplicación",
+  "Nueva carpeta": "Nueva carpeta",
+  "Crear carpeta": "Crear carpeta",
+  "Guardar teléfono": "Guardar teléfono",
+  "Restablecer distribución": "Restablecer distribución",
+  "Teléfono guardado.": "Teléfono guardado.",
+  "No se pudo guardar el teléfono. Tus cambios siguen aquí.": "No se pudo guardar el teléfono. Tus cambios siguen aquí."
 }

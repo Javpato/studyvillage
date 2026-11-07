@@ -1,7 +1,8 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect } from '@playwright/test';
 test('each room has its own full projects app, furniture and boards after reload',async({page})=>{
  await page.goto('/');
- const phone=async(app:string)=>{await page.getByTestId('phone-button').click();await page.getByTestId(`phone-${app}`).click();};
+ const phone=async(app:string)=>{await page.getByTestId('phone-button').click();await openPhoneApp(page,app);};
  const projects=page.getByRole('region',{name:'Proyectos en VS Code'});
  const closeProjects=async()=>{await projects.getByRole('button',{name:'Cerrar',exact:true}).first().click();};
  await phone('rooms');const spaces=page.getByRole('dialog',{name:'Plantas y habitaciones'});
@@ -36,7 +37,7 @@ for(const device of [{name:'phone',width:390,height:844,language:'es'},{name:'ta
    if(!localStorage.getItem('studyvillage-local-sync'))localStorage.setItem('studyvillage-local-sync',JSON.stringify({schemaVersion:1,profile:{displayName:'Owner',color:'#df8a72'},house:null,friendCode:'test-owner',contacts:[{schemaVersion:1,identity:{fingerprint:'b'.repeat(64),publicKey:'A'.repeat(44),displayName:'Ana',color:'#627c69'},friendCode:'test-friend'}],encryptedIdentity:null,editor:'',projectLinks:{}}));
   },{language:device.language});
   const en=device.language==='en';
-  const open=async()=>{await page.getByTestId('phone-button').click();await page.getByTestId('phone-rooms').click();};
+  const open=async()=>{await page.getByTestId('phone-button').click();await openPhoneApp(page,'rooms');};
   await page.goto('/');await open();
   const dialog=page.getByRole('dialog',{name:en?'Floors and rooms':'Plantas y habitaciones'});
   await dialog.getByRole('button',{name:en?'Add room':'Añadir habitación',exact:true}).click();

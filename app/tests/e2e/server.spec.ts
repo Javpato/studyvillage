@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { readPersistedLocalData } from './helpers/persistence';
 import { test, expect, type Page, type Browser } from '@playwright/test';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -30,7 +31,7 @@ test.afterAll(async () => { await stop(); if (dataDir) rmSync(dataDir, { recursi
 
 async function settings(page: Page, tab: string) {
   await page.getByTestId('phone-button').click();
-  await page.getByTestId('phone-settings').click();
+  await openPhoneApp(page,'settings');
   const dialog = page.getByRole('dialog', { name: 'Ajustes' });
   await dialog.getByRole('tab', { name: tab, exact: true }).click();
   return dialog;
@@ -85,7 +86,7 @@ test('owner claims the server, invites a temporary visitor, grows capacity, leav
   // A party invite requires acceptance, and the channel appears in both clients.
   for (const person of [admin, guest]) {
     await person.page.keyboard.press('Escape'); await person.page.keyboard.press('Escape');
-    await person.page.getByTestId('phone-button').click(); await person.page.getByTestId('phone-voice').click();
+    await person.page.getByTestId('phone-button').click(); await openPhoneApp(person.page,'voice');
   }
   const adminVoice = admin.page.locator('.sv-voice-channels');
   const guestVoice = guest.page.locator('.sv-voice-channels');
@@ -149,9 +150,9 @@ test('in my own house I can clear a guest\'s layer from the layers panel', async
   await guestDialog.getByRole('button', { name: 'Cerrar', exact: true }).first().click();
 
   // The owner goes home; the guest knocks on the owner's door (plot 1) and is let in.
-  await owner.page.getByTestId('phone-button').click(); await owner.page.getByTestId('phone-house').click();
+  await owner.page.getByTestId('phone-button').click(); await openPhoneApp(owner.page,'house');
   // Private floors work before an explicit import of the local lobby boards.
-  await owner.page.getByTestId('phone-button').click();await owner.page.getByTestId('phone-rooms').click();
+  await owner.page.getByTestId('phone-button').click();await openPhoneApp(owner.page,'rooms');
   const rooms=owner.page.getByRole('dialog',{name:'Plantas y habitaciones'});
   await rooms.getByRole('button',{name:'Añadir habitación',exact:true}).click();
   await rooms.getByRole('button',{name:'Entrar a la planta',exact:true}).click();
@@ -168,7 +169,7 @@ test('in my own house I can clear a guest\'s layer from the layers panel', async
   // Both open the owner's whiteboard; the guest draws.
   box = (await stage.boundingBox())!;
   await stage.dblclick({ position: { x: box.width * 373 / 768, y: box.height * 109 / 432 } });
-  await owner.page.getByTestId('phone-button').click(); await owner.page.getByTestId('phone-decorate').click();
+  await owner.page.getByTestId('phone-button').click(); await openPhoneApp(owner.page,'decorate');
   if (!await owner.page.locator('.sv-house-editor > details').evaluate(el => (el as HTMLDetailsElement).open)) await owner.page.locator('.sv-house-editor > details > summary').click();
   await owner.page.locator('.sv-furniture-item', { hasText: 'Pizarra' }).first().dblclick();
   const canvas = guest.page.getByLabel('Pizarra para dibujar');
@@ -213,20 +214,20 @@ test('friend lists saved in the phone allow offline-owner room entry after a ser
  await expect(guest.page.locator('.sv-contact-list strong')).toHaveText('Study buddy');
  await expect.poll(async()=>(await readPersistedLocalData(guest.page)).contacts.some(c=>c.nickname==='Study buddy'&&!c.friendCode)).toBe(true);
  await guest.page.keyboard.press('Escape');guestDialog=await settings(guest.page,'Servidores');
- await page.getByTestId('phone-button').click();await page.getByTestId('phone-rooms').click();const rooms=page.getByRole('dialog',{name:'Plantas y habitaciones'});
+ await page.getByTestId('phone-button').click();await openPhoneApp(page,'rooms');const rooms=page.getByRole('dialog',{name:'Plantas y habitaciones'});
  await rooms.getByRole('button',{name:'Añadir habitación',exact:true}).click();await expect(rooms.getByRole('status')).toContainText('Guardado en el servidor');
  // Importing a legacy house with no house allowlist must still sign valid JSON.
  await rooms.getByRole('button',{name:'Cerrar',exact:true}).click();
  dialog=await settings(page,'Servidores');await dialog.getByRole('button',{name:'Volver a importar mi casa y pizarras',exact:true}).click();
  await expect(page.locator('.sv-notice')).toContainText('Copiados tu casa');await dialog.getByRole('button',{name:'Cerrar',exact:true}).first().click();
- await page.getByTestId('phone-button').click();await page.getByTestId('phone-rooms').click();
+ await page.getByTestId('phone-button').click();await openPhoneApp(page,'rooms');
  await rooms.getByLabel('Acceso de la casa',{exact:true}).selectOption('locked');await expect(rooms.getByLabel('Acceso de la casa',{exact:true})).toBeEnabled();
  await rooms.locator('.sv-space-home summary').click();await rooms.locator('.sv-space-home').getByRole('checkbox').check();await expect(rooms.locator('.sv-space-home').getByRole('checkbox')).toBeEnabled();
  await rooms.locator('.sv-space-room summary').click();await rooms.locator('.sv-space-room').getByRole('checkbox').check();await expect(rooms.getByRole('status')).toContainText('Guardado en el servidor');await expect(rooms.locator('.sv-space-room').getByRole('checkbox')).toBeEnabled();
  await context.close();await stop();await start();await expect(guestDialog.getByText(/Residente.*1\/6 conectadas/)).toBeVisible({timeout:30000});await guestDialog.getByRole('button',{name:'Cerrar',exact:true}).first().click();
  const stage=guest.page.locator('.sv-stage-pane canvas');const box=(await stage.boundingBox())!;await stage.dblclick({position:{x:box.width*104/768,y:box.height*75/432}});
  await expect(guest.page.locator('.sv-hud-place h1')).toHaveText('Mi rincón de estudio',{timeout:15000});
- await guest.page.getByTestId('phone-button').click();await guest.page.getByTestId('phone-rooms').click();const guestRooms=guest.page.getByRole('dialog',{name:'Plantas y habitaciones'});
+ await guest.page.getByTestId('phone-button').click();await openPhoneApp(guest.page,'rooms');const guestRooms=guest.page.getByRole('dialog',{name:'Plantas y habitaciones'});
  await guestRooms.getByRole('button',{name:'Entrar a la habitación',exact:true}).click();await guestRooms.getByRole('button',{name:'Cerrar',exact:true}).click();await expect(guest.page.locator('.sv-hud-place h1')).toHaveText('Habitación 1');
  await guest.context.close();
 });
@@ -246,10 +247,10 @@ test('a saved custom avatar is transferred and rendered by a second server clien
   };
  },expected);
  try{
-  await owner.page.getByTestId('phone-button').click();await owner.page.getByTestId('phone-house').click();
+  await owner.page.getByTestId('phone-button').click();await openPhoneApp(owner.page,'house');
   const world=owner.page.locator('.sv-stage-pane canvas'),bounds=(await world.boundingBox())!;await world.dblclick({position:{x:bounds.width*644/768,y:bounds.height*182/432}});
   const wardrobe=owner.page.locator('.sv-wardrobe');await expect(wardrobe).toBeVisible();await wardrobe.locator('input[type=file]').setInputFiles({name:'custom-avatar.png',mimeType:'image/png',buffer:png});await expect(wardrobe.getByRole('button',{name:'Guardar look',exact:true})).toBeEnabled();await wardrobe.getByRole('button',{name:'Guardar look',exact:true}).click();await expect(wardrobe).toBeHidden();
-  await owner.page.getByTestId('phone-button').click();await owner.page.getByTestId('phone-house').click();await expect(owner.page.locator('.sv-hud-place h1')).toHaveText('La aldea');
+  await owner.page.getByTestId('phone-button').click();await openPhoneApp(owner.page,'house');await expect(owner.page.locator('.sv-hud-place h1')).toHaveText('La aldea');
   const dialog=await settings(owner.page,'Identidad');await dialog.getByLabel('Contraseña (12+ caracteres)').fill(PASS);await dialog.getByRole('button',{name:'Cifrar y guardar'}).click();await expect(owner.page.getByText(/Identidad guardada cifrada/).first()).toBeVisible();
   await dialog.getByRole('tab',{name:'Servidores',exact:true}).click();await dialog.getByLabel('Dirección del servidor').fill(`http://127.0.0.1:${port}`);await dialog.getByRole('button',{name:'Comprobar'}).click();await dialog.getByLabel('Secreto de instalación',{exact:true}).fill(SECRET);await dialog.getByRole('button',{name:'Conectar'}).click();await expect(dialog.getByText(/Administración.*1\/6 conectadas/)).toBeVisible();await dialog.getByText('Administrar servidor').click();await dialog.getByRole('button',{name:'Crear invitación privada'}).click();const invite=(await dialog.getByLabel('Invitación creada').inputValue()).split('\n')[1].split(': ')[1].trim();await dialog.getByRole('button',{name:'Cerrar',exact:true}).first().click();
   const guest=await guestContext.newPage();await guest.goto('/');expect(await guest.locator('html').getAttribute('data-remote-sprite-rendered')).toBeNull();const guestDialog=await settings(guest,'Servidores');await guestDialog.getByLabel('Dirección del servidor').fill(`http://127.0.0.1:${port}`);await guestDialog.getByLabel('Invitación del servidor').fill(invite);await guestDialog.getByRole('button',{name:'Conectar'}).click();await expect(guestDialog.getByText(/Visitante.*2\/6 conectadas/)).toBeVisible();await guestDialog.getByRole('button',{name:'Cerrar',exact:true}).first().click();

@@ -1,3 +1,4 @@
+import {openPhoneApp} from './phone-ui.mjs';
 import { _electron as electron, expect } from '@playwright/test';
 import { mkdtempSync, readFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -23,7 +24,7 @@ async function launch(name) {
 async function phone(page, name) {
   if (await page.locator('.sv-phone').isHidden()) await page.getByTestId('phone-button').click();
   else if (await page.locator('.sv-phone-head [aria-label="Volver"]').isVisible()) await page.locator('.sv-phone-head [aria-label="Volver"]').click();
-  await page.getByTestId(`phone-${name}`).click();
+  await openPhoneApp(page,name);
 }
 try {
   const host = await launch('host');

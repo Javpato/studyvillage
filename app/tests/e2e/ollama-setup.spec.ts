@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, _electron as electron, type Page } from '@playwright/test';
 import {existsSync,mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';
 const desktopTest=test.extend({page:async({},use)=>{
@@ -11,7 +12,7 @@ export async function openSetup(page:Page):Promise<void>{
  await canvas.dblclick({position:{x:box.width*240/768,y:box.height*392/432}});await expect(page.locator('.sv-hud-place h1')).toContainText('Biblioteca',{timeout:12000});box=(await canvas.boundingBox())!;
  await canvas.dblclick({position:{x:box.width*625/768,y:box.height*119/432}});await expect(page.getByRole('region',{name:'Configurar Ollama',exact:true})).toBeVisible({timeout:12000});
 }
-async function phone(page:Page,id:string){await page.getByTestId('phone-button').click();await page.getByTestId(`phone-${id}`).click();}
+async function phone(page:Page,id:string){await page.getByTestId('phone-button').click();await openPhoneApp(page,id);}
 async function board(page:Page){await phone(page,'decorate');const details=page.locator('.sv-house-editor > details');if(!await details.evaluate(e=>(e as HTMLDetailsElement).open))await details.locator(':scope > summary').click();await page.locator('.sv-furniture-item',{hasText:'Pizarra'}).first().dblclick();await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();}
 async function mock(page:Page,vision:boolean){await page.route('http://127.0.0.1:11434/**',async route=>{const path=new URL(route.request().url()).pathname;const req=route.request().postData()?route.request().postDataJSON():{};const shape=req?.format?.properties||{};
  const payload=shape.cards?{cards:[{question:'Pregunta generada',answer:'Respuesta generada',difficulty:'easy',tags:[]}]}:shape.questions?{questions:[{text:'Pregunta de IA',choices:['A','B'],correctChoice:0}]}:shape.steps?{steps:['Paso de prueba'],hint:'Pista de prueba'}:shape.latex?{latex:'$$x=1$$',summary:'Fórmula'}:shape.drawing&&String(req.prompt).includes('Dibuja')?{drawing:{strokes:[{c:'#000000',w:4,p:[10,10,50,10,50,50,10,50,10,10]}]}}:{text:'Un cuadrado negro'};

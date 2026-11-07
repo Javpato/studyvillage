@@ -1,7 +1,8 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page} from '@playwright/test';
 import {notebookOptions,closeNotebookOptions} from './notebook-ui';
 import type {InkObject} from '../../../packages/documents/src/model';
-async function openNotebook(page:Page){await page.getByTestId('phone-button').click();await page.getByTestId('phone-ink').click();await expect(page.locator('.sv-notebook').getByLabel('Título del cuaderno',{exact:true})).toHaveValue('Cuaderno');await expect(page.locator('.sv-notebook select[aria-label="Página"] option')).toHaveCount(1);}
+async function openNotebook(page:Page){await page.getByTestId('phone-button').click();await openPhoneApp(page,'ink');await expect(page.locator('.sv-notebook').getByLabel('Título del cuaderno',{exact:true})).toHaveValue('Cuaderno');await expect(page.locator('.sv-notebook select[aria-label="Página"] option')).toHaveCount(1);}
 async function mode(page:Page,enabled:boolean){await notebookOptions(page,'Tinta y selección');await page.locator('.sv-notebook').getByLabel('Modo lápiz',{exact:true}).setChecked(enabled);await closeNotebookOptions(page);}
 async function savedInk(page:Page):Promise<InkObject[]>{return page.evaluate(()=>new Promise((resolve,reject)=>{const request=indexedDB.open('studyvillage-notebooks-v1');request.onerror=()=>reject(request.error);request.onsuccess=()=>{const db=request.result,read=db.transaction('notebooks').objectStore('notebooks').getAll();read.onsuccess=()=>{resolve(read.result[0]?.pages[0]?.ink??[]);db.close();};read.onerror=()=>{reject(read.error);db.close();};};}));}
 type Sample={type:string;id:number;kind:'pen'|'touch';x:number;y:number;time:number;pressure?:number;width?:number;coalesced?:{x:number;y:number;time:number}[]};

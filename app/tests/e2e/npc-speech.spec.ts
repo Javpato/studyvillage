@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { expect, test, type Page } from '@playwright/test';
 import { openDecorate, savedHouse, worldPoint } from './root-polish-helpers';
 
@@ -33,7 +34,7 @@ async function observeAvatar(page: Page) {
 
 async function dialogueSettings(page: Page) {
   await page.getByTestId('phone-button').click();
-  await page.getByTestId('phone-settings').click();
+  await openPhoneApp(page,'settings');
   const settings = page.getByRole('dialog', { name: 'Ajustes', exact: true });
   await settings.getByRole('tab', { name: 'Controles', exact: true }).click();
   const disclosure = settings.locator('.sv-npc-settings');

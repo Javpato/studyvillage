@@ -1,5 +1,6 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page,type Locator} from '@playwright/test';
-async function study(page:Page){await page.getByTestId('phone-button').click();await page.getByTestId('phone-study').click();return page.getByRole('region',{name:'Estudio',exact:true});}
+async function study(page:Page){await page.getByTestId('phone-button').click();await openPhoneApp(page,'study');return page.getByRole('region',{name:'Estudio',exact:true});}
 async function sourceNote(root:Locator){
  await root.getByRole('button',{name:/^Cuadernos/}).click();await root.getByRole('button',{name:'Nuevo cuaderno',exact:true}).click();await root.getByLabel('Nombre del cuaderno').fill('Biología');await root.getByRole('button',{name:'Crear cuaderno',exact:true}).click();await root.getByRole('button',{name:'Nueva página',exact:true}).click();
  await root.getByTestId('secure-note-title').fill('La célula');await root.locator('.nb-text').first().fill('El núcleo contiene el ADN.');

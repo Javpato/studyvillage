@@ -1,10 +1,11 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect} from '@playwright/test';
 import {openDecorate,savedHouse,worldPoint} from './root-polish-helpers';
 
 for(const [name,hasTouch] of [['mouse',false],['touch',true]] as const)test.describe(name,()=>{
  test.use({reducedMotion:'reduce',hasTouch,viewport:{width:1440,height:1000}});
  test('ornaments do not move the character or open anything, but remain editable',async({page})=>{
-  await page.goto('/');await page.getByTestId('phone-button').click();await page.getByTestId('phone-house').click();const canvas=page.locator('.sv-stage-pane canvas');await expect(canvas).toBeVisible();await page.evaluate(()=>document.fonts.ready);await page.evaluate(()=>new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r()))));const before=await canvas.evaluate(c=>(c as HTMLCanvasElement).toDataURL());
+  await page.goto('/');await page.getByTestId('phone-button').click();await openPhoneApp(page,'house');const canvas=page.locator('.sv-stage-pane canvas');await expect(canvas).toBeVisible();await page.evaluate(()=>document.fonts.ready);await page.evaluate(()=>new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r()))));const before=await canvas.evaluate(c=>(c as HTMLCanvasElement).toDataURL());
   const [x,y]=await worldPoint(page,670,130);if(hasTouch){await page.touchscreen.tap(x,y);await page.touchscreen.tap(x,y);}else await page.mouse.dblclick(x,y);
   // A queued walk/interaction would visibly move the avatar within this interval.
   await page.waitForTimeout(500);expect(await canvas.evaluate(c=>(c as HTMLCanvasElement).toDataURL())).toBe(before);await expect(page.locator('.sv-notice:visible')).toHaveCount(0);await page.keyboard.press('e');await expect(page.locator('.sv-notice:visible')).toHaveCount(0);if(hasTouch)await expect(page.getByTestId('touch-action-btn')).toBeDisabled();

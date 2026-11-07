@@ -1,9 +1,10 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, type Page } from '@playwright/test';
 
 /** The furniture list lives in the phone's «Decorar» app. */
 async function openHouseBoard(page: Page): Promise<void> {
   await page.getByTestId('phone-button').click();
-  await page.getByTestId('phone-decorate').click();
+  await openPhoneApp(page,'decorate');
   if (!await page.locator('.sv-house-editor > details').evaluate(el => (el as HTMLDetailsElement).open)) await page.locator('.sv-house-editor > details > summary').click();
   await page.locator('.sv-furniture-item', { hasText: 'Pizarra' }).first().dblclick();
 }

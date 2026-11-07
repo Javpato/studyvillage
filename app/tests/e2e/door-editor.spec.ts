@@ -1,6 +1,7 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import{test,expect}from'@playwright/test';
 test('decoration moves floor and room doors and persists their entrances',async({page})=>{
- await page.goto('/');const phone=async(app:string)=>{await page.getByTestId('phone-button').click();await page.getByTestId(`phone-${app}`).click();};
+ await page.goto('/');const phone=async(app:string)=>{await page.getByTestId('phone-button').click();await openPhoneApp(page,app);};
  await phone('rooms');const rooms=page.getByRole('dialog',{name:'Plantas y habitaciones'});await rooms.getByRole('button',{name:'Añadir habitación',exact:true}).click();await rooms.getByRole('button',{name:'Cerrar',exact:true}).click();
  const decorate=async()=>{await phone('decorate');await page.getByRole('button',{name:'Decorar en la habitación',exact:true}).click();};
  const drag=async(x:number,y:number,toX:number,toY:number)=>{const stage=page.locator('.sv-stage-pane canvas'),box=(await stage.boundingBox())!;await page.mouse.move(box.x+box.width*x/768,box.y+box.height*y/432);await page.mouse.down();await page.mouse.move(box.x+box.width*toX/768,box.y+box.height*toY/432,{steps:10});await page.mouse.up();};

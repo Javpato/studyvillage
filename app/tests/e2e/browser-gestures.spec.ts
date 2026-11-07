@@ -1,7 +1,8 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page} from '@playwright/test';
 import {mkdirSync} from 'node:fs';
 test.use({viewport:{width:1024,height:768},hasTouch:true,isMobile:true,userAgent:'Mozilla/5.0 (iPad; CPU OS 17_7_10 like Mac OS X) AppleWebKit/605.1.15 Version/17.7 Mobile/15E148 Safari/604.1'});
-async function settings(page:Page){await page.getByTestId('phone-button').click();await page.getByTestId('phone-settings').click();return page.getByRole('dialog',{name:'Ajustes',exact:true});}
+async function settings(page:Page){await page.getByTestId('phone-button').click();await openPhoneApp(page,'settings');return page.getByRole('dialog',{name:'Ajustes',exact:true});}
 const output='/tmp/sv-browser-gestures';
 test('long-press policy covers detached dialogs without disabling editable or intentional copy content',async({page,browserName})=>{
  await page.goto('/');const menu=page.getByTestId('phone-button');await expect(menu).toBeVisible();
@@ -20,7 +21,7 @@ test('long-press policy covers detached dialogs without disabling editable or in
  });
  expect(policy).toMatchObject({chrome:false,menu:false,doubleTap:false,edit:true,editMenu:true,notes:true,notesStyle:'text',noteButton:false,noteButtonStyle:'none',detached:false,copy:true,letter:true,letterStyle:'text'});if(await page.evaluate(()=>CSS.supports('-webkit-touch-callout','none')))expect(policy.callout).toBe('none');
  expect(await page.locator('meta[name=viewport]').getAttribute('content')).not.toMatch(/user-scalable\s*=\s*no|maximum-scale\s*=\s*1/);
- await dialog.getByRole('button',{name:'Cerrar',exact:true}).click();await page.getByTestId('phone-button').click();await page.getByTestId('phone-focus').click();await expect(page.getByRole('button',{name:'Mover reloj flotante',exact:true,includeHidden:true})).toHaveCSS('touch-action','none');
+ await dialog.getByRole('button',{name:'Cerrar',exact:true}).click();await page.getByTestId('phone-button').click();await openPhoneApp(page,'focus');await expect(page.getByRole('button',{name:'Mover reloj flotante',exact:true,includeHidden:true})).toHaveCSS('touch-action','none');
 });
 
 test('visual-only zoom and pan settle HUD, modal geometry and editor focus without mutating saved positions',async({page,browserName})=>{

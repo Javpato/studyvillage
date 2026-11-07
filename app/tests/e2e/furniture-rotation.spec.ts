@@ -1,7 +1,8 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page} from '@playwright/test';
 import {worldPoint} from './root-polish-helpers';
 const roomBoard=(page:Page)=>page.evaluate(()=>{const docs=JSON.parse(localStorage.getItem('studyvillage-workspaces-v1')||'{}');for(const doc of Object.values(docs) as {furniture:{id:string;kind:string;rotation?:number;publicAlias:string}[]}[]){const board=doc.furniture.find(item=>item.id==='board');if(board)return board;}return null;});
-async function phone(page:Page,app:string){await page.getByTestId('phone-button').click();await page.getByTestId(`phone-${app}`).click();}
+async function phone(page:Page,app:string){await page.getByTestId('phone-button').click();await openPhoneApp(page,app);}
 async function colors(page:Page,points:number[][]){return page.evaluate(points=>{const canvas=document.querySelector<HTMLCanvasElement>('.sv-stage-pane canvas')!,ctx=canvas.getContext('2d')!;return points.map(([x,y])=>{const[r,g,b]=ctx.getImageData(Math.round(x*canvas.width/768),Math.round(y*canvas.height/432),1,1).data;return r>g*1.8&&r>b*1.8?'red':g>r*1.8&&g>b*1.8?'green':b>r*1.8&&b>g*1.8?'blue':r>100&&g>100&&b<80?'yellow':'other';});},points);}
 
 test('whiteboard artwork turns as one full-size object, keeps its hit area, and can be renamed from decoration',async({page},testInfo)=>{
