@@ -27,3 +27,18 @@ test('failed saving keeps draft and cancel leaves persisted layout unchanged',as
  await e.getByRole('button',{name:'Guardar teléfono',exact:true}).click();await expect(e.getByRole('alert')).toContainText('No se pudo guardar');await expect(e.locator('[data-app=focus]')).toBeVisible();
  await e.getByRole('button',{name:'Cancelar',exact:true}).click();await expect(e.locator('[data-app=focus]')).toHaveCount(0);
 });
+test('a full backup restores folders and optional shortcuts',async({page})=>{
+ await page.goto('/');let e=await editor(page);
+ await e.getByLabel('Aplicación para añadir',{exact:true}).selectOption('focus');await e.getByRole('button',{name:'Añadir aplicación',exact:true}).click();
+ await e.getByRole('button',{name:'Guardar teléfono',exact:true}).click();await closeSettings(page);
+ await openPhoneApp(page,'identity');
+ const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Exportar copia completa',exact:true}).click()]);
+ const stream=await download.createReadStream(),parts:Buffer[]=[];for await(const chunk of stream!)parts.push(Buffer.from(chunk));const bytes=Buffer.concat(parts);
+ expect(JSON.parse(JSON.parse(bytes.toString()).values['studyvillage-phone-layout-v1']).entries).toContainEqual({type:'app',id:'focus'});await closeSettings(page);
+ e=await editor(page);await e.locator('[data-app=focus]').getByRole('button',{name:'Quitar aplicación',exact:true}).click();await e.locator('[data-folder=home]').getByRole('button',{name:'Eliminar carpeta',exact:true}).click();
+ await e.getByRole('button',{name:'Guardar teléfono',exact:true}).click();await closeSettings(page);
+ await openPhoneApp(page,'identity');await page.getByLabel('Copia completa de StudyVillage',{exact:true}).setInputFiles({name:'phone-backup.json',mimeType:'application/json',buffer:bytes});
+ await page.getByLabel('He cerrado otras ventanas. Quiero reemplazar los datos locales con esta copia.',{exact:true}).check();
+ await Promise.all([page.waitForEvent('load'),page.getByRole('button',{name:'Restaurar copia y reiniciar',exact:true}).click()]);await page.getByTestId('phone-button').click();
+ await expect(page.getByTestId('phone-folder-home')).toBeVisible();await expect(page.getByTestId('phone-focus')).toBeVisible();
+});
