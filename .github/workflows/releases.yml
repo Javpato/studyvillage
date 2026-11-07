@@ -51,7 +51,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:pages
       - name: Verify complete deterministic Chromium regression suite
-        run: npm run test:e2e
+        run: xvfb-run -a npm run test:e2e
       - name: Verify phone and starter house in WebKit
         run: npm run test:webkit -- phone-layout.spec.ts initial-house.spec.ts
       - uses: actions/upload-artifact@v7

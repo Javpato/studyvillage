@@ -25,7 +25,9 @@ test('switching to English happens in place: no reload, open drafts and drawings
   const box = (await canvas.boundingBox())!;
   await page.mouse.move(box.x + box.width * .3, box.y + box.height * .4); await page.mouse.down();
   await page.mouse.move(box.x + box.width * .6, box.y + box.height * .5, { steps: 8 }); await page.mouse.up();
-  const drawn = await canvas.evaluate(el => (el as HTMLCanvasElement).toDataURL());
+  const savedStrokes=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('studyvillage-whiteboards-v1')||'{}').strokes);
+  await expect.poll(async()=>JSON.stringify(await savedStrokes())).toContain('points');
+  const drawn=await savedStrokes();
 
   await openSettings(page);
   const dialog = page.getByRole('dialog', { name: 'Ajustes' });
@@ -38,7 +40,12 @@ test('switching to English happens in place: no reload, open drafts and drawings
 
   await expect(page.getByLabel('Whiteboard for drawing')).toBeVisible();
   await expect(page.getByRole('group', { name: 'Whiteboard tools' }).getByRole('button', { name: 'Select', exact: true })).toBeVisible();
-  await expect.poll(() => page.getByLabel('Whiteboard for drawing').evaluate(el => (el as HTMLCanvasElement).toDataURL())).toBe(drawn);
+  // Translation may resize the canvas; compare editable geometry, not PNG bytes.
+  expect(await savedStrokes()).toEqual(drawn);
+  await expect.poll(()=>page.getByLabel('Whiteboard for drawing').evaluate(el=>{
+    const c=el as HTMLCanvasElement,d=c.getContext('2d')!.getImageData(0,0,c.width,c.height).data;
+    let ink=0;for(let i=0;i<d.length;i+=4)if(d[i]+d[i+1]+d[i+2]<300)ink++;return ink;
+  })).toBeGreaterThan(0);
   await page.getByTestId('phone-button').click();
   await page.getByTestId('phone-village').click();
   await expect(page.getByLabel('Invite code')).toHaveValue('borrador-de-invitacion');

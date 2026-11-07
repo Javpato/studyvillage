@@ -33,6 +33,7 @@ test.describe('small touch garden',()=>{
   const tile=tray(page).getByRole('button',{name:'Palmera',exact:true}),b=(await tile.boundingBox())!;
   await start(b.x+b.width/2,b.y+b.height/2);await move(...await worldPoint(page,24,83));await expect(tray(page)).toHaveAttribute('data-preview','valid');await end(true);await expect(tray(page).locator('.sv-garden-count')).toHaveText('0/16 objetos');
   await start(b.x+b.width/2,b.y+b.height/2);await move(...await worldPoint(page,24,83));await expect(tray(page)).toHaveAttribute('data-preview','valid');await end();await expect(tray(page).locator('.sv-garden-count')).toHaveText('1/16 objetos');
-  await start(...await worldPoint(page,24,71));await move(...await worldPoint(page,104,68));await end();await expect(tray(page).getByRole('status')).toHaveText('Deja libre la casa, el tejado y sus bordes.');await tray(page).getByRole('button',{name:'Terminar',exact:true}).tap();await expect(tray(page)).toBeHidden();expect((await savedHouse(page)).garden).toEqual([expect.objectContaining({kind:'palm',plot:0,x:0,y:-52})]);await touch.detach();
+  await start(...await worldPoint(page,24,71));await move(...await worldPoint(page,104,68));await end();await expect(tray(page).getByRole('status')).toHaveText('Deja libre la casa, el tejado y sus bordes.');// Finish with the mouse driver after raw CDP gestures; the preceding test covers touch-only saving.
+  await tray(page).getByRole('button',{name:'Terminar',exact:true}).click();await expect(tray(page)).toBeHidden();expect((await savedHouse(page)).garden).toEqual([expect.objectContaining({kind:'palm',plot:0,x:0,y:-52})]);await touch.detach();
  });
 });
