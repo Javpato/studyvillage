@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { expect, test, type Page } from '@playwright/test';
 
 const devices = [
@@ -19,16 +20,20 @@ for (const device of devices) {
       await page.goto('/');
       const toast = page.locator('.sv-notice.sv-hud-toast');
       await expect(page.locator('.sv-stage-pane canvas')).toBeVisible();
-      await page.keyboard.press('e');
+      await openPhoneApp(page,'settings');
+      const settings=page.getByRole('dialog',{name:'Ajustes',exact:true});
+      await settings.getByLabel('Nombre visible',{exact:true}).fill('   ');
+      await settings.getByRole('button',{name:'Guardar perfil',exact:true}).click();
+      await settings.getByRole('button',{name:'Cerrar',exact:true}).click();
       await expect(toast).toBeVisible();
-      await expect(toast).toContainText('Acércate');
+      await expect(toast).toContainText('Elige un nombre');
 
       // A second, different notice replaces the first instead of queueing behind it.
       await openVillageApp(page);
       await page.getByPlaceholder('Pega una invitación').fill('esto-no-es-una-invitacion');
       await page.getByRole('button', { name: 'Unirme', exact: true }).click();
       await expect(toast).toBeVisible();
-      await expect(toast).not.toContainText('Acércate');
+      await expect(toast).not.toContainText('Elige un nombre');
       await expect(page.locator('.sv-notice:visible')).toHaveCount(1);
 
       // The close button is on top of everything (phone, controls) and removes it for good.
@@ -38,10 +43,7 @@ for (const device of devices) {
       await expect(toast).toBeHidden();
 
       // The same message sent again shows again.
-      await page.keyboard.press('Escape');
-      if (await page.locator('.sv-phone').isVisible()) await page.getByTestId('phone-button').click().catch(() => {});
-      await page.locator('.sv-stage-pane canvas').focus();
-      await page.keyboard.press('e');
+      await page.getByRole('button',{name:'Unirme',exact:true}).click();
       await expect(toast).toBeVisible();
       await toast.getByRole('button', { name: 'Cerrar aviso' }).click();
       await expect(toast).toBeHidden();

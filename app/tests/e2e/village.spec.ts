@@ -323,7 +323,7 @@ test.describe('Mobile phone touch controls & responsive experience', () => {
     await page.locator('.sv-dpad-up').dispatchEvent('pointerup');
 
     // Tap action button
-    await actionBtn.click();
+    await expect(actionBtn).toBeDisabled();
 
     // The phone stays reachable next to the touch controls.
     await expect(page.getByTestId('phone-button')).toBeVisible();
@@ -361,7 +361,7 @@ test.describe('Multiplayer pixel-art world expansion', () => {
     await page.keyboard.press('e');
     await walkUntil('s', 'Ir a Biblioteca de Estudio');
     await page.keyboard.press('e');
-    await walkUntil('s', 'Flashcards');
+    await walkUntil('s', 'Mesa de estudio');
     await page.keyboard.press('e');
     const study = page.getByRole('region', { name: 'Estudio', exact: true });
     await expect(study).toBeVisible();

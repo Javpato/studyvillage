@@ -1,3 +1,4 @@
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {notebookOptions,closeNotebookOptions} from './notebook-ui';
 import {test,expect,type Page} from '@playwright/test';
 import {pathToFileURL} from 'node:url';
@@ -5,7 +6,7 @@ import {resolve} from 'node:path';
 let server:{port:number;close():Promise<void>};
 test.beforeAll(async()=>{const {startServer}=await import(pathToFileURL(resolve('server/dist/server.mjs')).href);server=await startServer({port:0,host:'127.0.0.1',dataDir:':memory:',name:'Ink village',origins:['*'],claimSecret:'shared-ink-test-secret-123456',log:()=>{}});});
 test.afterAll(async()=>{await server?.close();});
-async function phone(page:Page,tile:string){await page.getByTestId('phone-button').click();await page.getByTestId(tile).click();}
+async function phone(page:Page,tile:string){await page.getByTestId('phone-button').click();await openPhoneApp(page,tile.replace('phone-',''));}
 async function ink(page:Page){await phone(page,'phone-ink');await expect(page.locator('.sv-notebook')).toBeVisible();}
 async function backup(page:Page){await notebookOptions(page,'Archivos');const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Exportar copia editable',exact:true}).click()]);const stream=await download.createReadStream();const chunks:Buffer[]=[];for await(const chunk of stream!)chunks.push(chunk);const result=JSON.parse(Buffer.concat(chunks).toString());await closeNotebookOptions(page);return result;}
 async function line(page:Page,offset:number){const canvas=page.locator('.sv-ink-input');const rect=await canvas.boundingBox();if(!rect)throw Error('No canvas');await page.mouse.move(rect.x+40,rect.y+offset);await page.mouse.down();await page.mouse.move(rect.x+180,rect.y+offset,{steps:15});await page.mouse.up();}

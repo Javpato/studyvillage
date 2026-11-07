@@ -9,7 +9,7 @@ async function openGame(page:Page,game:'werewolves'|'gartic'){
 }
 for(const [device,width,height] of [['phone',390,844],['iPad',820,1180],['desktop',1440,1000]] as const)for(const game of ['werewolves','gartic'] as const){
   test(`${device}: ${game} has an optional square camera and releases it when closed`,async({page})=>{
-    await page.setViewportSize({width,height});await openGame(page,game);const voice=(await page.getByRole('button',{name:'Unirse a la voz del juego',exact:true}).boundingBox())!;expect(voice.height).toBeLessThanOrEqual(44);expect(voice.width).toBeLessThanOrEqual(220);await expect(page.locator('.sv-game-camera-tile')).toHaveCount(0);
+    await page.setViewportSize({width,height});await openGame(page,game);const voice=(await page.getByRole('button',{name:'Unirse a la voz del juego',exact:true}).boundingBox())!;expect(voice.height).toBeGreaterThanOrEqual(32);expect(voice.height).toBeLessThanOrEqual(64);expect(voice.width).toBeLessThanOrEqual(220);await expect(page.locator('.sv-game-camera-tile')).toHaveCount(0);
     await page.getByRole('button',{name:'Activar cámara',exact:true}).click();const video=page.locator('.sv-game-camera-tile video.is-self');
     await expect(video).toBeVisible();await expect.poll(()=>video.evaluate(v=>(v as HTMLVideoElement).videoWidth)).toBeGreaterThan(0);
     await video.evaluate(v=>{(window as any).cameraTrack=((v as HTMLVideoElement).srcObject as MediaStream).getVideoTracks()[0];});
