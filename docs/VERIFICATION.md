@@ -1,3 +1,13 @@
+# Pet expressions and default character — candidate checkpoint, 8 November 2026
+
+Current candidate: pending commit on `main`. Changes cover two visible eyes on front/three-quarter pet artwork, a commanded rabbit jump, a persisted hamster ball toggle, smaller proximity-triggered parrot speech, and a reversible reset in the sprite atelier only. No native installer changes.
+
+Completed: application/server typecheck; 24 focused model/game/project tests; 2,719 ES/EN/FR catalogue messages. Generated rabbit, hamster and parrot sheets visually inspected. Houses and bowls were preserved by targeted generation.
+
+Remaining: complete browser journeys (real world sprites and atelier save/cancel), full baseline, two-client snapshot transport check, Linux/macOS Chromium/WebKit matrix, production PWA checks, deployment verification. Candidate push is not a verified/published release. Workflow: [platform regressions](https://github.com/Javpato/studyvillage/actions/workflows/amendment-regressions.yml), [Pages](https://github.com/Javpato/studyvillage/actions/workflows/pages.yml). Record exact candidate/run links after push.
+
+---
+
 # Pets, folders, controllers and English/French corrections — 8 November 2026
 
 Runtime source [`33d934b`](https://github.com/Javpato/studyvillage/commit/33d934b) is pushed to `main` and **published to the web** by [Pages workflow 42525586611](https://github.com/Javpato/studyvillage/actions/runs/42525586611). The current local build uses cache `studyvillage-70b2b5b3b5e10439`, with 173 packaged local files plus the worker and versioned sprite cache aliases. [Itemized delivery, components, limitations and reviewed screenshots](PETS-CONTROLS.md).

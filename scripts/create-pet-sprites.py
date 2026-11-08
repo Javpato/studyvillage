@@ -1,7 +1,8 @@
 """Original StudyVillage pet pixel art. Explicit regeneration only; never run by builds."""
 from PIL import Image, ImageDraw
 from pathlib import Path
-import json
+import json, argparse
+parser=argparse.ArgumentParser();parser.add_argument("--sheets-only",action="store_true");args=parser.parse_args()
 out=Path(__file__).resolve().parents[1]/'app/public/sprites'
 manifest=json.loads((out/'manifest.json').read_text())
 colors={'cat':'#d29a61','dog':'#a36c48','parrot':'#5aab67','hamster':'#dfb876','rabbit':'#ded8cc'}
@@ -10,7 +11,7 @@ for species,color in colors.items():
  for direction in range(4):
   for frame in range(7):
    im=Image.new('RGBA',(32,32));d=ImageDraw.Draw(im);dy=1 if frame==2 else 0
-   d.ellipse((6,25,26,29),fill='#263d3438')
+   if not (species=='rabbit' and frame==6):d.ellipse((6,25,26,29),fill='#263d3438')
    if species=='parrot':
     d.ellipse((11,10+dy,22,26+dy),fill=color);d.ellipse((10,5+dy,22,18+dy),fill='#7ac778');d.polygon([(20,12+dy),(28,16+dy),(20,18+dy)],fill='#e6b44f');d.polygon([(12,23),(10,31),(17,26)],fill='#4488ab');d.ellipse((9,14+dy,17,24+dy),fill='#3d8158')
    else:
@@ -25,21 +26,27 @@ for species,color in colors.items():
      d.ellipse((8,0,13,15),fill=color);d.ellipse((18,0,23,15),fill=color);d.line((10,3,10,11),fill='#cc9b99',width=2);d.line((20,3,20,11),fill='#cc9b99',width=2);d.ellipse((24,21,30,27),fill='#f5efe5')
     d.rectangle((9,25,13,28+(frame==1)),fill=color);d.rectangle((21,25,25,28+(frame==2)),fill=color)
    if direction!=3:
-    for x in ([13,21] if direction==0 else [12] if direction==1 else [22]):
+    for x in ([13,21] if direction==0 else [10,17] if direction==1 else [17,23]):
      d.rectangle((x,12+dy,x+1,14+dy),fill='#263d34')
     if species!='parrot':d.rectangle((16,17+dy,18,18+dy),fill='#744a48')
    if frame==3:d.rectangle((12,26,23,29),fill='#75a6b7')
    if frame==4:d.polygon([(15,2),(12,0),(10,2),(15,7),(20,2),(18,0)],fill='#d87983')
-   if frame==5:
+   if frame==5 and direction!=3:
     d.rectangle((10,12+dy,23,14+dy),fill=color);d.line((11,14+dy,14,14+dy),fill='#425143');d.line((20,14+dy,23,14+dy),fill='#425143')
    if frame==6:
     if species=='hamster':d.ellipse((2,2,30,30),outline='#79b9cf',width=2)
     elif species=='dog':d.ellipse((23,19,30,25),fill='#cd7658')
-    elif species=='rabbit':im=im.transform(im.size,Image.Transform.AFFINE,(1,0,0,0,1,4))
+    elif species=='rabbit':
+     # Height is rendered above a stationary ground shadow, never baked into the frame.
+     d.rectangle((9,25,13,28),fill=(0,0,0,0));d.rectangle((21,25,25,28),fill=(0,0,0,0))
+     d.ellipse((9,22,14,26),fill=color);d.ellipse((20,22,25,26),fill=color)
     elif species=='cat':d.arc((2,4,29,30),220,300,fill='#e5ba6c',width=2)
    sheet.alpha_composite(im,(frame*32,direction*32))
  file=f'pet-{species}-sheet.png';sheet.save(out/file)
  manifest[f'pet-{species}-sheet']={'file':file,'width':224,'height':128,'frameWidth':32,'frameHeight':32,'animations':{'idle':[0],'walk':[1,2],'eat':[3,0],'pet':[4],'rest':[5],'ability':[6]},'directions':{'down':0,'left':1,'right':2,'up':3},'fps':6,'scale':1.25,'anchor':{'x':16,'y':27},'collisionRadius':9}
+ if species=='rabbit':manifest[f'pet-{species}-sheet'].update(jumpHeight=32);manifest[f'pet-{species}-sheet']['animations']['jump']=[6]
+ if species=='hamster':manifest[f'pet-{species}-sheet']['animations'].update(ballIdle=[6],ballWalk=[6])
+ if args.sheets_only:continue
  im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im);d.ellipse((6,49,59,61),fill='#263d3438')
  if species=='rabbit':
   d.ellipse((5,20,59,58),fill='#78945b');d.ellipse((22,32,43,58),fill='#5e4936');d.rectangle((9,51,57,57),fill='#99b66e');d.line((49,20,49,6),fill='#63935b',width=3);d.polygon([(45,17),(52,17),(49,29)],fill='#d78d45')
@@ -54,7 +61,8 @@ for species,color in colors.items():
  else:
   d.rectangle((11,24,53,57),fill='#bd8159');d.polygon([(4,26),(32,4),(60,26)],fill='#8e5250');d.rectangle((23,35,42,58),fill='#574639');d.ellipse((23,29,42,46),fill='#574639');d.rectangle((26,18,40,22),fill='#ead6a6')
  file=f'pet-{species}.png';im.save(out/file);manifest[f'pet-{species}']={'file':file,'width':64,'height':64}
-im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im);d.ellipse((8,28,56,54),fill='#47758a');d.ellipse((10,23,54,44),fill='#9cc8ce');d.ellipse((16,27,48,39),fill='#80573f')
-for x,y in [(21,30),(30,29),(39,31),(26,34),(36,35)]:d.rectangle((x,y,x+4,y+3),fill='#ba8955')
-im.save(out/'pet-bowl.png');manifest['pet-bowl']={'file':'pet-bowl.png','width':64,'height':64}
+if not args.sheets_only:
+ im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im);d.ellipse((8,28,56,54),fill='#47758a');d.ellipse((10,23,54,44),fill='#9cc8ce');d.ellipse((16,27,48,39),fill='#80573f')
+ for x,y in [(21,30),(30,29),(39,31),(26,34),(36,35)]:d.rectangle((x,y,x+4,y+3),fill='#ba8955')
+ im.save(out/'pet-bowl.png');manifest['pet-bowl']={'file':'pet-bowl.png','width':64,'height':64}
 (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')

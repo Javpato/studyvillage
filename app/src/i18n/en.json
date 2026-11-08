@@ -2714,5 +2714,8 @@
   "Stick izquierdo / cruceta: mover bloques.": "Left stick / D-pad: move blocks.",
   " (opcional)": " (optional)",
   "Falta una persona. Espera a tus vecinos o añade bots.": "One more player is needed. Wait for your neighbours or add bots.",
-  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "{count} more players are needed. Wait for your neighbours or add bots."
+  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "{count} more players are needed. Wait for your neighbours or add bots.",
+  "Entrar en la bola": "Enter the ball",
+  "Retirar la bola": "Remove the ball",
+  "Restaurar personaje predeterminado": "Restore default character"
 }

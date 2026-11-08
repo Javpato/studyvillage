@@ -2714,5 +2714,8 @@
   "Stick izquierdo / cruceta: mover bloques.": "Stick izquierdo / cruceta: mover bloques.",
   " (opcional)": " (opcional)",
   "Falta una persona. Espera a tus vecinos o añade bots.": "Falta una persona. Espera a tus vecinos o añade bots.",
-  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "Faltan {count} personas. Espera a tus vecinos o añade bots."
+  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "Faltan {count} personas. Espera a tus vecinos o añade bots.",
+  "Entrar en la bola": "Entrar en la bola",
+  "Retirar la bola": "Retirar la bola",
+  "Restaurar personaje predeterminado": "Restaurar personaje predeterminado"
 }

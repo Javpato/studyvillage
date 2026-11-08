@@ -605,13 +605,16 @@ it('routes owned pets between clients in one scene and rejects forged pets and e
  const entity={id:'pet0',owner:admin.id,species:'cat',scene:'area:residential',state:'idle',x:100,y:100,direction:'down',moving:false,reactionUntil:0};
  const send=(pets:unknown[],seq=1)=>admin.request({op:'app.send',channel:'pets',to:null,data:JSON.stringify({version:1,seq,pets})});
  const received=guest.next(m=>m.t==='app'&&m.channel==='pets');expect(await send([entity])).toMatchObject({ok:true});expect(JSON.parse((await received as Extract<ServerMessage,{t:'app'}>).data).pets).toEqual([entity]);
+ const presentation={...entity,ball:true,jumpProgress:.5,phrase:'Bonjour',speechId:10,speechUntil:8000,automaticSpeech:true};
+ const rendered=guest.next(m=>m.t==='app'&&m.channel==='pets'&&JSON.parse(m.data).seq===2);expect(await send([presentation],2)).toMatchObject({ok:true});expect(JSON.parse((await rendered as Extract<ServerMessage,{t:'app'}>).data).pets).toEqual([presentation]);
+ expect(await send([{...presentation,jumpProgress:2}],3)).toMatchObject({ok:false});
  expect(await send([{...entity,id:'invented'}])).toMatchObject({ok:false});expect(await send([{...entity,owner:guest.id}])).toMatchObject({ok:false});expect(await send([{...entity,scene:'house:private'}])).toMatchObject({ok:false});
  const at={areaId:'residential',x:384,y:344,direction:'up',moving:false};admin.send({op:'presence',position:at,houseId:admin.id});
  await admin.request({op:'workspace',command:{action:'enter',owner:admin.id,space:{floorId:'floor',roomId:null}}});
  await admin.request({op:'workspace',command:{action:'enter',owner:admin.id,space:{floorId:'floor',roomId:'room'}}});
  const doc=admin.messages.filter((m):m is Extract<ServerMessage,{t:'workspace'}>=>m.t==='workspace').at(-1)!.workspace.document!;
  expect(await admin.request({op:'workspace',command:{action:'commit',base:doc.revision,document:{...doc,furniture:[{...furniture[0],id:'extra',pet:{id:'extra',mode:'roam'}}]}}})).toMatchObject({ok:false});
- const before=guest.messages.filter(m=>m.t==='app'&&m.channel==='pets').length;expect(await send([{...entity,scene:`house:${admin.id}:floor:room`}],2)).toMatchObject({ok:true});
+ const before=guest.messages.filter(m=>m.t==='app'&&m.channel==='pets').length;expect(await send([{...entity,scene:`house:${admin.id}:floor:room`}],4)).toMatchObject({ok:true});
  await guest.request({op:'app.send',channel:'werewolves',to:SERVER_AUTHORITY,data:JSON.stringify({t:'hello'})});expect(guest.messages.filter(m=>m.t==='app'&&m.channel==='pets')).toHaveLength(before);
  await admin.close();await guest.close();
 });

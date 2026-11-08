@@ -28,9 +28,9 @@ jobs:
         run: npm run check
       - run: npx playwright install --with-deps chromium webkit
       - if: ${{ !inputs.controllers_only }}
-        run: npm run test:e2e -- pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
+        run: npm run test:e2e -- pet-expressions.spec.ts pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
       - if: ${{ !inputs.controllers_only }}
-        run: npm run test:webkit -- pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
+        run: npm run test:webkit -- pet-expressions.spec.ts pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
       - run: npx playwright test --config app/playwright.controllers.config.ts
       - uses: actions/upload-artifact@v7
         if: failure()

@@ -2717,5 +2717,8 @@
   "Stick izquierdo / cruceta: mover bloques.": "Stick gauche / croix directionnelle : déplacer les blocs.",
   " (opcional)": " (facultatif)",
   "Falta una persona. Espera a tus vecinos o añade bots.": "Il manque une personne. Attendez vos voisins ou ajoutez des bots.",
-  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "Il manque {count} personnes. Attendez vos voisins ou ajoutez des bots."
+  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "Il manque {count} personnes. Attendez vos voisins ou ajoutez des bots.",
+  "Entrar en la bola": "Entrer dans la boule",
+  "Retirar la bola": "Retirer la boule",
+  "Restaurar personaje predeterminado": "Revenir au personnage par défaut"
 }

@@ -13,7 +13,7 @@ export class NpcSpeech {
   private text = document.createElement('div');
   private count = document.createElement('span');
   private next = document.createElement('button');
-  private current: {source:DisplayText;text:string;x:number;y:number;scene:string;page:number} | null = null;
+  private current: {source:DisplayText;text:string;x:number;y:number;scene:string;page:number;petId?:string;expiresAt?:number} | null = null;
   private preferences: NpcDialoguePreferences = {...DEFAULT_DIALOGUE};
   private pages: string[] = [];
   private layoutKey = '';
@@ -45,12 +45,19 @@ export class NpcSpeech {
     this.clear(); event.preventDefault(); event.stopPropagation();
   };
   say(source:DisplayText, x:number, y:number, scene:string) {
+    setDisplayAttribute(this.root,'aria-label',msg('Diálogo del guía'));
     const text=isMessage(source)?t(source):source;
     if (this.current?.text === text && this.current.scene === scene && this.current.x === x && this.current.y === y) { this.advance(); return; }
     cancelAnimationFrame(this.animation); this.animation = 0;
     this.current = {source,text, x, y, scene, page:0}; this.layoutKey = ''; this.pages = [];
     this.root.style.visibility = 'hidden'; this.root.hidden = false; this.announcement.textContent = text;
   }
+  sayPet(text:string,x:number,y:number,scene:string,id:string,expiresAt:number,automatic:boolean){
+    if(automatic&&this.current)return;
+    this.clear();this.say(text,x,y,scene);this.current!.petId=id;this.current!.expiresAt=expiresAt;
+    setDisplayAttribute(this.root,'aria-label',msg('Frase del loro'));
+  }
+  followPet(id:string,x:number,y:number){if(this.current?.petId===id){this.current.x=x;this.current.y=y;}}
   get isOpen(): boolean { return this.current !== null; }
   clear() {
     this.current = null; this.root.hidden = true; this.announcement.textContent = '';
@@ -80,12 +87,12 @@ export class NpcSpeech {
   };
   draw(ctx:CanvasRenderingContext2D, scene:string, viewport?:()=>SpeechViewport) {
     const speech = this.current; if (!speech) return;
-    if (speech.scene !== scene) { this.clear(); return; }
+    if (speech.expiresAt!==undefined&&Date.now()>=speech.expiresAt||speech.scene !== scene) { this.clear(); return; }
     const v = viewport?.() || {left:0,right:768,top:0};
     const scale = v.scale || 1, leftEdge = v.screenLeft ?? 0, topEdge = v.screenTop ?? 0;
     const rightEdge = v.screenRight ?? innerWidth, bottomEdge = v.screenBottom ?? innerHeight;
-    const size=this.preferences.size;const width = Math.max(80, Math.min({small:320,standard:440,large:560}[size], rightEdge - leftEdge - 16));
-    this.root.style.setProperty('--speech-height',`${Math.max(36,Math.min((bottomEdge-topEdge)*({small:.3,standard:.4,large:.55}[size]),bottomEdge-topEdge-90))}px`);
+    const compact=speech.petId?0.75:1;const size=this.preferences.size;const width = Math.max(80, Math.min({small:320,standard:440,large:560}[size]*compact, rightEdge - leftEdge - 16));
+    this.root.style.setProperty('--speech-height',`${Math.max(36,Math.min((bottomEdge-topEdge)*({small:.3,standard:.4,large:.55}[size])*compact,bottomEdge-topEdge-90))}px`);
     const font = {small:14,standard:16,large:18}[size]+(this.preferences.textSize==='large'?2:0);
     const key = `${speech.text}:${width}:${font}:${this.preferences.lines}`;
     if (key !== this.layoutKey) {
