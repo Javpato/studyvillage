@@ -26,7 +26,8 @@ const launch=()=>shell('am','start','-W','-n',`${pkg}/.MainActivity`);
 try{
  adb('wait-for-device');assert.equal(shell('getprop','ro.kernel.qemu').trim(),'1','Use a disposable Android emulator');
  adb('install','-r','deliverables/android-current/StudyVillage-development.apk');adb('logcat','-c');
- launch();await tap('Abrir menú (M)');await node('Aldea');await node('Contactos');await node('Identidad');await node('Hogar');await node('Ajustes');
+ // Identity lives inside Settings; the current home has two apps and two folders.
+ launch();await tap('Abrir menú (M)');for(const label of ['Aldea','Contactos','Hogar','Ajustes'])await node(label);
  await tap('Hogar');await node('Habitaciones');await node('Decorar');await node('Mi jardín');await tap('Mi casa');await node('Mi rincón de estudio');
  await writeFile(`${out}/house.png`,adb('exec-out','screencap','-p'));
  shell('am','force-stop',pkg);launch();await node('Abrir menú (M)');assert(shell('pidof',pkg).trim());
