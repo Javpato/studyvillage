@@ -1,3 +1,11 @@
+# Current release checkpoint — 8 November 2026
+
+Release candidate **1.0.0-dev.8** is being prepared on `main`: four current installers, updated README/release notes, consolidated handbook, and all social/controller/media/responsive changes. Prior releases and tags remain unchanged. Release publication is pending the full browser and native installer gates. The current web implementation was published from `496a8fd` before the version bump.
+
+Before lengthy checks: version synchronized in package/lock and Android (`versionCode` 10007). The server browser journey now explicitly accepts a friendship request before checking the saved nickname, matching the implemented feature. Documentation reorganization already present in the workspace is included and its packaging guidance corrected. Remaining: source commit/push, release workflow URL, full validation, four native packages plus Intel DMG check, published asset hashes, replacement of obsolete local deliveries, final Git/README status.
+
+The dated entries below are historical evidence; they do not identify the current release unless explicitly linked above.
+
 # Single-file installers — 7 November 2026
 
 Candidate **1.0.0-dev.7** replaces desktop ZIP/tar folders with one delivery per OS: Windows NSIS Setup EXE, Linux AppImage, universal macOS DMG (Intel and Apple Silicon), and the existing Android APK. The application keeps its current player-data paths.
@@ -65,6 +73,11 @@ Physical Android, Apple Pencil, OS signing/notarization and real-network multime
 ---
 
 # Verification and handoff — 5 November 2026
+
+## Documentation and cleanup verification — 5 November 2026
+
+The handbook was reorganized and expanded without changing application source or public interfaces. `npm run check` passed: 444 app tests, 31 server tests, translation coverage, TypeScript, web/PWA and server builds. `npm run linux:test` passed all 5 desktop unit tests. Local Markdown links and Git whitespace checks passed. Existing current native packages were retained; no native rebuild or publication was performed for documentation-only changes. Earlier sections below are dated historical evidence, including previous build identifiers and device limitations.
+
 
 Current web build version: **1.0.0-dev.1**, PWA cache **studyvillage-7ee145a93f404960**. Pen mode reserves writing and erasure for the pen while allowing fingers to pan, pinch, select and move existing content. It preserves the original project/profile and records implementation/content limits in FEATURES.md, INK.md, ARCHITECTURE.md and WEREWOLVES.md. It is not a claim of physical-device certification or exact reproduction of every printed expansion event.
 
@@ -153,7 +166,7 @@ The preceding pass (`studyvillage-6b36ee14bd7845c5`) adds small two-line NPC bub
 
 ## Previous interface correction pass
 
-The previous bundle (`studyvillage-9b6ff1e6b7936dcc`) includes the redesigned notebook, focus clock/jukebox, Werewolves interface, in-world garden placement, NPC speech/custom dialogue, finite display board, sharper wardrobe and sprite vanity. Design references and decisions are recorded in VISUAL_DESIGN.md.
+The previous bundle (`studyvillage-9b6ff1e6b7936dcc`) includes the redesigned notebook, focus clock/jukebox, Werewolves interface, in-world garden placement, NPC speech/custom dialogue, finite display board, sharper wardrobe and sprite vanity. Design references and decisions are recorded in UI_INPUT_I18N.md.
 
 - App/server TypeScript passes. **272 application tests across 39 files** and **27 server tests** pass; **2,406 ES/EN/FR strings** have matching coverage/placeholders.
 - **20 production Chromium journeys** pass: avatar draft/save/discard, garden placement/drag/undo/cancel/reload, manual flashcard→quiz, guide/frame persistence, static and animated sprite workflows, finite display board, focus/HUD, jukebox/drop/playback, responsive layouts, English/French, Werewolves lobby/card flip/settings/mobile mosaic, and a live temporary village with simulated camera capture while walking.
@@ -259,6 +272,25 @@ Remaining at checkpoint: full unit/server rerun, delayed 16-client transport tes
 - `npm run test:pages`: PASS in Chromium and WebKit, including packaged subpath assets, offline cache, persistent ink, palm rejection and finger navigation.
 - Focused camera and game tests: 21 passed, including four-camera selection and track cleanup. No physical media hardware or WAN/NAT certification, and no new native installers or release tags. Existing native bundles predate this candidate; current working builds are `app/dist` and `server/dist`.
 
+### Final local result
+
+Final source candidate `09e77e6` is pushed to `origin/main`. WebKit's targeted long-press and clock persistence/cancel journey passed after the overlap correction (1/1). The current production PWA cache is `studyvillage-da53bb3380789ddf`. User-authored handbook changes remain uncommitted and preserved. Generated browser outputs and task scratch files were cleaned; current web and server builds are retained.
+
+GitHub Actions run https://github.com/Javpato/studyvillage/actions/runs/42393927955 completed successfully for `09e77e6`: both build and deploy passed. The web candidate is published to GitHub Pages; native installers remain unchanged.
+
+
+## Phone drag feedback — 2026-11-07
+
+Added a noninteractive lifted icon following mouse/touch movement, a dimmed source, highlighted destination and a short settle animation (skipped for reduced motion). Long press can continue into dragging; cancellation, capture loss, blur, closing and disposal remove the preview without changing the layout.
+
+Completed before push: source typecheck and four Chromium journeys (mouse grouping, native touch at 390/820 widths, cancellation and long-press/reduced-motion cleanup). Inspected the captured tablet drag preview. Remaining checkpoint: WebKit mouse/long-press journeys and the automatic Pages workflow. User handbook edits remain untouched and uncommitted.
+
+The production build then caught an overly broad string type in the new CDP test helper; its event type was narrowed to the four supported touch events before rerunning the build.
+
+Drag feedback final local results: production build PASS; Chromium 4/4 (including native touch at phone/tablet widths); WebKit 2/2 (drag/grouping and long-press/reduced-motion cleanup). Visual preview inspected. Source is pushed as `c04cc33`; publication workflow: https://github.com/Javpato/studyvillage/actions/runs/42413929362 . Browser scratch outputs removed, current build retained.
+
+GitHub Pages build and deploy for `c04cc33` completed successfully (run 42413929362). Drag feedback is published.
+
 ## Forest, phone and sprite improvements — 2026-11-07
 
 Candidate scope: typed app/folder drag destinations, packed insertion feedback and folder renaming; visible sprite descriptions/previews and transactional guide dialogue; mirrored arcade and new guide; one-piece preview, keyboard hints, dynamic controls, media sidebar, three difficulties and authoritative local/room NPC opponents. ES/EN/FR strings updated.
@@ -267,6 +299,10 @@ Completed before candidate push: app/server typecheck; 22 focused phone/engine t
 
 Remaining at this checkpoint: Chromium and WebKit interaction journeys, visual inspection, full client/server checks and current production builds, Pages deployment verification and generated-output cleanup. This is a testable candidate, not a verified release. Existing user handbook edits are preserved separately. Workflow: https://github.com/Javpato/studyvillage/actions/workflows/pages.yml
 
+Candidate `e18c30e` is pushed to origin/main. Workflow: https://github.com/Javpato/studyvillage/actions/runs/42421943665 . Full checks and Chromium journeys are in progress; local logs/output are in `/tmp/sv-full-check.log` and `/tmp/sv-forest-chromium`.
+
+Verification follow-up: full check passed (476 app + 32 server tests, ES/EN/FR, web/PWA/server builds). Candidate workflow succeeded and deployed. Browser checks exposed folder tap capture, native capture transfer, compact garden height and drag Escape routing; corrections are being verified. One first-pass desktop game failure was caused by Vite reloading during an edit, so later passes run against stable source/builds. Expanded checks now include guide undo/permissions, sprite import cancellation, all three languages and authenticated server NPC updates.
+
 ### Verified forest and phone refinements
 
 - Full local check PASS: 477 client tests, 33 server tests, typecheck, 2589 ES/EN/FR messages, production web/PWA and server builds. The new server journey verifies a common hard difficulty, identical one-piece previews and authoritative NPC moves received by authenticated human clients.
@@ -274,6 +310,10 @@ Remaining at this checkpoint: Chromium and WebKit interaction journeys, visual i
 - Browser findings corrected: capture begins on the tile so taps still open folders and a fast move outside the phone remains a drag; cancelled gestures suppress their trailing click; Escape also works after focus changes. Compact garden cards leave room for the yard. Mobile held/next pieces use readable labels. Grouping waits 400 ms with its target remaining under the pointer.
 - Visual inspection: mobile/tablet/desktop game layouts, compact 320px garden, touch drag feedback, and rotated custom board artwork. Physical microphone/camera devices and WAN/NAT behavior were not exercised; native installers are unchanged. Current working builds remain app/dist and server/dist.
 - Candidate e18c30e was published successfully by https://github.com/Javpato/studyvillage/actions/runs/42421943665 . Final refinements are ready for the next source commit; its Pages workflow still needs confirmation. User handbook changes remain local and unstaged.
+
+Final source `faf77f5` is pushed to `origin/main`; the final production build passed (PWA cache `studyvillage-1e76a96ba9c0ce7c`). Final grouping/capture checks: Chromium 4/4 and WebKit 2/2; preceding long-press checks also passed in both. Publication workflow: https://github.com/Javpato/studyvillage/actions/runs/42423148192 . Awaiting deployment confirmation at this checkpoint.
+
+Publication confirmed on 2026-11-08: workflow https://github.com/Javpato/studyvillage/actions/runs/42423148192 completed successfully for `faf77f5`; both build and deploy passed. The final web version is published at https://javpato.github.io/studyvillage/ . Task browser outputs and scratch files were removed, the task dev server was stopped, and current web/server builds were retained. Only the pre-existing handbook edits and local verification follow-up remain uncommitted.
 
 ## 2026-11-08 — social, controller and responsive candidate
 
@@ -292,3 +332,9 @@ Verification follow-up: fixed duplicate controller initialization found by brows
 Build, server build, types and ES/EN/FR catalogue checks passed. Compatibility: retain server protocol 7; friendship is additive and becomes available after the private friends state arrives. Older servers retain other functionality and display an update message for friend requests. No destructive database migration; friend state uses the existing SQLite metadata store.
 
 Initial candidate workflow https://github.com/Javpato/studyvillage/actions/runs/42478313244 failed on the test delivery-order assumption corrected above. Next candidate includes these corrections. Remaining: packaged Pages checks/CI, final visual inspection, cleanup; physical controller, iPad Safari keyboard, browser-menu zoom and actual OS screen-audio capture remain hardware checks.
+
+Final corrected candidate pushed: `496a8fd` — https://github.com/Javpato/studyvillage/commit/496a8fd . Workflow: https://github.com/Javpato/studyvillage/actions/runs/42478905490 (running at checkpoint). Packaged Pages checks passed in Chromium and WebKit, including offline cache and saved ink; current PWA cache is `studyvillage-652841334e7ffedb`. Final tablet/desktop Forest Blocks and phone world visuals inspected. No native installer or release tag was created. Current web/server builds retained.
+
+Final WebKit targeted checks also passed (2/2): controller settings/local game stop and the iPad invitation field above the simulated keyboard. GitHub workflow 42478905490 has passed unit/server tests, translation checks, build and packaged browser checks; deployment confirmation is pending. Automated coverage does not certify physical Bluetooth pairing, OS audio availability or real iPad keyboard behavior.
+
+Publication confirmed: workflow https://github.com/Javpato/studyvillage/actions/runs/42478905490 completed successfully for `496a8fd`; build and deploy both passed. Web app: https://javpato.github.io/studyvillage/ . Task scratch scripts/logs/screenshots and Playwright output were removed; the task Vite dev server was stopped. Current `app/dist` and `server/dist` retained. Existing user documentation edits remain uncommitted, together with this final verification follow-up; implementation files are committed and pushed. No claim of physical-device or universal system-audio certification.

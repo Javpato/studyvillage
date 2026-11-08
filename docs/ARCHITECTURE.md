@@ -13,3 +13,34 @@ The user-selected destination is `../studyvillage`, an independent Git repositor
 - French is a bundled static catalogue; live language changes never replace the transport. Domain errors use untranslated message keys; presentation translates them for the current user instead of baking an authority's language into shared state.
 - Electron retains context isolation, disabled Node integration and sandboxing. See https://www.electronjs.org/docs/latest/tutorial/context-isolation .
 - Pointer Events with feature detection are the common handwriting path (https://webkit.org/blog/9674/new-webkit-features-in-safari-13/). Physical stylus behavior remains unverified. PDF.js is loaded lazily so unsupported PDF rendering does not prevent village or plain notebook startup.
+
+
+## Reading a change through the layers
+
+A notebook edit begins in the canvas editor, becomes a validated document operation, is saved through the repository, and (only for a shared page) enters the runtime outbox and authority path. Rendering never establishes permission. A server acknowledgement is sent after authoritative persistence, not merely after a UI redraw. Read [storage](STORAGE_BACKUPS.md), [networking](NETWORKING.md) and [server](SERVER.md) together before changing this flow.
+
+A furniture action begins with world hit testing and reach, resolves an interaction, opens a feature panel and addresses a room or personal model. The same tool opened from the phone should obey the same ownership and persistence rules. Furniture IDs do not own personal notebook data. Read [world](WORLD_ASSETS.md) and [study tools](STUDY_TOOLS.md) before coupling a tool to a room.
+
+## Repository ownership
+
+| Directory | Maintainer responsibility |
+|---|---|
+| `app/src` | Presentation, composition, Canvas rendering and browser input |
+| `packages/core/src` | Domain schemas, identity, rules and pure algorithms |
+| `packages/runtime/src` | Sessions, storage adapters, network/media and platform integration |
+| `packages/documents/src` | Independent notebook, ink, repository and authority implementation |
+| `server/src` | Persistent authority, bounded sockets, SQLite and optional local AI |
+| `app/linux`, `app/src-tauri`, `android` | Platform code/configuration and retained compatibility |
+| `scripts` | Build, package, asset and verification tooling |
+| `docs` | Current handbook, specialist references and verification evidence |
+| `deliverables` | Ignored current runnable/distributable packages and metadata |
+
+Retain the current package boundaries. Moving a file requires checking imports, dynamic imports, script-relative URL resolution, Vite roots, native asset copies and test working directories. Cosmetic renaming is not sufficient reason to risk those interfaces.
+
+## Adding behavior safely
+
+Define the domain model and validation first, then the authority and persistence behavior, then presentation. For shared behavior, specify who may act, what each participant may see, what survives disconnect, and what retries mean. Add focused tests for those guarantees. Avoid introducing a second serializer, a second authority timer or a duplicated store when an existing layer already owns the responsibility.
+
+## Compatibility boundaries
+
+Legacy whiteboards and new notebook shared pages coexist. Core still includes some browser-facing port types; runtime still imports selected presentation helpers. These are documented architectural debt, not a reason to claim total isolation. `app/tests/architecture.test.ts` enforces the implemented core import boundary. Update a migration and its evidence before removing a compatibility export or native adapter.

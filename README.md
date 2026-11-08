@@ -4,6 +4,31 @@ Una aldea acogedora en pixel art para tener tu propio rincón, visitar a tus ami
 
 **[Jugar en el navegador](https://javpato.github.io/studyvillage/)** · **[Descargar para tu dispositivo](https://github.com/Javpato/studyvillage/releases)**
 
+## Estado y descargas
+
+La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages. Los instaladores tienen versiones propias: consulta la [última entrega de desarrollo](https://github.com/Javpato/studyvillage/releases) y descarga el archivo de tu sistema. **`1.0.0-dev.8` es la versión preparada en este código**; una entrega solo está publicada cuando aparecen sus cuatro instaladores y las sumas de comprobación en Releases.
+
+| Dispositivo | Qué abrir o descargar |
+|---|---|
+| Navegador, iPhone o iPad | [Web de StudyVillage](https://javpato.github.io/studyvillage/); en Safari, Compartir → Añadir a pantalla de inicio |
+| Windows x64 | `StudyVillage-Setup-x64.exe` |
+| Linux x64 | `StudyVillage-linux-x64.AppImage` |
+| macOS Intel o Apple Silicon | `StudyVillage-macos-universal.dmg` — el mismo archivo para ambos |
+| Android | `StudyVillage-development.apk` |
+
+Son versiones de desarrollo. Los instaladores de escritorio no tienen firma comercial ni notarización; el APK usa firma de desarrollo. Exporta una copia de tus datos antes de desinstalar o cambiar de dispositivo. No hay instalador nativo de iOS.
+
+## Novedades de dev.8
+
+- Solicitudes de amistad con aceptación y avisos de amistad/voz silenciosos, fáciles de cerrar y sin acumulación.
+- Pantallas compartidas que cada persona puede mover, redimensionar o minimizar para sí misma; audio opcional cuando el navegador y sistema lo permiten.
+- **Ajustes → Mando:** guía de conexión USB/Bluetooth, detección, prueba de botones y controles para menús, aldea y Bloques del Bosque. Escribir y dibujar siguen usando teclado, ratón o pantalla táctil.
+- Bloques del Bosque con juego a la izquierda, cámaras a la derecha, ocultación local del vídeo y «Terminar partida» junto a «Comenzar».
+- Mejoras de teléfono/iPad, campo de invitación sobre el teclado, jardín más visible y tamaño estable con zoom; llamadas abajo a la izquierda en ordenador.
+- Teléfono organizable por carpetas, mejoras de sprites y partidas de Bloques contra NPC incluidas desde los cambios posteriores a dev.7.
+
+Las solicitudes de amistad sobreviven a desconexiones en servidores actualizados. **Actualizar la web o un instalador no actualiza el servidor de tu aldea:** su administrador debe actualizarlo desde esta misma versión. Los servidores anteriores conservan las demás funciones. Consulta [las notas completas](docs/RELEASE_NOTES.md).
+
 ## Tu lugar en la aldea
 
 Empiezas con una casa sencilla: una pizarra, un escritorio, una planta, un armario y una guía que te ayuda a orientarte. La puerta interior da acceso a las plantas y habitaciones. Fuera te espera un buzón; puedes moverlo o retirarlo desde el jardín. Los demás muebles se añaden cuando tú quieras. Las casas ya guardadas conservan su decoración.
@@ -33,6 +58,7 @@ En iPhone y iPad, abre la web en Safari y usa **Compartir → Añadir a pantalla
 - **Doble clic o doble toque:** acercarte y usar casas, muebles y portales.
 - **M:** abrir o cerrar el teléfono. **Escape:** cerrar o volver.
 - En pantallas táctiles, usa los controles en pantalla y personalízalos desde Editar controles.
+- Para usar un mando estándar, abre **Ajustes → Mando**. El emparejamiento Bluetooth se hace en el sistema operativo.
 
 Puedes explorar y usar tus herramientas personales sin iniciar sesión. Guarda una identidad cifrada para que tus amigos puedan reconocerte entre sesiones. Los datos personales se conservan localmente: exporta una copia completa desde Identidad antes de borrar datos del navegador o cambiar de dispositivo. La escritura guardada puede reabrirse sin conexión después de la primera carga web.
 
@@ -61,8 +87,23 @@ Las Releases se construyen desde una etiqueta de versión: los cuatro instalador
 
 Más información: [funciones](docs/FEATURES.md), [arquitectura](docs/ARCHITECTURE.md), [cuadernos y tinta](docs/INK.md), [recursos gráficos](docs/SPRITES.md) y [verificaciones y límites](docs/VERIFICATION.md). Las pruebas automatizadas y una compilación correcta no sustituyen las comprobaciones en dispositivos físicos.
 
+## Cómo se organiza el repositorio
+
+| Carpeta | Contenido |
+|---|---|
+| `app/` | Interfaz, mundo y clientes web/escritorio |
+| `packages/` | Reglas, protocolos, almacenamiento y colaboración |
+| `server/` | Servidor persistente con Node.js y SQLite |
+| `android/` | Proyecto Android |
+| `scripts/` y `.github/workflows/` | Construcción, verificaciones y publicación |
+| `docs/` | [Manual técnico](docs/README.md) y evidencia de pruebas |
+
+`main` contiene el desarrollo actual; las etiquetas `v…` identifican releases concretos y no se reutilizan. Un workflow verde de Pages confirma la publicación web; el workflow **Build and publish Releases** verifica los cuatro instaladores antes de publicarlos. `BUILD_INFO.json` identifica el commit de cada entrega y `SHA256SUMS` permite comprobar sus archivos. Los builds y paquetes generados están ignorados por Git.
+
 ## Proyecto y recursos
 
 StudyVillage es un proyecto independiente en desarrollo. No requiere una suscripción, API de IA de pago ni dominio comprado. Los servicios externos tienen sus propias condiciones y los servidores propios usan los recursos de quien los aloja.
 
 El repositorio sigue siendo **UNLICENSED**: todavía no se ha seleccionado una licencia de código abierto. Consulta [las licencias de recursos](ASSETS_LICENSES.md); los gráficos y demás materiales conservan sus condiciones originales.
+
+Manual técnico detallado: [documentación](docs/README.md).

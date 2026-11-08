@@ -210,6 +210,7 @@ test('friend lists saved in the phone allow offline-owner room entry after a ser
  await guestDialog.getByRole('button',{name:'Cerrar',exact:true}).first().click();
  await guest.page.getByTestId('phone-button').click();await guest.page.getByTestId('phone-contacts').click();
  await guest.page.getByRole('button',{name:'Añadir a Owner a contactos',exact:true}).click();
+ await openPhoneApp(page,'contacts');await page.locator('.sv-session-contacts').getByRole('button',{name:'Aceptar',exact:true}).click();await page.keyboard.press('Escape');
  const nickname=guest.page.getByLabel('Apodo de Owner',{exact:true});await nickname.fill('Study buddy');await nickname.press('Tab');
  await expect(guest.page.locator('.sv-contact-list strong')).toHaveText('Study buddy');
  await expect.poll(async()=>(await readPersistedLocalData(guest.page)).contacts.some(c=>c.nickname==='Study buddy'&&!c.friendCode)).toBe(true);
