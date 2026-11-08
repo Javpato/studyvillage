@@ -2,7 +2,8 @@ import {resolve} from 'node:path';
 import {test,expect,type Page,type Locator} from '@playwright/test';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 async function pad(page:Page){await page.addInitScript(()=>{const p={id:'Xbox test controller',index:0,mapping:'standard',connected:true,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0,touched:false})),timestamp:0};(window as any).pad=p;Object.defineProperty(navigator,'getGamepads',{value:()=>p.connected?[p]:[]});});}
-async function press(page:Page,button:number){await page.evaluate(i=>(window as any).pad.buttons[i].pressed=true,button);await page.waitForTimeout(65);await page.evaluate(i=>(window as any).pad.buttons[i].pressed=false,button);await page.waitForTimeout(65);}
+// Keep both press and release observable across polling frames, even on loaded CI runners.
+async function press(page:Page,button:number){for(const down of [true,false])await page.evaluate(async({button,down})=>{(window as any).pad.buttons[button].pressed=down;await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));},{button,down});}
 async function choose(page:Page,target:Locator){await expect(target).toBeEnabled();for(let i=0;i<100;i++){if(await target.evaluate(e=>document.activeElement===e)){await press(page,0);return;}await press(page,5);}throw new Error(`Controller could not focus ${await target.textContent()}`);}
 async function fixture(page:Page,kind:'gartic'|'werewolves'){
  const source=await page.request.get('/src/input/gamepad.ts');test.skip(!source.headers()['content-type']?.includes('javascript'),'Source fixture uses Vite endpoints; production gamepad flow is covered separately.');
