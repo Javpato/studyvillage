@@ -38,3 +38,11 @@ Coverage includes all 36 source/destination plot combinations, boundary position
 Use world, house, interaction-reach, garden-layout, garden-relocation, furniture-rotation and sprite-manifest unit tests. Browser coverage includes actual drag/tap decoration, cancellation, reload and portrait layout. For a new object, check the complete sprite footprint, doorway clearance, picking region, rendered orientation and exported public representation.
 
 Retain [asset provenance](../ASSETS_LICENSES.md), source PNGs and reference material. Generated bundles contain copies of these assets by design; remove obsolete bundles rather than deleting a source PNG just because multiple distributions contain it.
+
+## Pet expressions and character reset
+
+Use the nearby pet interaction and its special ability to make a rabbit hop. Normal walking stays on the ground. A hamster's **Enter the ball** command is a saved toggle: **Remove the ball** is the only normal way to take it out, including after following, room changes or minigames.
+
+A parrot with a saved phrase speaks when a player enters its nearby range in the active shared scene. Its compact bubble follows it for up to eight seconds, respects dialogue font settings and leaves an intentional guide conversation alone. Manual **Repeat phrase** remains available; automatic arrivals are rate-limited.
+
+The sprite atelier's **Restore default character** restores the initial game appearance in a preview. Undo or closing discards it; **Save character** applies it. Name, house and identity color stay unchanged. This control belongs to the drawing atelier, not the wardrobe.

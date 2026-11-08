@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {PetController,assertPetLimit,newPetConfig,petConfigSchema,petCount,ownsPet,type PetHome,type PetNavigation} from '../../packages/core/src/pets/model';
+import {PetController,assertPetLimit,newPetConfig,petCount,ownsPet,type PetHome,type PetNavigation} from '../../packages/core/src/pets/model';
 import {PetReservations,type PetBot} from '../../packages/core/src/pets/protocol';
 import {WerewolvesGame} from '../../packages/core/src/minigames/werewolves';
 import {TetrisGame} from '../../packages/core/src/minigames/tetris';
