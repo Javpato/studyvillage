@@ -593,5 +593,245 @@
     "file": "icon-camera.png",
     "width": 24,
     "height": 24
+  },
+  "pet-cat-sheet": {
+    "file": "pet-cat-sheet.png",
+    "width": 224,
+    "height": 128,
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "animations": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        1,
+        2
+      ],
+      "eat": [
+        3,
+        0
+      ],
+      "pet": [
+        4
+      ],
+      "rest": [
+        5
+      ],
+      "ability": [
+        6
+      ]
+    },
+    "directions": {
+      "down": 0,
+      "left": 1,
+      "right": 2,
+      "up": 3
+    },
+    "fps": 6,
+    "scale": 1.25,
+    "anchor": {
+      "x": 16,
+      "y": 27
+    },
+    "collisionRadius": 9
+  },
+  "pet-cat": {
+    "file": "pet-cat.png",
+    "width": 64,
+    "height": 64
+  },
+  "pet-dog-sheet": {
+    "file": "pet-dog-sheet.png",
+    "width": 224,
+    "height": 128,
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "animations": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        1,
+        2
+      ],
+      "eat": [
+        3,
+        0
+      ],
+      "pet": [
+        4
+      ],
+      "rest": [
+        5
+      ],
+      "ability": [
+        6
+      ]
+    },
+    "directions": {
+      "down": 0,
+      "left": 1,
+      "right": 2,
+      "up": 3
+    },
+    "fps": 6,
+    "scale": 1.25,
+    "anchor": {
+      "x": 16,
+      "y": 27
+    },
+    "collisionRadius": 9
+  },
+  "pet-dog": {
+    "file": "pet-dog.png",
+    "width": 64,
+    "height": 64
+  },
+  "pet-parrot-sheet": {
+    "file": "pet-parrot-sheet.png",
+    "width": 224,
+    "height": 128,
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "animations": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        1,
+        2
+      ],
+      "eat": [
+        3,
+        0
+      ],
+      "pet": [
+        4
+      ],
+      "rest": [
+        5
+      ],
+      "ability": [
+        6
+      ]
+    },
+    "directions": {
+      "down": 0,
+      "left": 1,
+      "right": 2,
+      "up": 3
+    },
+    "fps": 6,
+    "scale": 1.25,
+    "anchor": {
+      "x": 16,
+      "y": 27
+    },
+    "collisionRadius": 9
+  },
+  "pet-parrot": {
+    "file": "pet-parrot.png",
+    "width": 64,
+    "height": 64
+  },
+  "pet-hamster-sheet": {
+    "file": "pet-hamster-sheet.png",
+    "width": 224,
+    "height": 128,
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "animations": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        1,
+        2
+      ],
+      "eat": [
+        3,
+        0
+      ],
+      "pet": [
+        4
+      ],
+      "rest": [
+        5
+      ],
+      "ability": [
+        6
+      ]
+    },
+    "directions": {
+      "down": 0,
+      "left": 1,
+      "right": 2,
+      "up": 3
+    },
+    "fps": 6,
+    "scale": 1.25,
+    "anchor": {
+      "x": 16,
+      "y": 27
+    },
+    "collisionRadius": 9
+  },
+  "pet-hamster": {
+    "file": "pet-hamster.png",
+    "width": 64,
+    "height": 64
+  },
+  "pet-rabbit-sheet": {
+    "file": "pet-rabbit-sheet.png",
+    "width": 224,
+    "height": 128,
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "animations": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        1,
+        2
+      ],
+      "eat": [
+        3,
+        0
+      ],
+      "pet": [
+        4
+      ],
+      "rest": [
+        5
+      ],
+      "ability": [
+        6
+      ]
+    },
+    "directions": {
+      "down": 0,
+      "left": 1,
+      "right": 2,
+      "up": 3
+    },
+    "fps": 6,
+    "scale": 1.25,
+    "anchor": {
+      "x": 16,
+      "y": 27
+    },
+    "collisionRadius": 9
+  },
+  "pet-rabbit": {
+    "file": "pet-rabbit.png",
+    "width": 64,
+    "height": 64
+  },
+  "pet-bowl": {
+    "file": "pet-bowl.png",
+    "width": 64,
+    "height": 64
   }
 }

@@ -1,3 +1,4 @@
+import {petConfigSchema} from '../pets/model';
 import {friendCommandSchema,friendViewSchema} from '../social/friends';
 import { gardenSchema } from './garden';
 import { doorPositionsSchema, accessListSchema, floorsSchema, houseSpaceSchema, workspaceCommandSchema, workspaceViewSchema } from '../house/workspaces';
@@ -29,10 +30,10 @@ export const houseSchema = z.strictObject({
   ownerId: fingerprintSchema, revision: integer, name: z.string().trim().min(1).max(60),
   access: z.enum(['open', 'ask', 'locked']), theme: z.enum(['mint', 'peach']),
   furniture: z.array(z.strictObject({
-    guideText: z.string().max(320).optional(), showFrame: z.boolean().optional(),
+    pet:petConfigSchema.optional(), guideText: z.string().max(320).optional(), showFrame: z.boolean().optional(),
     color: color.optional(),
     rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
-    id: idSchema, kind: z.enum(['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity']),
+    id: idSchema, kind: z.enum(['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity', 'pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl']),
     x: z.number().min(0).max(736), y: z.number().min(0).max(400), publicAlias: z.string().max(60),
   })).max(LIMITS.furniture),
 }).refine(house => new Set(house.furniture.map(item => item.id)).size === house.furniture.length);
@@ -57,7 +58,7 @@ export const signedHouseSchema = z.strictObject({ house: houseSchema, signature 
 export const signedStrokeSchema = z.strictObject({ stroke: strokeSchema, signature });
 export const boardCommitSchema = z.strictObject({ id:idSchema,boardId:boardRefSchema,documents:z.array(signedStrokeSchema).min(1).max(128),signature }).refine(c=>new Set(c.documents.map(d=>d.stroke.id)).size===c.documents.length && c.documents.every(d=>d.stroke.boardId===c.boardId));
 export type SignedBoardCommit = z.infer<typeof boardCommitSchema>;
-export const appChannelSchema = z.enum(['werewolves', 'tetris', 'gartic', 'projects', 'study', 'camera', 'ai', 'ink', 'sprites', 'mailbox']);
+export const appChannelSchema = z.enum(['werewolves', 'tetris', 'gartic', 'projects', 'study', 'camera', 'ai', 'ink', 'pets', 'sprites', 'mailbox']);
 const appDataSchema = z.string().min(2).max(LIMITS.appData);
 export const inviteSchema = z.strictObject({
   v: z.literal(1), sessionId: idSchema, epoch: integer.min(1), hostFingerprint: fingerprintSchema,

@@ -183,11 +183,13 @@ export class ProjectsPanel {
 
     // Repository: open it in the real editor.
     const repo = el('section', 'pj-section');
-    repo.append(el('h4', '', msg('Repositorio')));
+    repo.append(el('h4', '', msg('Repositorio vinculado')));
     if (project.repoUrl) {
       const url = project.repoUrl;
       const link = el('code', 'pj-repo', repoLabel(url));
       const row = el('div', 'pj-actions');
+      const open=btn(msg('Abrir repositorio'),'pj-btn');open.onclick=()=>this.open(url);
+      const remove=btn(msg('Quitar vínculo'),'pj-btn');remove.onclick=()=>this.ctx.send({kind:'edit',id:project.id,name:project.name,description:project.description,repoUrl:''});row.append(open,remove);
       const clone = btn(msg('Clonar en VS Code'), 'pj-btn');
       setDisplayAttribute(clone, "title", msg('Abre VS Code y te pregunta dónde guardar la copia'));
       clone.addEventListener('click', () => this.open(vscodeCloneLink(url)));
@@ -209,7 +211,7 @@ export class ProjectsPanel {
       row.append(copy);
       repo.append(link, row);
     } else {
-      repo.append(el('p', 'pj-muted', msg('Añade la dirección del repositorio (GitHub, GitLab…) para que cualquiera pueda clonarlo con un clic.')));
+      repo.append(el('p', 'pj-muted', msg('Vincula un repositorio de GitHub u otro servidor Git. Esto guarda un enlace; no sincroniza archivos.')));
       const add = btn(msg('Añadir repositorio'), 'pj-btn');
       add.addEventListener('click', () => { this.mode = 'edit'; this.render(); });
       repo.append(add);

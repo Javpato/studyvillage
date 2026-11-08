@@ -1,3 +1,4 @@
+import {petConfigSchema,assertPetLimit,ownerPetGroups,petSpecies} from '../pets/model';
 import { z } from 'zod';
 import type { Furniture, FurnitureKind, Position, PublicHouse, PublicIdentity } from '../protocol/types';
 
@@ -9,7 +10,7 @@ export const houseSpaceSchema = z.strictObject({ floorId: key, roomId: key.nulla
 export type HouseSpace = z.infer<typeof houseSpaceSchema>;
 export const floorsSchema = z.array(z.strictObject({ id: key, name: z.string().trim().min(1).max(48), rooms: z.array(z.strictObject({ id: key, name: z.string().trim().min(1).max(48), allowlist: accessListSchema.optional() })).max(10).refine(rooms => new Set(rooms.map(r => r.id)).size === rooms.length) })).min(1).max(3).refine(floors => new Set(floors.map(f => f.id)).size === floors.length);
 export type HouseFloor = z.infer<typeof floorsSchema>[number];
-const furniture = z.strictObject({ guideText:z.string().max(320).optional(), showFrame:z.boolean().optional(), sprite:z.string().max(32000).regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/).optional(), color:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional(), id: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), kind: z.enum(['desk','bookshelf','board','plant','table','frame','cabinet','flashcards','oak','palm','cherry','flowerbed','lantern','fountain','picnic','hammock','mailbox','birdbath','mushrooms','stonepath','inkdesk','guide','sketchboard','clock','jukebox','vanity']), x: z.number().min(0).max(736), y: z.number().min(0).max(400), publicAlias: z.string().max(48), rotation: z.union([z.literal(0),z.literal(90),z.literal(180),z.literal(270)]).optional() });
+const furniture = z.strictObject({ pet:petConfigSchema.optional(), guideText:z.string().max(320).optional(), showFrame:z.boolean().optional(), sprite:z.string().max(32000).regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/).optional(), color:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional(), id: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), kind: z.enum(['desk','bookshelf','board','plant','table','frame','cabinet','flashcards','oak','palm','cherry','flowerbed','lantern','fountain','picnic','hammock','mailbox','birdbath','mushrooms','stonepath','inkdesk','guide','sketchboard','clock','jukebox','vanity','pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl']), x: z.number().min(0).max(736), y: z.number().min(0).max(400), publicAlias: z.string().max(48), rotation: z.union([z.literal(0),z.literal(90),z.literal(180),z.literal(270)]).optional() });
 export const workspaceSchema = z.strictObject({
   revision: z.number().int().nonnegative(), theme:z.enum(['mint','peach']).optional(), furniture: z.array(furniture).max(32).refine(items => new Set(items.map(f => f.id)).size === items.length),
   notes: z.array(z.strictObject({ id:key, title:z.string().max(80), text:z.string().max(8000) })).max(16),
@@ -26,6 +27,7 @@ export function parseWorkspaceForSpace(space:HouseSpace,raw:unknown):WorkspaceDo
 export const spaceRequestSchema = z.strictObject({ id: key, visitor: person, owner: person, space: houseSpaceSchema, from: z.string().max(100) });
 export type SpaceRequest = z.infer<typeof spaceRequestSchema>;
 export const workspaceCommandSchema = z.discriminatedUnion('action', [
+  z.strictObject({action:z.literal('pet'),space:houseSpaceSchema,furniture:z.string().max(80),config:petConfigSchema}),
   z.strictObject({ action:z.literal('enter'), owner:person, space:houseSpaceSchema.nullable(), seed:workspaceSchema.optional(), requestId:key.optional() }),
   z.strictObject({action:z.literal('cancel'),request:key}),
   z.strictObject({ action:z.literal('decide'), request:key, accept:z.boolean() }),
@@ -106,6 +108,7 @@ export class WorkspaceCoordinator {
   apply(who:string,raw:WorkspaceCommand):void {
     const command=workspaceCommandSchema.parse(raw),member=this.person(who);
     if(!member?.connected)throw new Error('La sesión ya no está disponible.');
+    if(command.action==='pet'){const house=this.house(who);if(!house||!spaceExists(house,command.space))throw new Error('Esta mascota no está disponible.');const old=this.document(who,command.space);const item=old.furniture.find(f=>f.id===command.furniture&&petSpecies(f.kind));if(!item||command.config.id!==(item.pet?.id??item.id))throw new Error('Esta mascota no está disponible.');this.storage.put(who,command.space,{...old,revision:old.revision+1,furniture:old.furniture.map(f=>f===item?{...f,pet:command.config}:f)});return;}
     if(command.action==='cancel'){this.cancel(who,command.request);return;}
     if(command.action==='enter'){
       // A pending request owns this visitor's access slot until a decision or
@@ -142,7 +145,7 @@ export class WorkspaceCoordinator {
     const old=this.document(owner,space);
     if(old.revision!==command.base)throw new Error('El espacio cambió. Revisa la versión actual antes de guardar.');
     if(who!==owner&&(JSON.stringify(old.furniture)!==JSON.stringify(command.document.furniture)||old.theme!==command.document.theme))throw new Error('Solo el propietario puede decorar esta habitación.');
-    const next=parseWorkspaceForSpace(space,{...command.document,revision:old.revision+1});this.storage.put(owner,space,next);
+    const next=parseWorkspaceForSpace(space,{...command.document,revision:old.revision+1});assertPetLimit(ownerPetGroups(this.house(owner)!,candidate=>sameSpace(candidate,space)?next:this.storage.get(owner,candidate)));this.storage.put(owner,space,next);
   }
   reconcile(people:string[]):void {
     const owners=new Set([...people,...this.layouts.keys(),...people.flatMap(id=>this.person(id)?.houseId?[this.person(id)!.houseId!]:[])]);

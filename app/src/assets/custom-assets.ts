@@ -177,7 +177,7 @@ export function validateAssetPack(raw: unknown): AssetPackManifest {
 
   const avatar = normalizeAppearance(obj.avatar);
 
-  const validKinds: FurnitureKind[] = ['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity'];
+  const validKinds: FurnitureKind[] = ['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity', 'pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl'];
   const furnitureColors: Partial<Record<FurnitureKind, string>> = {};
   if (obj.furnitureColors && typeof obj.furnitureColors === 'object') {
     for (const kind of validKinds) {

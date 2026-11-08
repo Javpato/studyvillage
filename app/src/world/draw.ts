@@ -169,7 +169,7 @@ export function paintEmptyPlotSource(ctx: CanvasRenderingContext2D, x: number, y
   contactShadow(ctx, signX, signY + 28, 8, 0.26);
 }
 
-function paintEmptyPlot(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,slot:number):void{const asset=sprite('plot-empty');if(asset)ctx.drawImage(asset,x-7,y-6);else paintEmptyPlotSource(ctx,x,y,w,h,slot);const signX=x+w/2,signY=y+h/2-10;text(ctx,t('PARCELA {n}',{n:slot+1}),signX,signY-1,PALETTE.paper[1],8);text(ctx,t('LIBRE'),signX,signY+9,shade(moss1,40),8);}
+function paintEmptyPlot(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,slot:number):void{const asset=sprite('plot-empty');if(asset)ctx.drawImage(asset,x-7,y-6);else paintEmptyPlotSource(ctx,x,y,w,h,slot);const signX=x+w/2,signY=y+h/2-10;text(ctx,t('PARCELA {n}',{n:slot+1}),signX,signY-1,PALETTE.paper[1],8);text(ctx,t('Disponible'),signX,signY+9,shade(moss1,40),8);}
 
 export function paintResidentialGround(ctx:CanvasRenderingContext2D):void{paintGrass(ctx);paintPaths(ctx);paintPlaza(ctx);}
 function terrain(occupied: readonly OccupiedParcel[]): HTMLCanvasElement | null {

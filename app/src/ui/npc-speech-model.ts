@@ -1,14 +1,16 @@
 export const NPC_DIALOGUE_KEY = 'studyvillage-npc-dialogue-v1';
 export interface NpcDialoguePreferences {
+  size: 'small'|'standard'|'large';
   opacity: number;
   textSize: 'normal' | 'large';
   lines: 2 | 3;
   progressive: boolean;
 }
-export const DEFAULT_DIALOGUE: NpcDialoguePreferences = { opacity: .9, textSize: 'normal', lines: 2, progressive: true };
+export const DEFAULT_DIALOGUE: NpcDialoguePreferences = { size:'standard', opacity: .9, textSize: 'normal', lines: 2, progressive: true };
 export function parseDialoguePreferences(value: unknown): NpcDialoguePreferences {
   const raw = value && typeof value === 'object' ? value as Partial<NpcDialoguePreferences> : {};
   return {
+    size:raw.size==='small'||raw.size==='large'?raw.size:'standard',
     opacity: typeof raw.opacity === 'number' && Number.isFinite(raw.opacity) ? Math.max(.35, Math.min(1, raw.opacity)) : DEFAULT_DIALOGUE.opacity,
     textSize: raw.textSize === 'large' ? 'large' : 'normal',
     lines: raw.lines === 3 ? 3 : 2,

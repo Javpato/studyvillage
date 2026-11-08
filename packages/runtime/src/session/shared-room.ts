@@ -44,7 +44,7 @@ export class SharedRoom<Action, View, Engine extends RoomEngine<Action, View> = 
     const key = hostId ? `online:${hostId}:${this.isAuthority()}` : `local:${selfId}`;
     if (key === this.modeKey) return;
     this.modeKey = key;
-    this.engine = this.isAuthority() ? this.createEngine() : null;
+    this.engine?.cancel?.(Date.now());this.engine = this.isAuthority() ? this.createEngine() : null;
     this.watchers.clear();
     this.view = null; this.lead = false;
     this.ensureTimer();
@@ -126,6 +126,7 @@ export class SharedRoom<Action, View, Engine extends RoomEngine<Action, View> = 
   }
 
   dispose(): void {
+    this.engine?.cancel?.(Date.now());
     this.offApp();
     if (this.timer) clearInterval(this.timer);
     this.timer = null;

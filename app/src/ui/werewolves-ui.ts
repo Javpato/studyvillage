@@ -1,3 +1,5 @@
+import type {PetBot} from '../../../packages/core/src/pets/protocol';
+import {petPortrait} from '../pets/art';
 import './werewolves.css';
 import { msg, t, defaultText, setDisplayText, setDisplayAttribute, getLocale, formatDate, type DisplayText } from '../i18n';
 import {
@@ -38,6 +40,7 @@ const BUILDING_HELP:Record<VillageBuilding,string>={
 };
 
 export interface WerewolvesPanelContext {
+  pets?():PetBot[];
   send(action: WerewolvesAction): void;
   close(): void;
   me(): { name: string; color: string };
@@ -222,7 +225,7 @@ export class WerewolvesPanel {
       seat.disabled = !canPick && !(v.phase === 'lobby' && p.bot && v.me.isLeader);
       seat.setAttribute('aria-label', `${p.name}${p.alive ? '' : t(' (eliminado)')}${p.role ? `, ${roleInfo(p.role).name}` : ''}`);
 
-      const avatar = el('span', 'ww-avatar', p.bot ? '' : p.name.slice(0, 1).toUpperCase());if(p.bot)avatar.append(colorIcon('bot',38));if(p.id===v.mayorId)avatar.append(el('small','',msg('Alcalde')));
+      const avatar = el('span', 'ww-avatar', p.bot ? '' : p.name.slice(0, 1).toUpperCase());if(p.pet)avatar.append(petPortrait(p.pet));else if(p.bot)avatar.append(colorIcon('bot',38));if(p.id===v.mayorId)avatar.append(el('small','',msg('Alcalde')));
       avatar.style.backgroundColor = p.color;
       const badge = el('span', 'ww-role-badge');
       badge.append(colorIcon(!p.alive ? 'dead' : p.role ?? 'unknown', 22, p.role ? roleInfo(p.role).name : t('Carta oculta')));
@@ -377,6 +380,7 @@ export class WerewolvesPanel {
           box.append(el('p', '', need > 0 ? msg("Faltan {p0} jugador{p1}. Espera a tus vecinos o añade bots.", { p0: need, p1: need === 1 ? '' : 'es' }) : msg('Todo listo. Cuando empieces, cada uno recibirá una carta al azar.')));
           const add = secondary(msg('Añadir bot'), () => this.ctx.send({ kind: 'add_bot' }));
           add.disabled = v.players.length >= MAX_PLAYERS;
+          const pets=this.ctx.pets?.()??[];if(pets.length){const select=el('select');setDisplayAttribute(select,'aria-label',msg('Elegir mascota'));for(const pet of pets){const o=el('option','',pet.name);o.value=pet.id;select.append(o);}box.append(select);const addPet=secondary(msg('Añadir mascota bot'),()=>{const pet=pets.find(p=>p.id===select.value);if(pet)this.ctx.send({kind:'add_bot',pet});});addPet.disabled=v.players.length>=MAX_PLAYERS;}
           primary(msg('Repartir cartas'), () => this.ctx.send({ kind: 'start' }), v.players.length >= MIN_PLAYERS && !v.deckError);
           if (v.players.some((p) => p.bot)) box.append(el('p', 'ww-muted', msg('Pulsa un bot para quitarlo.')));
         } else {

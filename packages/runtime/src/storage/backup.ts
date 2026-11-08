@@ -35,7 +35,7 @@ function validateEntry(key:string,raw:string):void {
  if(key.startsWith('studyvillage-secure-notes-v1'))z.object({notebooks:z.array(z.object({id:z.string().max(96),name:z.string().max(120),ownerId:z.string().max(128),createdAt:z.number()})).max(1000),notes:z.array(secureNoteSchema).max(10000)}).parse(value);
  else if(key.startsWith('studyvillage-flashcard-decks-v1'))z.array(flashcardDeckSchema).max(1000).parse(value);
  else if(key.startsWith('studyvillage-quizzes-v1'))z.object({version:z.literal(1),quizzes:z.array(quizDefinitionSchema).max(1000),migrated:z.array(z.string()).max(10000)}).parse(value);
- else if(key==='studyvillage-npc-dialogue-v1')z.object({opacity:z.number().min(.35).max(1),textSize:z.enum(['normal','large']),lines:z.union([z.literal(2),z.literal(3)]),progressive:z.boolean()}).parse(value);
+ else if(key==='studyvillage-npc-dialogue-v1')z.object({opacity:z.number().min(.35).max(1),size:z.enum(['small','standard','large']).optional(),textSize:z.enum(['normal','large']),lines:z.union([z.literal(2),z.literal(3)]),progressive:z.boolean()}).parse(value);
  else if(key==='studyvillage-workspaces-v1'){const spaces=z.record(z.string(),workspaceSchema).parse(value);if(Object.keys(spaces).length>2000)throw new AppError('invalid','Copia fuera de límites.');for(const [scope,doc]of Object.entries(spaces))if(scope.endsWith('/@floor'))floorWorkspaceSchema.parse(doc);}
  else if(key==='studyvillage-custom-assets-v1')validateAssetPack(value);
  else if(key==='studyvillage-whiteboards-v1'){

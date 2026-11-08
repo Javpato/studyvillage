@@ -1,3 +1,4 @@
+import {drawWorldLabel} from '../ui/world-label';
 import { sprite } from '../assets/sprite-catalog';
 import { furniturePaintTransform } from './rotation';
 import { inlineFurnitureSprite } from './sprites';
@@ -424,12 +425,7 @@ function paintFurniture(
   }
 
   if (item.publicAlias) {
-    let label = defaultText(item.publicAlias).slice(0, 48);
-    ctx.font = '700 9px Inter, ui-sans-serif, system-ui, sans-serif';
-    const maximum=Math.max(64,Math.min(120,w+34));while(label.length>3&&ctx.measureText(label).width>maximum-16)label=label.endsWith('…')?label.slice(0,-2)+'…':label.slice(0,-1)+'…';
-    const width = Math.min(maximum, Math.ceil(ctx.measureText(label).width) + 16);
-    plate(ctx, x + w / 2 - width / 2, y + h + 4, width, 15, 'rgba(251,244,226,0.95)', 'rgba(30,55,48,0.45)');
-    text(ctx, label, x + w / 2, y + h + 15, PALETTE.paper[0], 9);
+    drawWorldLabel(ctx,defaultText(item.publicAlias),x+w/2,y+h+4);
   }
 }
 

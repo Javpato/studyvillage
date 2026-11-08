@@ -1,3 +1,5 @@
+import {assertPetLimit,ownerPetGroups} from '../../packages/core/src/pets/model';
+import {LocalWorkspaces as PetWorkspaces} from '../../packages/runtime/src/storage/workspaces';
 import { createBackup,parseBackup as parseAppBackup,previewBackup,restoreBackup as restoreAppBackup,recoverInterruptedRestore,previousBackup } from '../../packages/runtime/src/storage/backup';
 import { exportIdentityTransfer, unlockIdentityTransfer } from '../../packages/runtime/src/storage/identity-transfer';
 import { sharePublicContact } from '../../packages/runtime/src/local-bridge/contact-share';
@@ -145,7 +147,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
     }),
     saveHouseLayout: house => run(async () => {
       if(house.ownerId!==identity.public.fingerprint)throw new Error('Solo puedes decorar tu propia casa.');
-      let next=publicHouse(pruneDoorPositions(house));
+      let next=publicHouse(pruneDoorPositions(house));assertPetLimit(ownerPetGroups(next,space=>new PetWorkspaces(next.ownerId).get(next.ownerId,space)));
       next.revision=Math.max(next.revision,ownHouse.revision+1);
       if(client instanceof ServerVillageClient)next=await client.saveHouseLayout(next);
       else client.publishHouse(next);
@@ -159,7 +161,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
       const next = publicHouse(authoritative?{...house,floors:authoritative.floors,allowlist:authoritative.allowlist,doorPositions:authoritative.doorPositions,access:house.access===ownHouse.access?authoritative.access:house.access}:house);
       if(authoritative)next.revision=Math.max(next.revision,authoritative.revision+1);
       if (next.revision <= ownHouse.revision) next.revision = ownHouse.revision + 1;
-      ownHouse = next;
+      assertPetLimit(ownerPetGroups(next,space=>new PetWorkspaces(next.ownerId).get(next.ownerId,space)));ownHouse = next;
       data.projectLinks = Object.fromEntries(Object.entries(data.projectLinks).filter(([id]) => ownHouse.furniture.some(item => item.id === id)));
       client.publishHouse(ownHouse); void persist(); update();
     }),

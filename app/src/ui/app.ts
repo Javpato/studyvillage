@@ -1,3 +1,7 @@
+import {PARCELS} from '../world/model';
+import {PetWorld} from '../pets/world';
+import {petSpecies,newPetConfig,petCount,ownerPetGroups,assertPetLimit} from '../../../packages/core/src/pets/model';
+import {LocalWorkspaces as PetWorkspaces} from '../../../packages/runtime/src/storage/workspaces';
 import {GamepadController} from '../input/gamepad';
 import {mediaWindow} from '../input/media-window';
 import {confirmSprite,editGuideText} from './sprite-dialogs';
@@ -422,6 +426,7 @@ class StudyUI {
   private hudEditTile!: HTMLButtonElement;
   private vanity:VanityPanel;
   private hudCamera!:HTMLButtonElement;
+  private pets:PetWorld;
   private wardrobe: WardrobePanel;
   private spaces: HouseSpacesPanel;
   private roomWorkspace: RoomWorkspacePanel;
@@ -441,9 +446,15 @@ class StudyUI {
         actions.workspaceCommand({action:'commit',base:doc.revision,document:{...doc,theme:house.theme,furniture:house.furniture.map(f=>({...f,color:f.color??'#9f7847'}))}});
       }else actions.updateOwnHouse(house);
     } };
+    this.pets=new PetWorld({view:()=>this.view,scene:()=>this.petScene(),position:()=>this.localPosition,stop:()=>this.stopMoving(),obstacles:()=>this.pane==='house'?houseObstacles(this.currentHouse()??this.view!.ownHouse):this.currentArea==='residential'?worldObstacles(occupiedParcels(this.view!)):[...this.expansion.objectRegistry.obstaclesForArea(this.currentArea),...lampObstacles(this.currentArea)],save:(home,config)=>{
+      const view=this.view;if(!view)return;
+      if(home.scene==='area:residential')actions.updateOwnHouse({...view.ownHouse,garden:view.ownHouse.garden?.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
+      else {const key=home.scene.split(':').slice(2);if(key[0]==='lobby')actions.updateOwnHouse({...view.ownHouse,furniture:view.ownHouse.furniture.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
+       else actions.workspaceCommand({action:'pet',space:{floorId:key[0],roomId:key[1]==='-'?null:key[1]},furniture:home.furnitureId,config});}
+    }},actions);
     this.notebooks.connect(actions,()=>this.view,()=>this.activityScope()||'village');
     this.mailbox=new MailboxUI(()=>this.view?.identity.fingerprint??'',command=>this.actions.mailboxCommand(command));
-    this.garden=new GardenPanel(()=>this.view,house=>this.actions.saveHouseLayout(house),()=>this.stageCanvas);
+    this.garden=new GardenPanel(()=>this.view,house=>this.actions.saveHouseLayout(house),()=>this.stageCanvas,()=>this.pets.count());
     const spaceContext: SpacePanelContext = {
       house:()=>this.baseHouse(),space:()=>this.localPosition.space??null,document:()=>this.view?.network.workspace?.document??null,me:()=>this.view?.identity.fingerprint??'',
       pendingAccess:()=>this.view?.network.pendingAccess??null,cancelAccessRequest:()=>this.actions.cancelAccessRequest(),
@@ -451,6 +462,7 @@ class StudyUI {
     };
     this.spaces=new HouseSpacesPanel(spaceContext);this.roomWorkspace=new RoomWorkspacePanel(spaceContext);
     this.expansion = new WorldExpansionUIController({
+      pets:()=>this.pets.bots(),petMatch:(key,ids)=>this.pets.match(key,ids),
       getView: () => this.view,
       getCurrentArea: () => this.currentArea,
       setCurrentArea: (area: BuiltinAreaId) => this.changeWorldArea(area, WORLD_AREAS[area].defaultSpawn),
@@ -490,7 +502,7 @@ class StudyUI {
     });
     this.wardrobe = new WardrobePanel({
       save: look => this.actions.updateAppearance(look),
-      closed: () => { this.stopMoving(); this.lastStageRenderSig = ''; this.stageCanvas?.focus(); },
+      closed: () => { this.selectedFurnitureId=null;this.stopMoving();this.refreshHouseEditor();this.lastStageRenderSig='';this.stageCanvas?.focus(); },
     });
     this.vanity=new VanityPanel(look=>this.actions.updateAppearance(look));
     this.build();
@@ -579,7 +591,7 @@ class StudyUI {
     const ownMember = view.network.members.find((member) => member.identity.fingerprint === view.identity.fingerprint);
     const space=view.network.workspace?.space??ownMember?.position.space??null;
     if(this.houseOwnerId&&!sameSpace(space,this.localPosition.space)){
-      this.localPosition={...HOUSE_SPAWN,space:space??undefined};this.stopMoving();this.endDecoration();this.selectedFurnitureId=null;
+      this.wardrobe.close(true);this.localPosition={...HOUSE_SPAWN,space:space??undefined};this.stopMoving();this.endDecoration();this.selectedFurnitureId=null;
       this.expansion.closeModal();if(this.pane==='board')this.pane='house';this.lastStageRenderSig='';
     }
     const notice=view.network.workspace?.notice??null;
@@ -623,7 +635,7 @@ class StudyUI {
     document.removeEventListener('visibilitychange',this.boardHidden);window.removeEventListener('orientationchange',this.boardRotated);
     this.boardEditor?.dispose();
     cancelAnimationFrame(this.raf); this.offAi?.();
-    this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();this.phoneEditor?.dispose();
+    this.pets.dispose();this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();this.phoneEditor?.dispose();
     this.gamepad?.dispose();this.mobileHud.dispose();
     this.expansion.dispose();
     window.removeEventListener('keydown', this.onKeyDown);
@@ -866,6 +878,7 @@ class StudyUI {
       this.openPhone('decorate');
     }, 'phone-decorate');
     tile(msg('Contactos'), 'contacts', '#c9654f', () => this.openPhone('contacts'), 'phone-contacts');
+    tile(msg('Mascotas'),'house','#9e9a67',()=>{this.closePhone();this.pets.open();},'phone-pets');
     tile(msg('Ajustes'), 'gear', '#7c8a7a', () => { this.closePhone(); this.settingsDialog.showModal(); }, 'phone-settings');
     tile(msg('Mi jardín'),'brush','#729a84',()=>{this.closePhone();this.stopMoving();this.endDecoration();this.garden.open();},'phone-garden');
     tile(msg('Bloques del Bosque'),'projects','#729a84',()=>{this.closePhone();this.expansion.openActivity('tetris');},'phone-tetris');
@@ -899,7 +912,7 @@ class StudyUI {
     for(const entry of this.phoneLayout.entries){
       if(entry.type==='app'){this.phoneGrid.append(this.phoneTiles.get(entry.id)!);continue;}
       const item=button('','sv-app-tile');item.dataset.testid=`phone-folder-${entry.id}`;item.dataset.phoneFolder=entry.id;
-      const face=node('span','sv-app-icon');face.style.setProperty('--tile','#b38a55');face.append(monoIcon('house',26));
+      const face=node('span','sv-app-icon');face.style.setProperty('--tile','#b38a55');face.append(monoIcon(entry.builtin&&entry.id==='settings'?'gear':'house',26));
       append(item,face,node('span','sv-app-label',entry.builtin?msg(entry.name):entry.name));
       item.onclick=()=>{this.phoneFolder=entry.id;this.openPhone('folder');};this.phoneGrid.append(item);
     }
@@ -1940,7 +1953,7 @@ class StudyUI {
     setInput(this.houseNameInput, defaultText(house.name));
     setInput(this.houseAccessSelect, house.access);
     setInput(this.houseThemeSelect, house.theme);
-    setText(this.furnitureCount, `${house.furniture.length}/${LIMITS.furniture}`);
+    setText(this.furnitureCount,`${house.furniture.length}/${LIMITS.furniture} · ${t('Casas de mascotas: {count}/5',{count:this.pets.count()})}`);
     this.refreshFurnitureKindPreview();
     const selected = house.furniture.find((item) => item.id === this.selectedFurnitureId) || null;
     show(this.furnitureDetail, !!selected);
@@ -2313,7 +2326,8 @@ class StudyUI {
     const house = (this.view ? this.ownDecoratedHouse() : undefined); if (!house || next.ownerId !== house.ownerId) return false;
     const error = placementError(next, changedId,spacePortals(next,this.localPosition.space)); if (error) { this.notify(error); return false; }
     this.decorationHistory.remember(house);
-    const furniture = next.furniture.map(f => f.id === 'placing-preview' ? { ...f, id: crypto.randomUUID() } : f);
+    try{assertPetLimit(ownerPetGroups(this.localPosition.space?this.view!.ownHouse:next,space=>sameSpace(space,this.localPosition.space)?{furniture:next.furniture}:new PetWorkspaces(next.ownerId).get(next.ownerId,space)));}catch(e){this.notify(errorMessage(e));return false;}
+    const furniture = next.furniture.map(f => {const id=f.id==='placing-preview'?crypto.randomUUID():f.id;return {...f,id,...(petSpecies(f.kind)&&!f.pet?{pet:newPetConfig(id)}:{})};});
     this.selectedFurnitureId = furniture.find(f => f.id === changedId)?.id || furniture.at(-1)?.id || null;
     this.actions.updateOwnHouse({ ...next, furniture, revision: house.revision + 1 }); this.lastStageRenderSig = ''; return true;
   }
@@ -2354,6 +2368,7 @@ class StudyUI {
   }
 
   private leaveCurrentHouse(): void {
+    this.wardrobe.close(true);
     this.endDecoration();
     this.spaces.root.close();this.roomWorkspace.root.close();
     const view = this.view;
@@ -2391,6 +2406,7 @@ class StudyUI {
   }
   private ownDecoratedHouse():PublicHouse { return this.houseOwnerId===this.view?.identity.fingerprint?this.currentHouse()??this.view!.ownHouse:this.view!.ownHouse; }
   private enterSpace(space:HouseSpace|null):void {
+    this.wardrobe.close(true);
     if(this.view?.network.pendingAccess)return;
     const owner=this.houseOwnerId;if(!owner)return;this.endDecoration();this.stopMoving();this.actions.workspaceCommand({action:'enter',owner,space});
   }
@@ -2434,12 +2450,31 @@ class StudyUI {
     if(this.view?.network.boardRef===this.wireBoardId())for(const stroke of this.view.network.strokes){const old=byId.get(stroke.id);if(!old||stroke.seq>=old.seq)byId.set(stroke.id,{...stroke,boardId});}
     return [...byId.values()];
   }
+  private boardCommits=new Map<string,Promise<void>>();
   private async commitBoardChanges(changes: BoardStroke[]): Promise<void> {
-    const boardId=this.boardId();const original=structuredClone(this.expansion.boardRegistry.getStrokes(boardId));
+    // Capture scope before any await: a completed gesture belongs to its original board.
+    const boardId=this.boardId(),ref=this.wireBoardId(),online=this.view?.network.phase==='JOINED';
+    const original=new Map(this.expansion.boardRegistry.getStrokes(boardId).map(s=>[s.id,structuredClone(s)]));
     this.expansion.boardRegistry.commitStrokes(boardId,changes);
-    try { if(this.view?.network.phase==='JOINED') { const ref=this.wireBoardId();if(!await this.actions.commitBoard(ref,changes.map(s=>({...s,boardId:ref}))))throw new Error(t('No se pudo guardar la selección.')); } }
-    catch(error){this.expansion.boardRegistry.replaceStrokes(boardId,original);throw error;}
-    this.lastBoardRenderSig='';this.boardExtraFrames=3;this.refreshBoardControls();
+    this.lastBoardRenderSig='';this.boardExtraFrames=3;
+    const previous=this.boardCommits.get(ref)??Promise.resolve();
+    const job=previous.catch(()=>{}).then(async()=>{
+      if(online&&!await this.actions.commitBoard(ref,changes.map(s=>({...s,boardId:ref}))))throw new Error(t('No se pudo guardar la selección.'));
+    });
+    this.boardCommits.set(ref,job);
+    try { await job; }
+    catch(error){
+      const rejected=new Map(changes.map(s=>[s.id,s]));
+      // Roll back only this operation, never a newer stroke or remote revision.
+      const restored=this.expansion.boardRegistry.getStrokes(boardId).flatMap(s=>{
+        const failed=rejected.get(s.id);if(!failed||s.seq!==failed.seq)return [s];
+        const old=original.get(s.id);return old?[old]:[];
+      });
+      this.expansion.boardRegistry.replaceStrokes(boardId,restored);throw error;
+    } finally {
+      if(this.boardCommits.get(ref)===job)this.boardCommits.delete(ref);
+      this.lastBoardRenderSig='';this.boardExtraFrames=3;this.refreshBoardControls();
+    }
   }
 
   private canDrawBoard(): boolean {
@@ -2600,19 +2635,21 @@ class StudyUI {
     });
   }
 
+  private petScene():string{return this.houseOwnerId?`house:${this.houseOwnerId}:${this.localPosition.space?`${this.localPosition.space.floorId}:${this.localPosition.space.roomId??'-'}`:'lobby'}`:`area:${this.currentArea}`;}
   private interactWithFurniture(item: Furniture): void {
     const view = this.view;
     if (!view || !isInteractiveFurniture(item.kind)) return;
-    this.selectedFurnitureId = item.id;
+    this.wardrobe.close(true);this.selectedFurnitureId = item.id;
     this.refreshHouseEditor();
     // Room furniture works like the lobby's; activityScope() gives it that room's own projects, flashcards, quizzes and notes.
+    if(petSpecies(item.kind)){this.closePhone();this.pets.open(item.pet?.id??item.id);return;}
     switch (item.kind) {
       case 'mailbox': this.openMailbox(this.houseOwnerId||view.identity.fingerprint,this.currentHouse()?.name||'');break;
       case 'vanity': this.stopMoving();this.closePhone();this.vanity.open(view.identity);break;
       case 'jukebox': this.stopMoving();this.jukebox.open();break;
       case 'clock': this.stopMoving();this.focusClock.open();break;
       case 'inkdesk': this.stopMoving(); void this.notebooks.open(); break;
-      case 'guide': this.closePhone();this.stopMoving();this.speech.say(item.guideText?.trim()||t('Guía: usa el teléfono para estudiar, visitar amigos y decorar. Mueve o retira esta guía desde Decorar.'),item.x+24,item.y,this.speechScene());break;
+      case 'guide': this.closePhone();this.stopMoving();this.speech.say(item.guideText?.trim()||msg('Guía: usa el teléfono para estudiar, visitar amigos y decorar. Mueve o retira esta guía desde Decorar.'),item.x+24,item.y,this.speechScene());break;
       case 'sketchboard':
       case 'board': {
         if(this.houseOwnerId===view.identity.fingerprint)this.syncFurnitureName(item);
@@ -2875,6 +2912,7 @@ class StudyUI {
     if (this.decorating) return;
     try { navigator.vibrate?.(15); } catch {}
     if (this.pane === 'world') {
+      if(this.currentArea==='residential'&&this.view){const used=new Set(occupiedParcels(this.view).map(p=>p.parcel.slot));if(PARCELS.some(p=>!used.has(p.slot)&&Math.hypot(this.localPosition.x-p.doorX,this.localPosition.y-p.doorY)<60)){this.explainPlot();return;}}
       const portal = closestPortal(this.currentArea, this.localPosition);
       if (portal && closestPortal(this.currentArea, this.localPosition)?.id === portal.id) {
         this.changeWorldArea(portal.toArea, portal.spawnAtTarget);
@@ -3109,9 +3147,15 @@ class StudyUI {
   }
 
   /** What a click on the stage would use, and where to stand to use it. */
+  private explainPlot():void{
+    this.stopMoving();const dialog=node('dialog','sv-pet-panel');setDisplayAttribute(dialog,'aria-label',msg('Cómo obtener una parcela'));
+    dialog.append(node('h2','',msg('Cómo obtener una parcela')),node('p','',msg('La parcela es gratuita. En un servidor se asigna al entrar como residente con una identidad guardada. Las identidades temporales son visitantes. En una aldea temporal tu casa recibe una parcela durante la sesión.')));
+    const settings=button(msg('Ajustes'),'sv-button');settings.onclick=()=>{dialog.close();this.settingsDialog.showModal();};const close=button(msg('Cerrar'),'sv-button');close.onclick=()=>dialog.close();dialog.append(settings,close);dialog.onclose=()=>dialog.remove();this.shell.append(dialog);dialog.showModal();
+  }
   private interactionAt(point: BoardPoint): Interaction | null {
     const view = this.view!;
     if (this.pane === 'world') {
+      if(this.currentArea==='residential'){const used=new Set(occupiedParcels(view).map(p=>p.parcel.slot));const empty=PARCELS.find(p=>!used.has(p.slot)&&pointInRect(point.x,point.y,p));if(empty)return{x:empty.doorX,y:empty.doorY,near:()=>Math.hypot(this.localPosition.x-empty.doorX,this.localPosition.y-empty.doorY)<72,run:()=>this.explainPlot()};}
       const portal = WORLD_AREAS[this.currentArea].portals.find((p) => pointInRect(point.x, point.y, p.rect));
       if (portal) {
         return {
@@ -3186,6 +3230,7 @@ class StudyUI {
     if (!view || this.settingsDialog.open || this.activityOpen || (this.wardrobe.isOpen()||this.vanity.root.open)) return;
     if (!this.phone.hidden) { this.closePhone(); return; }
     const point = this.canvasPoint(event, this.stageCanvas);
+    if(!this.decorating&&!this.garden.active&&this.pets.hit(point)){event.preventDefault();return;}
     if(this.garden.active){this.garden.pointerDown(point);this.stageCanvas.setPointerCapture(event.pointerId);event.preventDefault();return;}
     if(this.decorating&&this.doorSaving)return;
     if(this.decorating&&!this.pendingFurniture&&this.pane==='house'&&this.houseOwnerId===view.identity.fingerprint){
@@ -3398,7 +3443,7 @@ class StudyUI {
       this.lastBoardRenderSig='';return;
     }
     if(this.richBoardDraft&&this.view){const draft=this.richBoardDraft;this.richBoardDraft=null;this.saveStroke({points:[draft.start,draft.current],tool:draft.kind,color:this.boardColor.value,width:Number(this.boardWidth.value)});this.boardExtraFrames=3;this.refreshBoardControls();return;}
-    const draft=this.boardDraft;this.boardDraft=null;if(draft)this.saveStroke(draft);
+    const draft=this.boardDraft;if(draft)this.saveStroke(draft);this.boardDraft=null;
   };
 
   private onBoardWheel = (event: WheelEvent): void => {
@@ -3439,7 +3484,7 @@ class StudyUI {
 
   private onKeyDown = (event: KeyboardEvent): void => {
     // A locked identity prevents connecting, but local controls work after choosing offline mode.
-    if (!this.view || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
+    if (!this.view || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
     const key = event.key.toLowerCase();
     if(this.furnitureNameDialog.open)return;
     if(key==='escape'&&this.pane==='diagnostics'){this.leaveDiagnostics();event.preventDefault();return;}
@@ -3511,7 +3556,7 @@ class StudyUI {
     }
     const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.05) : 0;
     this.lastFrame = now;
-    advanceAnim(dt);
+    advanceAnim(dt);this.pets.tick(dt,now);
     const view = this.view;
     if (view && (this.pane === 'world' || this.pane === 'house')) {
       let vx = Number(this.keys.has('d') || this.keys.has('arrowright') || this.dpadKeys.has('arrowright'))
@@ -3519,7 +3564,7 @@ class StudyUI {
       let vy = Number(this.keys.has('s') || this.keys.has('arrowdown') || this.dpadKeys.has('arrowdown'))
         - Number(this.keys.has('w') || this.keys.has('arrowup') || this.dpadKeys.has('arrowup'));
 
-      if (this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.phone.hidden === false || this.settingsDialog.open || this.activityOpen || this.decorating || this.garden.active || (this.wardrobe.isOpen()||this.vanity.root.open) || this.spaces.root.open || this.roomWorkspace.root.open || this.mobileHud?.root.open) {
+      if (this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.phone.hidden === false || this.settingsDialog.open || this.activityOpen || this.decorating || this.garden.active || (this.wardrobe.isOpen()||this.vanity.root.open) || this.spaces.root.open || this.roomWorkspace.root.open || this.mobileHud?.root.open) {
         vx = 0; vy = 0;
       }
       if (!this.moveTarget) this.movePath = [];
@@ -3581,7 +3626,7 @@ class StudyUI {
       const calm = reducedMotion();
       this.expansion.environment.tick(dt);
       const envState = this.expansion.environment.getState();
-      const anyMoving = this.speech.isOpen || this.garden.active || people.some((p) => p.position.moving) || !!this.moveTarget || !!view.network.gameCamera.local || view.network.gameCamera.remote.length>0
+      const anyMoving = this.pets.active || this.speech.isOpen || this.garden.active || people.some((p) => p.position.moving) || !!this.moveTarget || !!view.network.gameCamera.local || view.network.gameCamera.remote.length>0
         || envState.cycleMode === 'auto' || envState.weather !== 'clear';
       const stageSig = calm && !anyMoving
         ? JSON.stringify([getLanguage(), this.pane, this.currentArea, envState.timeOfDay, envState.weather, this.selectedFurnitureId, activeHouse, inlineSpriteGeneration(), occupied.map((o) => [o.ownerId, o.house.revision]), people, getAvatarCustomization()])
@@ -3658,7 +3703,7 @@ class StudyUI {
               if (candidate) { const r = furnitureRect(candidate); ctx.save(); ctx.fillStyle = this.decorationInvalid ? '#d8444450' : '#59b87140'; ctx.fillRect(r.x, r.y, r.w, r.h); ctx.strokeStyle = this.decorationInvalid ? '#b52828' : '#387e45'; ctx.strokeRect(r.x, r.y, r.w, r.h); ctx.restore(); }
             }
           }
-          this.headCameras.draw(ctx,people);
+          this.pets.draw(ctx,now,this.stageCanvas);this.headCameras.draw(ctx,people);
           this.speech.draw(ctx,this.speechScene(),()=>{const r=this.stageCanvas.getBoundingClientRect(),w=this.stageWrap.getBoundingClientRect();return{left:Math.max(0,(w.left-r.left)*768/r.width),right:Math.min(768,(w.right-r.left)*768/r.width),top:Math.max(0,(w.top-r.top)*432/r.height),screenLeft:Math.max(0,w.left),screenTop:Math.max(0,w.top),screenRight:Math.min(innerWidth,w.right),screenBottom:Math.min(innerHeight,w.bottom),canvasLeft:r.left,canvasTop:r.top,scale:r.width/768};});
           if (this.moveTarget) {
             ctx.save();

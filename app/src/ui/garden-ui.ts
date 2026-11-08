@@ -1,3 +1,4 @@
+import {petSpecies,newPetConfig,petCount,PET_LIMIT_MESSAGE} from '../../../packages/core/src/pets/model';
 import {gardenItemSchema,gardenSchema,type GardenItem} from '../../../packages/core/src/protocol/garden';
 import {gardenBounds,gardenDoorway,gardenHouseFootprint,gardenItemRect,gardenOrigin,gardenPlacementIssue,resolveGardenItem,type GardenPlacementIssue} from '../../../packages/core/src/world/garden';
 import type {AppView,PublicHouse} from '../../../packages/core/src/protocol/types';
@@ -20,7 +21,7 @@ export class GardenPanel {
  private catalogueDrag:CatalogueDrag|null=null;private suppressClick=false;private ghost:GardenItem|null=null;
  private floating=document.createElement('img');private saving=false;private feedback=document.createElement('p');private catalogue=document.createElement('div');private count=document.createElement('span');private undo:GardenItem[][]=[];
  private undoButton:HTMLButtonElement;private removeButton:HTMLButtonElement;private doneButton:HTMLButtonElement;
- constructor(private readonly view:()=>AppView|null,private readonly save:(house:PublicHouse)=>Promise<void>,_stage:()=>HTMLCanvasElement){
+ constructor(private readonly view:()=>AppView|null,private readonly save:(house:PublicHouse)=>Promise<void>,_stage:()=>HTMLCanvasElement,private petTotal:()=>number=()=>0){
   this.viewport.className='sv-garden-preview';this.viewport.hidden=true;setDisplayAttribute(this.canvas,'aria-label',msg('Jardín'));this.viewport.append(this.canvas);document.body.append(this.viewport);
   this.canvas.onpointerdown=e=>{if(e.button!==0)return;if(this.pan){this.panStart={x:e.clientX,y:e.clientY,left:this.viewport.scrollLeft,top:this.viewport.scrollTop};this.canvas.setPointerCapture(e.pointerId);return;}this.pointerDown(this.point(e));this.canvas.setPointerCapture(e.pointerId);};this.canvas.onpointermove=e=>{if(this.panStart){this.viewport.scrollLeft=this.panStart.left+this.panStart.x-e.clientX;this.viewport.scrollTop=this.panStart.top+this.panStart.y-e.clientY;}else this.pointerMove(this.point(e));};this.canvas.onpointerup=e=>{this.panStart=null;this.pointerUp();if(this.canvas.hasPointerCapture(e.pointerId))this.canvas.releasePointerCapture(e.pointerId);};this.canvas.onpointercancel=()=>this.pointerUp(true);
   this.root.className='sv-garden-tray';this.root.hidden=true;setDisplayAttribute(this.root,'aria-label',msg('Decoración exterior'));
@@ -46,13 +47,14 @@ export class GardenPanel {
  close(){if(this.saving)return;this.cancelGestures();this.active=false;cancelAnimationFrame(this.frame);this.viewport.hidden=true;this.root.hidden=true;document.documentElement.classList.remove('sv-decorating');}
  preview(parcels:OccupiedParcel[]):OccupiedParcel[]{return this.active?parcels.map(parcel=>parcel.isOwn?{...parcel,house:{...parcel.house,garden:this.items.map(({plot,...item})=>item)}}:parcel):parcels;}
  private remember(){this.undo.push(structuredClone(this.items));if(this.undo.length>30)this.undo.shift();}
- private selectButtons(){for(const b of this.catalogue.querySelectorAll('button')){b.setAttribute('aria-pressed',String(b.dataset.kind===this.pending));b.disabled=this.saving;}this.undoButton.disabled=this.saving||!this.undo.length;this.removeButton.disabled=this.saving||!this.selected;this.doneButton.disabled=this.saving;setDisplayText(this.count,msg('{count}/16 objetos',{count:this.items.length}));}
+ private selectButtons(){for(const b of this.catalogue.querySelectorAll('button')){b.setAttribute('aria-pressed',String(b.dataset.kind===this.pending));b.disabled=this.saving;}this.undoButton.disabled=this.saving||!this.undo.length;this.removeButton.disabled=this.saving||!this.selected;this.doneButton.disabled=this.saving;setDisplayText(this.count,msg('Jardín: {items}/16 · Casas de mascotas: {pets}/5',{items:this.items.length,pets:this.petTotal()-petCount(this.view()?.ownHouse.garden??[])+petCount(this.items)}));}
  private candidate(kind:GardenItem['kind'],point:Point,id='garden-preview'):GardenItem|null{const parcel=this.parcel();if(!parcel)return null;const origin=gardenOrigin(parcel);return{id,kind,plot:parcel.slot,x:Math.round((point.x-origin.x)/4)*4,y:Math.round((point.y-origin.y)/4)*4};}
  private placement(item:GardenItem){const parcel=this.parcel();return parcel?gardenPlacementIssue(parcel,item):'bounds' as const;}
  private explain(issue:GardenPlacementIssue|null){setDisplayText(this.feedback,msg(issue==='house'?'Deja libre la casa, el tejado y sus bordes.':issue==='door'?'Deja libre el camino de la puerta.':issue==='bounds'?'Coloca el objeto dentro del jardín marcado.':'Suelta para colocar.'));}
  private add(item:GardenItem):boolean{
+  if(petSpecies(item.kind)&&this.petTotal()-petCount(this.view()?.ownHouse.garden??[])+petCount(this.items)>=5){setDisplayText(this.feedback,msg(PET_LIMIT_MESSAGE));return false;}
   const issue=this.placement(item);if(issue){this.explain(issue);return false;}if(this.items.length>=16){setDisplayText(this.feedback,msg('Tu jardín ya tiene 16 objetos. Retira uno para añadir otro.'));return false;}
-  this.remember();const saved={...item,id:crypto.randomUUID()};this.items.push(saved);this.selected=saved.id;this.pending=null;this.ghost=null;this.feedback.textContent='';this.selectButtons();return true;
+  this.remember();const id=crypto.randomUUID(),saved={...item,id,...(petSpecies(item.kind)?{pet:newPetConfig(id)}:{})};this.items.push(saved);this.selected=saved.id;this.pending=null;this.ghost=null;this.feedback.textContent='';this.selectButtons();return true;
  }
  pointerDown(point:Point){
   if(!this.active||this.saving||this.catalogueDrag)return;const parcel=this.parcel();if(!parcel)return;

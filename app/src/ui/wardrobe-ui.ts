@@ -19,7 +19,7 @@ export class WardrobePanel {
   private category:Category='headwear';
   private direction=0;
   private openColors=new Set<string>();
-  private busy=false;
+  private busy=false;private ownsInput=false;
   private pendingSheet:HTMLImageElement|null=null;
   private importGeneration=0;
   private importing=false;
@@ -57,12 +57,13 @@ export class WardrobePanel {
     };
     foot.append(button(msg('Importar sprite 192 × 256'),()=>sheetInput.click()),button(msg('Exportar sprite'),()=>{const custom=this.draft.useCustomSheet?(this.pendingSheet??getAvatarSheet()):null;const canvas=avatarSpriteSheet(this.identity,this.draft);if(custom){const output=document.createElement('canvas');output.width=192;output.height=256;output.getContext('2d')!.drawImage(custom,0,0);output.toBlob(b=>{if(b)downloadLocal('avatar-192x256.png',b);});}else canvas.toBlob(b=>{if(b)downloadLocal('avatar-192x256.png',b);});}),sheetInput,this.error,this.discard,this.save);this.root.append(head,body,foot);
     this.root.addEventListener('cancel',event=>{event.preventDefault();this.close();});
-    this.root.addEventListener('close',()=>this.ctx.closed());
+    this.root.addEventListener('close',()=>this.finishInteraction());
   }
-  open(identity:PublicIdentity):void{this.importGeneration++;this.importing=false;this.save.disabled=false;this.identity=identity;this.pendingSheet=null;this.draft=getAvatarCustomization();this.direction=0;this.category='headwear';this.openColors.clear();this.error.hidden=true;this.render();if(!this.root.open)this.root.showModal();}
+  open(identity:PublicIdentity):void{if(this.busy||this.root.open)return;this.ownsInput=true;this.importGeneration++;this.importing=false;this.save.disabled=false;this.identity=identity;this.pendingSheet=null;this.draft=getAvatarCustomization();this.direction=0;this.category='headwear';this.openColors.clear();this.error.hidden=true;this.render();if(!this.root.open)this.root.showModal();}
   isOpen():boolean{return this.root.open;}
-  close():void{if(!this.busy){this.importGeneration++;this.importing=false;this.save.disabled=false;this.root.close();}}
-  dispose():void{this.importGeneration++;this.root.close();this.root.remove();}
+  close(force=false):void{if(force||!this.busy){this.importGeneration++;this.importing=false;this.save.disabled=this.busy;this.pendingSheet=null;if(this.root.open)this.root.close();this.finishInteraction();}}
+  private finishInteraction(){if(!this.ownsInput)return;this.ownsInput=false;this.ctx.closed();}
+  dispose():void{this.importGeneration++;this.close(true);this.root.remove();}
   private rotate(delta:number):void{this.direction=(this.direction+delta+4)%4;this.paint();}
   private change(patch:Partial<AvatarAppearance>):void{if(this.busy)return;this.draft=normalizeAppearance({...this.draft,...patch,useCustomSheet:patch.useCustomSheet??false});this.render();}
   private draw(canvas:HTMLCanvasElement,look:AvatarAppearance,large=false):void{
@@ -105,9 +106,9 @@ export class WardrobePanel {
   }
   private async commit():Promise<void>{
     if(this.busy||this.importing)return;this.busy=true;this.save.disabled=true;this.discard.disabled=true;setDisplayText(this.save, msg('Guardando…'));this.error.hidden=true;
-    const previous=avatarSheetData();
-    try{if(this.pendingSheet&&this.draft.useCustomSheet)await setAvatarSheet(this.pendingSheet.src);await this.ctx.save(normalizeAppearance(this.draft));this.pendingSheet=null;this.root.close();}
-    catch(e){if(this.pendingSheet)await setAvatarSheet(previous).catch(()=>{});this.error.textContent=errorMessage(e, 'No se pudo guardar el look. Vuelve a intentarlo.');this.error.hidden=false;}
+    const previous=avatarSheetData(),sheet=this.pendingSheet,look=normalizeAppearance(this.draft);
+    try{if(sheet&&look.useCustomSheet)await setAvatarSheet(sheet.src);await this.ctx.save(look);this.pendingSheet=null;this.close(true);}
+    catch(e){if(sheet)await setAvatarSheet(previous).catch(()=>{});this.error.textContent=errorMessage(e, 'No se pudo guardar el look. Vuelve a intentarlo.');this.error.hidden=false;}
     finally{this.busy=false;this.save.disabled=false;this.discard.disabled=false;setDisplayText(this.save, msg('Guardar look'));}
   }
 }

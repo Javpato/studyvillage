@@ -1,3 +1,5 @@
+import {PetMatch,PetReservations,type PetBot} from '../pets/protocol';
+import {werewolfDecision} from '../pets/werewolves-policy';
 import { pick, secureRandomInt, shuffle, type RoomEngine } from './room';
 
 /**
@@ -139,7 +141,7 @@ class PactState {
 }
 
 export interface WerewolfPlayer {
-  id: string; name: string; color: string; bot: boolean;
+  id: string; name: string; color: string; bot: boolean;pet?:PetBot;
   alive: boolean; role: WerewolfRole | null; ready: boolean;
 }
 
@@ -149,7 +151,7 @@ export interface LogEntry { icon: 'moon' | 'sun' | 'skull' | 'vote' | 'trophy' |
 export type WerewolvesAction =
   | { kind: 'join'; name: string; color: string }
   | { kind: 'leave' }
-  | { kind: 'add_bot' }
+  | { kind: 'add_bot';pet?:PetBot }
   | { kind: 'remove_bot'; id: string }
   | { kind: 'configure'; counts: RoleCounts }
   | { kind: 'mayor_setting'; enabled: boolean }
@@ -199,7 +201,7 @@ export interface WerewolvesView {
   leaderId: string | null;
   me: { id: string; seated: boolean; alive: boolean; role: WerewolfRole | null; acted: boolean; isLeader: boolean };
   players: {
-    id: string; name: string; color: string; bot: boolean; alive: boolean;
+    id: string; name: string; color: string; bot: boolean;pet?:PetBot; alive: boolean;
     /** Only what the viewer is entitled to know. */
     role: WerewolfRole | null;
     ready: boolean;
@@ -262,9 +264,12 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
   private resumeAfterDeath: 'dawn' | 'verdict' | 'interrupted' = 'dawn';
   private interrupted: { phase: WerewolvesPhase; step: NightStep | null; remaining: number } | null = null;
 
+  private petMatch=new PetMatch();
+  setPetReservations(registry:PetReservations){this.petMatch.connect(registry);}
   constructor(private readonly random: (max: number) => number = secureRandomInt, private readonly authorityId: string | null = null) {}
 
   cancel(): void {
+    this.petMatch.clear();this.players=this.players.filter(p=>!p.pet);
     this.phase = 'lobby';this.pact=new PactState();
     this.step = null; this.round = 0; this.deadline = 0; this.deck = []; this.log = [{ icon: 'info', text: 'El anfitrión terminó la partida.' }];
     this.night = emptyNight(); this.votes.clear(); this.seerSeen.clear(); this.winner = null;
@@ -290,6 +295,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
       }
       case 'leave': {
         if (!actor) return;
+        for(const pet of this.players.filter(p=>p.pet?.owner===actorId)){this.petMatch.remove(pet.pet!.id);if(pet.alive)this.kill(pet.id,'leave');}this.players=this.players.filter(p=>p.pet?.owner!==actorId);
         if (this.phase === 'lobby' || this.phase === 'end') {
           this.players = this.players.filter((p) => p.id !== actorId);
         } else if (actor.alive) {
@@ -308,10 +314,11 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
         this.requireLeader(actorId);
         if (this.phase !== 'lobby') throw new Error('Solo se añaden bots antes de empezar.');
         if (this.players.length >= MAX_PLAYERS) throw new Error('La mesa está completa.');
+        const pet=action.pet?this.petMatch.add(action.pet,actorId):undefined;
         const used = new Set(this.players.map((p) => p.name));
         const name = pick(BOT_NAMES.filter((n) => !used.has(n)), this.random) ?? `Bot ${this.players.length + 1}`;
         this.players.push({
-          id: `bot:${this.random(1_000_000_000)}`, name, color: pick(BOT_COLORS, this.random)!,
+          id: pet?`pet:${pet.owner}:${pet.id}`:`bot:${this.random(1_000_000_000)}`, name:pet?.name??name,...(pet?{pet}:{}), color: pick(BOT_COLORS, this.random)!,
           bot: true, alive: true, role: null, ready: true,
         });
         return;
@@ -319,6 +326,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
       case 'remove_bot': {
         this.requireLeader(actorId);
         if (this.phase !== 'lobby') return;
+        const removed=this.players.find(p=>p.id===action.id);if(removed?.pet)this.petMatch.remove(removed.pet.id);
         this.players = this.players.filter((p) => !(p.bot && p.id === action.id));
         return;
       }
@@ -411,7 +419,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
           this.players.forEach((p,i)=>{if(i<kinds.length){this.pact.building.set(p.id,kinds[i]);if(kinds[i]==='tavern')this.pact.tavernImmune.add(p.id);}});
         }
         if(cards.includes('gypsy'))this.settings.events=true;if(this.settings.events)this.mayorEnabled=true;this.pact.angelOpening=cards.includes('angel');
-        this.players.forEach((p, i) => { p.role = cards[i]; p.alive = true; p.ready = p.bot; });
+        this.petMatch.start();this.players.forEach((p, i) => { p.role = cards[i]; p.alive = true; p.ready = p.bot; });
         this.round = 0;this.mayorId=null;this.mayorElection=false;
         this.lovers = null; this.peeks.clear(); this.exposedGirls.clear(); this.hunters = []; this.spentHunters.clear(); this.interrupted = null;
         this.healLeft = true;
@@ -466,13 +474,14 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
   tick(now: number): boolean {
     if (this.phase === 'lobby' || this.phase === 'end') return false;
     let changed = false;
+    if(now>=this.botAt&&['execution','succession','scapegoat','reveal','hunter'].includes(this.phase))changed=this.botsAct(now);
     if(this.phase==='execution'){if(now>=this.deadline){this.executeVerdict(now);return true;}return false;}
     if(this.phase==='succession'){if(now>=this.deadline){this.mayorId=pick(this.mayorCandidates(),this.random)?.id??null;this.pact.mayorDeath=null;this.finishDeaths(now,this.resumeAfterDeath);return true;}return false;}
     if(this.phase==='scapegoat'){if(now>=this.deadline){this.pact.scapegoat=null;this.finishDeaths(now,this.resumeAfterDeath);return true;}return false;}
     if (this.phase === 'hunter') {
       const hunter = this.players.find(p => p.id === this.hunters[0]);
       if (now >= this.deadline || (hunter?.bot && now >= this.botAt)) {
-        this.apply(hunter!.id, { kind: 'hunter', target: hunter?.bot ? pick(this.alive(), this.random)?.id ?? null : null }, now); return true;
+        this.apply(hunter!.id, { kind: 'hunter', target: null }, now); return true;
       }
       return false;
     }
@@ -530,7 +539,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
         isLeader: this.isController(viewerId),
       },
       players: this.players.map((p) => ({
-        id: p.id, name: p.name, color: p.color, bot: p.bot, alive: p.alive, role: knows(p), ready: p.ready,
+        id: p.id, name: p.name, color: p.color, bot: p.bot,...(p.pet?{pet:p.pet}:{}), alive: p.alive, role: knows(p), ready: p.ready,
         votesFor: showVotes ? this.votes.get(p.id) ?? null : null,
         wolfTarget: wolfTurn ? this.night.wolfVotes.get(p.id) ?? null : null,
       })),
@@ -746,7 +755,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
     else if(!wolves.length&&!solo.length)this.winner='aldea';
     else if(!solo.length&&wolves.length>=alive.length-wolves.length)this.winner='lobos';
     else return false;
-    this.phase='end';this.step=null;
+    this.phase='end';this.petMatch.release();this.step=null;
     const texts:Record<NonNullable<WerewolvesView['winner']>,string>={aldea:'¡Gana la aldea! No queda ningún hombre lobo.',lobos:'¡Ganan los hombres lobo! Ya son tantos como los aldeanos.',lovers:'¡Ganan los enamorados!',whitewolf:'¡Gana el lobo blanco!',piper:'¡Gana el flautista!',cultist:'¡Gana el sectario!',angel:'¡Gana el ángel!',nobody:'No quedan supervivientes.'};
     this.say('trophy',texts[this.winner!]);return true;
   }
@@ -763,51 +772,17 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
     }
   }
 
-  private botsAct(now: number): boolean {
-    const step = this.step!;
-    let changed = false;
-    if (step === 'wolves') for (const girl of this.alive().filter(p => p.bot && this.powerRole(p) === 'girl' && !this.night.acted.has(p.id))) { this.apply(girl.id, { kind: 'peek', spy: this.random(2) === 0 }, now); changed = true; }
-    const bots = this.alive().filter((p) => p.bot && this.actsInStep(p,step) && !this.night.acted.has(p.id));
-    if (!bots.length) return changed;
-    for (const bot of bots) {
-      if (this.phase !== 'night' || this.step !== step) break;
-      const turn = this.turnFor(bot, step);
-      if (step === 'cupid') { const targets = shuffle(turn.targets, this.random).slice(0, 2) as [string, string]; this.nightAction(bot, { kind: 'cupid', targets }, now); continue; }
-      if (step === 'witch') {
-        const heal = turn.canHeal && this.random(2) === 0;
-        const poison = turn.canPoison && this.random(5) === 0 ? pick(turn.targets, this.random) ?? null : null;
-        this.nightAction(bot, { kind: 'witch', heal, poison }, now);
-        continue;
+  private botsAct(now:number):boolean{
+    let changed=false;
+    for(const bot of this.players.filter(p=>p.bot)){
+      for(let attempt=0;attempt<2;attempt++){
+        const action=werewolfDecision(this.viewFor(bot.id,now),attempt===0?this.random:()=>0);if(!action)break;
+        try{this.apply(bot.id,action,now);changed=true;break;}catch{/* Retry once; the authoritative phase deadline is the final fallback. */}
       }
-      if(!['wolves','seer','guard'].includes(step)){
-        const targets=shuffle(turn.targets,this.random).slice(0,turn.chooseCount??1);
-        const choice=pick(turn.choices??[],this.random);
-        this.nightAction(bot,{kind:'power',targets,choice,...(!targets.length&&!choice?{use:false}:{})},now);continue;
-      }
-      // A bot wolf follows a packmate's choice half the time, like a real pack.
-      const packChoice = step === 'wolves' ? pick([...this.night.wolfVotes.values()], this.random) : undefined;
-      const target = packChoice && this.random(2) === 0 ? packChoice : pick(turn.targets, this.random);
-      if (!target) { this.night.acted.add(bot.id); continue; }
-      const kind = step === 'wolves' ? 'wolf_vote' : step === 'seer' ? 'seer_look' : 'guard';
-      this.nightAction(bot, { kind, target }, now);
     }
-    if (this.phase === 'night' && this.step === step && this.stepDone()) this.endStep(now);
-    return true;
+    this.botAt=now+1000+this.random(1000);return changed;
   }
-
-  private botsVote(now: number): boolean {
-    const bots = this.alive().filter((p) => p.bot && this.canVote(p)&&!this.votes.has(p.id));
-    if (!bots.length) return false;
-    // One bot at a time, so votes trickle in instead of landing together.
-    const bot = pick(bots, this.random)!;
-    const others = this.alive().filter((p) => p.id !== bot.id && !(this.isWolf(bot)&&this.isWolf(p))&&!this.pact.tavernImmune.has(p.id)&&!this.isLoverPair(bot.id,p.id));
-    const leaning = [...this.votes.values()].filter((t) => others.some((p) => p.id === t));
-    const target = leaning.length && this.random(3) === 0 ? pick(leaning, this.random)! : pick(others, this.random)?.id ?? 'skip';
-    this.votes.set(bot.id, target);
-    this.botAt = now + 1_500 + this.random(4_000);
-    if (this.alive().filter(p=>this.canVote(p)).every((p) => this.votes.has(p.id))) this.closeVote(now);
-    return true;
-  }
+  private botsVote(now:number):boolean{return this.botsAct(now);}
 
   /** The authority enforces these independently of the visible camera curtain. */
   canBroadcastCamera(id:string):boolean {const p=this.players.find(p=>p.id===id);return !p||p.alive||this.phase==='lobby'||this.phase==='end';}
@@ -960,6 +935,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
   private say(icon: LogEntry['icon'], text: string, params?: LogEntry['params']): void { this.log.push(params ? { icon, text, params } : { icon, text }); if (this.log.length > 60) this.log.shift(); }
 
   private reset(): void {
+    this.petMatch.clear();
     this.players = [];
     this.phase = 'lobby';
     this.step = null;

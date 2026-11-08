@@ -45,7 +45,7 @@ async function dialogueSettings(page: Page) {
 for (const profile of [{ name: 'desktop', width: 1440, height: 1000, touch: false }, { name: 'phone', width: 320, height: 568, touch: true }]) {
   test.describe(`guide dialogue on ${profile.name}`, () => {
     test.use({ viewport: { width: profile.width, height: profile.height }, hasTouch: profile.touch, isMobile: profile.touch });
-    test('stays compact, reveals and pages, dismisses outside and keeps controls available', async ({ page }) => {
+    test('uses larger scrollable dialogue, dismisses outside and persists size preferences', async ({ page }) => {
       test.setTimeout(75_000);
       await observeAvatar(page);
       await page.goto('/');
@@ -70,35 +70,19 @@ for (const profile of [{ name: 'desktop', width: 1440, height: 1000, touch: fals
       await expect(next).toHaveText('Mostrar texto');
       const firstPage = await speech.locator('.sv-npc-page').textContent();
       await next.click();
-      await expect(next).toHaveText('Siguiente');
-      expect(await speech.locator('.sv-npc-page').textContent()).toBe(firstPage);
-      const bounds = (await speech.boundingBox())!;
-      expect(bounds.width).toBeLessThanOrEqual(240);
-      expect(bounds.height).toBeLessThanOrEqual(shortHeight + 2);
-      expect(bounds.x).toBeGreaterThanOrEqual(0);
-      expect(bounds.y).toBeGreaterThanOrEqual(0);
-      expect(bounds.x + bounds.width).toBeLessThanOrEqual(profile.width);
-      expect(bounds.y + bounds.height).toBeLessThanOrEqual(profile.height);
-      await page.screenshot({ path:test.info().outputPath(`npc-speech${profile.touch ? '-phone' : ''}.png`), animations: 'disabled' });
-      const parts: string[] = [];
-      for (let count = 0; count < 20 && await speech.isVisible(); count++) {
-        await expect(next).toHaveText(/^(Siguiente|Listo)$/);
-        const text = await speech.locator('.sv-npc-bubble-text').textContent();
-        parts.push(text!);
-        expect(text!.split('\n').length).toBeLessThanOrEqual(2);
-        expect((await speech.boundingBox())!.height).toBeLessThanOrEqual(shortHeight + 2);
-        await next.click();
-      }
-      await expect(speech).toBeHidden();
-      expect(parts.length).toBeGreaterThan(2);
-      expect(parts.join(' ').replace(/\s+/g, ' ').trim()).toBe(longDialogue);
-
+      await expect(next).toHaveText('Listo');
+      await expect(speech.locator('.sv-npc-bubble-text')).toHaveText(longDialogue);
+      const bounds=(await speech.boundingBox())!;
+      expect(bounds.width).toBeGreaterThanOrEqual(profile.touch?280:430);
+      expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.y).toBeGreaterThanOrEqual(0);
+      expect(bounds.x+bounds.width).toBeLessThanOrEqual(profile.width);expect(bounds.y+bounds.height).toBeLessThanOrEqual(profile.height);
+      await next.click();await expect(speech).toBeHidden();
       let settings = await dialogueSettings(page);
       const opacity = settings.getByLabel('Opacidad del fondo', { exact: true });
       await opacity.focus(); await opacity.press('Home');
       for (let n = 0; n < 5; n++) await opacity.press('ArrowRight');
       await settings.getByLabel('Tamaño del texto', { exact: true }).selectOption('large');
-      await settings.getByLabel('Texto por burbuja', { exact: true }).selectOption('3');
+      await settings.getByLabel('Tamaño del diálogo NPC', { exact: true }).selectOption('large');
       await settings.getByLabel('Texto progresivo', { exact: true }).uncheck();
       await expect(opacity).toHaveValue('60');
       if (!profile.touch) { await settings.locator('.sv-npc-settings').scrollIntoViewIfNeeded(); await page.screenshot({ path:test.info().outputPath('npc-dialogue-settings.png'), animations: 'disabled' }); }
@@ -106,14 +90,14 @@ for (const profile of [{ name: 'desktop', width: 1440, height: 1000, touch: fals
       settings = await dialogueSettings(page);
       await expect(settings.getByLabel('Opacidad del fondo', { exact: true })).toHaveValue('60');
       await expect(settings.getByLabel('Tamaño del texto', { exact: true })).toHaveValue('large');
-      await expect(settings.getByLabel('Texto por burbuja', { exact: true })).toHaveValue('3');
+      await expect(settings.getByLabel('Tamaño del diálogo NPC', { exact: true })).toHaveValue('large');
       await expect(settings.getByLabel('Texto progresivo', { exact: true })).not.toBeChecked();
       await settings.getByRole('button', { name: 'Cerrar', exact: true }).click();
       await speak(page);
-      await expect(next).toHaveText('Siguiente');
+      await expect(next).toHaveText('Listo');
       expect(await speech.evaluate(el => el.style.getPropertyValue('--speech-opacity'))).toBe('0.6');
-      await expect(speech.locator('.sv-npc-bubble-text')).toHaveCSS('font-size', '16px');
-      expect((await speech.locator('.sv-npc-bubble-text').textContent())!.split('\n').length).toBe(3);
+      await expect(speech.locator('.sv-npc-bubble-text')).toHaveCSS('font-size', '20px');
+      await expect(speech.locator('.sv-npc-bubble-text')).toHaveText(longDialogue);
       await speech.getByRole('button', { name: 'Cerrar diálogo', exact: true }).click();
       await expect(speech).toBeHidden();
     });

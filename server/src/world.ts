@@ -1,3 +1,5 @@
+import {PetReservations,petSnapshotSchema} from '../../packages/core/src/pets/protocol';
+import {assertPetLimit,ownerPetGroups,ownsPet} from '../../packages/core/src/pets/model';
 import {Friends} from '../../packages/core/src/social/friends';
 import { InkAuthority } from '../../packages/documents/src/authority';
 import {MailboxAuthority,MailboxError,mailboxResult} from '../../packages/core/src/house/mailbox';
@@ -49,6 +51,7 @@ const SPAWN: Position = { areaId: 'residential', x: 240, y: 215, direction: 'dow
 
 export class World {
   private mailbox:MailboxAuthority;
+  private petReservations=new PetReservations(pet=>{const house=(this.store.house(pet.owner)?.document as SignedHouse|undefined)?.house;return !!house&&ownsPet(house,space=>this.store.workspace(pet.owner,space),pet);});
   private workspace: WorkspaceCoordinator;
   private ink:InkAuthority;
   private friends:Friends;
@@ -411,6 +414,7 @@ export class World {
   private writeHouse(owner: string, document: SignedHouse): void {
     const stored = this.store.house(owner);
     if (stored && document.house.revision <= stored.revision) throw new Reject('conflict');
+    assertPetLimit(ownerPetGroups(document.house,space=>this.store.workspace(owner,space)));
     this.store.putHouse(owner, document.house.revision, document);
   }
   private async publishHouse(c: Connection, document: SignedHouse, scope: string, epoch: number): Promise<unknown> {
@@ -457,8 +461,9 @@ export class World {
     return changed;
   }
 
-  private relayApp(c: Connection, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'sprites', to: string | null, data: string): null {
+  private relayApp(c: Connection, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'pets' | 'sprites', to: string | null, data: string): null {
     const me = c.identity!.fingerprint;
+    if(channel==='pets'){const packet=petSnapshotSchema.safeParse(JSON.parse(data));if(!packet.success||packet.data.pets.some(p=>p.owner!==me)||this.byFingerprint(me)!==c||to===SERVER_AUTHORITY)throw new Reject('forbidden');for(const target of this.present(c.neighborhood).filter(o=>o!==c&&c.houseId===o.houseId&&(c.houseId?sameSpace(c.position.space,o.position.space):areaOf(c.position)===areaOf(o.position))))this.send(target,{t:'app',channel,from:me,data});return null;}
     if(channel==='camera'&&this.byFingerprint(me)!==c)throw new Reject('forbidden');
     if(channel==='ink'){if(to!==SERVER_AUTHORITY)throw new Reject('forbidden');void this.ink.receive(c.id,me,String(c.neighborhood),data);return null;}
     if(channel === 'ai') {
@@ -501,7 +506,7 @@ export class World {
     if (!room) {
       const factory = this.options.engines[channel];
       if (!factory) throw new Reject('not-found');
-      room = new ActivityRoom(channel, factory, (id, data) => { for(const target of this.personDevices(id)) if (global||target.neighborhood === neighborhood) this.send(target, { t: 'app', channel, from: SERVER_AUTHORITY, data: scope ? JSON.stringify({ ...JSON.parse(data), s: scope }) : data }); },
+      room = new ActivityRoom(channel, organizer=>{const engine=factory(organizer);(engine as unknown as {setPetReservations?(r:PetReservations):void}).setPetReservations?.(this.petReservations);return engine;}, (id, data) => { for(const target of this.personDevices(id)) if (global||target.neighborhood === neighborhood) this.send(target, { t: 'app', channel, from: SERVER_AUTHORITY, data: scope ? JSON.stringify({ ...JSON.parse(data), s: scope }) : data }); },
         id => global?!!this.byFingerprint(id):this.byFingerprint(id)?.neighborhood === neighborhood, this.now, this.store, neighborhood, () => { this.voice.endGame(global?'forest':String(neighborhood), channel); this.broadcastVoice(); }, scope, this.options.ai);
       this.rooms.set(key, room);
     }

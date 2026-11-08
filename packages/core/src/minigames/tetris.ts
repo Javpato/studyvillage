@@ -1,3 +1,4 @@
+import {PetMatch,PetReservations,petBotSchema,type PetBot} from '../pets/protocol';
 import {z} from 'zod';
 import type {RoomEngine} from './room';
 export const tetrisDifficultySchema=z.enum(['easy','normal','hard']);
@@ -7,12 +8,12 @@ export const tetrisActionSchema=z.discriminatedUnion('type',[
  z.strictObject({type:z.literal('join'),name:z.string().trim().min(1).max(48)}),
  z.strictObject({type:z.literal('ready'),ready:z.boolean()}),z.strictObject({type:z.literal('start')}),z.strictObject({type:z.literal('leave')}),z.strictObject({type:z.literal('ping')}),
  z.strictObject({type:z.literal('difficulty'),difficulty:tetrisDifficultySchema}),
- z.strictObject({type:z.literal('bot'),operation:z.enum(['add','remove']),id:z.string().max(100).optional()}),
+ z.strictObject({type:z.literal('bot'),pet:petBotSchema.optional(),operation:z.enum(['add','remove']),id:z.string().max(100).optional()}),
  z.strictObject({type:z.literal('input'),round:z.number().int().nonnegative(),seq:z.number().int().nonnegative(),key:z.enum(['left','right','down','cw','ccw','drop','hold','shield','moss','roots']),target:z.string().max(100).optional()}),
 ]);
 export type TetrisAction=z.infer<typeof tetrisActionSchema>;
 export type Piece={kind:number;rotation:number;x:number;y:number};
-export type TetrisPlayer={id:string;name:string;bot?:boolean;ready:boolean;board:number[][];piece:Piece;next:number[];hold:number|null;held:boolean;alive:boolean;score:number;lines:number;energy:number;cooldown:number;pending:{rows:number;at:number;hole:number}[];seq:number;lastSeen:number;gravity:number;lock:number;resets:number;bagIndex:number;combo:number;target:string|null;lastInput:number;rank:number|null};
+export type TetrisPlayer={id:string;name:string;bot?:boolean;pet?:PetBot;ready:boolean;board:number[][];piece:Piece;next:number[];hold:number|null;held:boolean;alive:boolean;score:number;lines:number;energy:number;cooldown:number;pending:{rows:number;at:number;hole:number}[];seq:number;lastSeen:number;gravity:number;lock:number;resets:number;bagIndex:number;combo:number;target:string|null;lastInput:number;rank:number|null};
 export type TetrisView={phase:'lobby'|'countdown'|'playing'|'finished';round:number;startsAt:number;now:number;host:string|null;players:TetrisPlayer[];winner:string|null;solo:boolean;difficulty:TetrisDifficulty};
 const shapes=[[[0,1],[1,1],[2,1],[3,1]],[[1,0],[2,0],[1,1],[2,1]],[[1,0],[0,1],[1,1],[2,1]],[[1,0],[2,0],[0,1],[1,1]],[[0,0],[1,0],[1,1],[2,1]],[[0,0],[0,1],[1,1],[2,1]],[[2,0],[0,1],[1,1],[2,1]]];
 export function cells(piece:Piece):number[][]{let points=shapes[piece.kind].map(p=>[...p]);if(piece.kind!==1)for(let r=0;r<piece.rotation;r++)points=points.map(([x,y])=>[(piece.kind===0?3:2)-y,x]);return points.map(([x,y])=>[x+piece.x,y+piece.y]);}
@@ -22,6 +23,8 @@ const empty=()=>Array.from({length:20},()=>Array<number>(10).fill(0));
 /** All rules and time are owned by the host/server; no client supplied board is trusted. */
 export class TetrisGame implements RoomEngine<TetrisAction,TetrisView>{
  private players=new Map<string,TetrisPlayer>();private phase:TetrisView['phase']='lobby';private round=0;private startsAt=0;private host:string|null=null;private winner:string|null=null;private sequence:number[]=[];private randomState:number;private nextPractice=0;private difficulty:TetrisDifficulty;private botNumber=0;private botTime=new Map<string,number>();
+ private petMatch=new PetMatch();
+ setPetReservations(registry:PetReservations){this.petMatch.connect(registry);}
  constructor(seed=crypto.getRandomValues(new Uint32Array(1))[0],readonly solo=false,readonly practice=false,difficulty:TetrisDifficulty='normal'){this.randomState=seed||1;this.difficulty=difficulty;}
  private random(n:number){let x=this.randomState;x^=x<<13;x^=x>>>17;x^=x<<5;this.randomState=x>>>0;return this.randomState%n;}
  private number(index:number){while(this.sequence.length<=index){const bag=this.difficulty==='hard'?[0,1,1,2,2,3,3,4,4,5,5,6,6]:[0,1,2,3,4,5,6];for(let i=bag.length-1;i>0;i--){const j=this.random(i+1);[bag[i],bag[j]]=[bag[j],bag[i]];}this.sequence.push(...bag);}return this.sequence[index];}
@@ -34,15 +37,15 @@ export class TetrisGame implements RoomEngine<TetrisAction,TetrisView>{
   if(a.type==='difficulty'||a.type==='bot'){
    if(id!==this.host||!['lobby','finished'].includes(this.phase))throw Error('Solo quien organiza puede cambiar la sala antes de comenzar.');
    if(a.type==='difficulty'){this.difficulty=a.difficulty;for(const q of this.players.values())q.ready=!!q.bot;}
-   else if(a.operation==='remove'){const q=this.players.get(a.id??'');if(q?.bot){this.players.delete(q.id);this.botTime.delete(q.id);}}
+   else if(a.operation==='remove'){const q=this.players.get(a.id??'');if(q?.bot){if(q.pet)this.petMatch.remove(q.pet.id);this.players.delete(q.id);this.botTime.delete(q.id);}}
    else {
-    if(this.solo||this.players.size>=16||[...this.players.values()].filter(q=>q.bot).length>=3)throw Error('No hay espacio para más NPC.');
-    const botId=`tetris-npc:${++this.botNumber}`,bot: TetrisPlayer={...structuredClone(p),id:botId,name:`NPC ${this.botNumber}`,bot:true,ready:true,board:empty(),alive:false,pending:[],hold:null,held:false,next:[],score:0,lines:0};this.players.set(botId,bot);
+    if(this.solo||this.players.size>=16||(!a.pet&&[...this.players.values()].filter(q=>q.bot&&!q.pet).length>=3))throw Error('No hay espacio para más NPC.');
+    const pet=a.pet?this.petMatch.add(a.pet,id):undefined;const botId=pet?`pet:${pet.owner}:${pet.id}`:`tetris-npc:${++this.botNumber}`,bot: TetrisPlayer={...structuredClone(p),id:botId,name:pet?.name??`NPC ${this.botNumber}`,...(pet?{pet}:{}),bot:true,ready:true,board:empty(),alive:false,pending:[],hold:null,held:false,next:[],score:0,lines:0};this.players.set(botId,bot);
    }return;
   }
-  if(a.type==='leave'){this.kill(p);if(this.phase==='lobby'||this.phase==='finished')this.players.delete(id);if(this.host===id)this.host=[...this.players.values()].find(q=>q.id!==id&&!q.bot)?.id??null;this.finish();return;}
+  if(a.type==='leave'){for(const [key,pet]of this.players)if(pet.pet?.owner===id){this.petMatch.remove(pet.pet.id);this.kill(pet);this.players.delete(key);}this.kill(p);if(this.phase==='lobby'||this.phase==='finished')this.players.delete(id);if(this.host===id)this.host=[...this.players.values()].find(q=>q.id!==id&&!q.bot)?.id??null;this.finish();return;}
   if(a.type==='ready'){if(this.phase==='lobby'||this.phase==='finished')p.ready=a.ready;return;}
-  if(a.type==='start'){if(id!==this.host||!['lobby','finished'].includes(this.phase))throw Error('Solo quien organiza puede comenzar.');const all=[...this.players.values()];if(all.length<(this.solo?1:2)||all.some(p=>!p.ready))throw Error('Espera a que todos estén preparados.');this.round++;this.sequence=[];this.phase='countdown';this.startsAt=now+3000;this.nextPractice=this.startsAt+20000;this.winner=null;for(const p of all){Object.assign(p,{board:empty(),hold:null,held:false,alive:true,score:0,lines:0,energy:25,cooldown:0,pending:[],seq:-1,bagIndex:0,combo:0,rank:null,lastSeen:now});this.spawn(p,this.startsAt);}return;}
+  if(a.type==='start'){if(id!==this.host||!['lobby','finished'].includes(this.phase))throw Error('Solo quien organiza puede comenzar.');const all=[...this.players.values()];if(all.length<(this.solo?1:2)||all.some(p=>!p.ready))throw Error('Espera a que todos estén preparados.');this.petMatch.start();this.round++;this.sequence=[];this.phase='countdown';this.startsAt=now+3000;this.nextPractice=this.startsAt+20000;this.winner=null;for(const p of all){Object.assign(p,{board:empty(),hold:null,held:false,alive:true,score:0,lines:0,energy:25,cooldown:0,pending:[],seq:-1,bagIndex:0,combo:0,rank:null,lastSeen:now});this.spawn(p,this.startsAt);}return;}
   if(a.type!=='input'||a.round!==this.round||a.seq<=p.seq||this.phase!=='playing'||!p.alive)return;
   p.seq=a.seq;if(now-p.lastInput<15)return;p.lastInput=now;if(a.target&&this.players.get(a.target)?.alive&&a.target!==id)p.target=a.target;
   if(['shield','moss','roots'].includes(a.key)){this.power(p,a.key,now);return;}
@@ -56,19 +59,20 @@ export class TetrisGame implements RoomEngine<TetrisAction,TetrisView>{
  private lockPiece(p:TetrisPlayer,now:number){const points=cells(p.piece);if(points.some(([,y])=>y<0)){this.kill(p);return;}for(const [x,y]of points)p.board[y][x]=p.piece.kind+1;const left=p.board.filter(row=>!row.every(v=>v>0&&v!==8)),n=20-left.length;p.board=[...Array.from({length:n},()=>Array<number>(10).fill(0)),...left];if(n){p.score+=([0,100,300,500,800][n]??800)*(1+Math.floor(p.lines/10));p.lines+=n;p.energy=Math.min(100,p.energy+n*10);p.combo++;this.attack(p,Math.min(6,([0,0,1,2,4][n]??4)+(p.combo>=2?1:0)),now);}else p.combo=0;
   let allowance=4;while(allowance&&p.pending[0]?.at<=now){const attack=p.pending[0];if(p.board[0].some(Boolean)){this.kill(p);break;}p.board.shift();p.board.push(Array.from({length:10},(_,x)=>x===attack.hole?0:8));attack.rows--;allowance--;if(!attack.rows)p.pending.shift();}p.held=false;if(p.alive)this.spawn(p,now);
  }
- tick(now:number){if(this.phase==='lobby'||this.phase==='finished'){let changed=false;for(const [id,p]of this.players)if(!this.solo&&!p.bot&&now-p.lastSeen>15000){this.players.delete(id);changed=true;}if(this.host&&!this.players.has(this.host))this.host=[...this.players.values()].find(p=>!p.bot)?.id??null;if(!this.host&&this.players.size){this.players.clear();changed=true;}return changed;}if(this.phase==='countdown'&&now>=this.startsAt){this.phase='playing';for(const p of this.players.values())p.gravity=now;return true;}if(this.phase!=='playing')return false;
+ tick(now:number){if(this.phase==='lobby'||this.phase==='finished'){let changed=false;for(const [id,p]of this.players)if(!this.solo&&!p.bot&&now-p.lastSeen>15000){this.players.delete(id);changed=true;}if(this.host&&!this.players.has(this.host))this.host=[...this.players.values()].find(p=>!p.bot)?.id??null;if(!this.host&&this.players.size){this.petMatch.clear();this.players.clear();changed=true;}return changed;}if(this.phase==='countdown'&&now>=this.startsAt){this.phase='playing';for(const p of this.players.values())p.gravity=now;return true;}if(this.phase!=='playing')return false;
   if(this.practice&&this.solo&&now>=this.nextPractice){this.nextPractice=now+20000;for(const p of this.players.values())p.pending.push({rows:2,at:now+TETRIS_DIFFICULTIES[this.difficulty].warning,hole:this.random(10)});}
   for(const p of this.players.values()){if(!p.alive)continue;
    if(p.bot&&now-(this.botTime.get(p.id)??0)>=TETRIS_DIFFICULTIES[this.difficulty].botInterval){
     this.botTime.set(p.id,now);
     const key=p.pending.length&&p.energy>=30?'shield':p.board.some(row=>row.includes(8))&&p.energy>=40?'moss':p.energy>=50?'roots':null;
-    const action=key&&p.cooldown<=now?key:botMove(p);
-    this.apply(p.id,{type:'input',round:this.round,seq:p.seq+1,key:action},now);
+    let move:BotKey='drop';try{move=botMove(p);}catch{/* A validated hard drop guarantees progress when evaluation fails. */}
+    const input=key&&p.cooldown<=now?key:move;
+    this.apply(p.id,{type:'input',round:this.round,seq:p.seq+1,key:input},now);
    }
    if(!p.alive)continue;if(!this.solo&&!p.bot&&now-p.lastSeen>15000){this.kill(p);continue;}const interval=Math.max(100,TETRIS_DIFFICULTIES[this.difficulty].gravity-Math.floor(p.lines/10)*80);if(now-p.gravity>=interval){shiftPiece(p,'down');p.gravity=now;}if(!fits(p.board,{...p.piece,y:p.piece.y+1})){if(!p.lock)p.lock=now;if(now-p.lock>=500)this.lockPiece(p,now);}else p.lock=0;}this.finish();return true;
  }
- private finish(){if(this.phase!=='playing')return;const alive=[...this.players.values()].filter(p=>p.alive);if(alive.length<=(this.solo?0:1)){this.phase='finished';this.winner=alive[0]?.id??null;if(alive[0])alive[0].rank=1;for(const p of this.players.values())p.ready=!!p.bot;}}
- cancel(){this.phase='lobby';for(const p of this.players.values()){p.alive=false;p.ready=!!p.bot;}this.winner=null;}
+ private finish(){if(this.phase!=='playing')return;const alive=[...this.players.values()].filter(p=>p.alive);if(alive.length<=(this.solo?0:1)){this.phase='finished';this.petMatch.release();this.winner=alive[0]?.id??null;if(alive[0])alive[0].rank=1;for(const p of this.players.values())p.ready=!!p.bot;}}
+ cancel(){this.petMatch.clear();for(const [id,p]of this.players)if(p.pet)this.players.delete(id);this.phase='lobby';for(const p of this.players.values()){p.alive=false;p.ready=!!p.bot;}this.winner=null;}
  /** Pause is local-only; network rounds always keep running. */
  postpone(ms:number){if(!this.solo)return;this.startsAt+=ms;this.nextPractice+=ms;for(const p of this.players.values()){p.gravity+=ms;if(p.lock)p.lock+=ms;p.cooldown+=ms;for(const a of p.pending)a.at+=ms;}}
  audience(){return [...this.players.values()].filter(p=>!p.bot).map(p=>p.id);}

@@ -1,3 +1,4 @@
+import {assertPetLimit,ownerPetGroups} from '../../../core/src/pets/model';
 import {Friends,emptyFriends,type FriendCommand} from '../../../core/src/social/friends';
 import {LocalWorkspaces} from '../storage/workspaces';
 import {LocalMailbox} from '../storage/mailbox';
@@ -517,7 +518,7 @@ export class VillageClient implements VillageActions {
       if (!this.active(link)) return;
       const previous = this.houses.get(sender);
       if (previous && payload.document.house.revision <= previous.house.revision) return;
-      this.houses.set(sender, structuredClone(payload.document));
+      assertPetLimit(ownerPetGroups(payload.document.house,space=>this.workspaceStorage.get(sender,space)));this.houses.set(sender, structuredClone(payload.document));
       if (payload.document.house.access === 'locked') for (const member of this.members.values()) if (member.houseId === sender && member.identity.fingerprint !== sender && !hasHouseAccess(payload.document.house,member.identity.fingerprint)) {member.houseId = null;member.position={...member.position,space:undefined};}
       this.rosterChanged(); return;
     }
@@ -587,7 +588,7 @@ export class VillageClient implements VillageActions {
   publishHouse(house: PublicHouse): void {
     const parsed = houseSchema.safeParse(house);
     if (!parsed.success || house.ownerId !== this.id || house.revision < this.ownHouse.revision || (house.revision === this.ownHouse.revision && canonical(house) !== canonical(this.ownHouse))) { this.setError('Solo puedes publicar tu casa con una revisión nueva y campos públicos válidos.'); return; }
-    this.ownHouse = parsed.data;
+    assertPetLimit(ownerPetGroups(parsed.data,space=>this.workspaceStorage.get(this.id,space)));this.ownHouse = parsed.data;
     if(this.phase!=='JOINED')this.workspace.reconcile([this.id]);
     if (this.phase === 'JOINED') this.publishHouseDocument();
     this.notify();

@@ -65,6 +65,13 @@ export function parseRepoUrl(raw: string): string | null {
   const ssh = /^git@([a-z0-9.-]+):([\w.-]+\/[\w./-]+?)(\.git)?$/i.exec(trimmed);
   const url = safeUrl(ssh ? `https://${ssh[1]}/${ssh[2]}` : trimmed);
   if (!url || url.pathname.split('/').filter(Boolean).length < 2) return null;
+  if(url.hostname==='github.com'||url.hostname==='www.github.com'){
+    if(url.port||url.search||url.hash||!/^\/[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9_.-]+\/?$/.test(url.pathname))return null;
+    const path=url.pathname.replace(/\/$/,'').replace(/\.git$/,'');
+    if(['.','..'].includes(path.split('/')[2])||!path.split('/')[2])return null;
+    return `https://github.com${path}`;
+  }
+  if(url.search||url.hash)return null;
   return url.href.replace(/\/$/, '');
 }
 
@@ -98,7 +105,7 @@ export function gitCloneCommand(repoUrl: string): string {
 export function repoLabel(repoUrl: string): string {
   const url = safeUrl(repoUrl);
   if (!url) return repoUrl;
-  return `${url.hostname.replace(/^www\./, '')}${url.pathname.replace(/\.git$/, '')}`;
+  return `${url.hostname==='github.com'?'':url.hostname}${url.pathname.replace(/\.git$/, '')}`.replace(/^\//,'');
 }
 
 export class GroupProjectsBoard implements RoomEngine<ProjectsAction, ProjectsView> {

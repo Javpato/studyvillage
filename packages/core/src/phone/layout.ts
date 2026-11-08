@@ -1,7 +1,7 @@
 import {z} from 'zod';
 
 export const PHONE_APPS = {
- village:'Aldea', contacts:'Contactos', identity:'Identidad', house:'Mi casa', rooms:'Habitaciones',
+ pets:'Mascotas', village:'Aldea', contacts:'Contactos', identity:'Identidad', house:'Mi casa', rooms:'Habitaciones',
  decorate:'Decorar', garden:'Mi jardín', settings:'Ajustes', connection:'Conexión', voice:'Voz',
  'hud-editor':'Editar controles', ink:'Cuaderno de tinta', music:'Música', study:'Estudio', projects:'Proyectos', focus:'Concentración', tetris:'Bloques del Bosque',
 } as const;
@@ -18,7 +18,7 @@ export type PhoneLayout=z.infer<typeof phoneLayoutSchema>;
 export type PhoneFolder=Extract<PhoneLayout['entries'][number],{type:'folder'}>;
 export function defaultPhoneLayout():PhoneLayout{return {version:1,entries:[
  {type:'app',id:'village'},{type:'app',id:'contacts'},
- {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden']},
+ {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden','pets']},
  {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor']},
 ]};}
 export function removePhoneFolder(layout:PhoneLayout,id:string):PhoneLayout{

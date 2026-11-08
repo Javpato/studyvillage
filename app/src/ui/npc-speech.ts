@@ -1,4 +1,4 @@
-import {msg, setDisplayText, setDisplayAttribute} from '../i18n';
+import {msg, t, isMessage, subscribeLanguage, type DisplayText, setDisplayText, setDisplayAttribute} from '../i18n';
 import {DEFAULT_DIALOGUE, NPC_DIALOGUE_KEY, parseDialoguePreferences, dialoguePages, type NpcDialoguePreferences} from './npc-speech-model';
 import './npc-speech.css';
 interface SpeechViewport {
@@ -13,7 +13,7 @@ export class NpcSpeech {
   private text = document.createElement('div');
   private count = document.createElement('span');
   private next = document.createElement('button');
-  private current: {text:string;x:number;y:number;scene:string;page:number} | null = null;
+  private current: {source:DisplayText;text:string;x:number;y:number;scene:string;page:number} | null = null;
   private preferences: NpcDialoguePreferences = {...DEFAULT_DIALOGUE};
   private pages: string[] = [];
   private layoutKey = '';
@@ -21,17 +21,19 @@ export class NpcSpeech {
   private revealed = false;
   private animation = 0;
   private settingControls: (() => void)[] = [];
+  private unlanguage=subscribeLanguage(()=>{if(this.current){this.current.text=isMessage(this.current.source)?t(this.current.source):this.current.source;this.layoutKey='';}});
   constructor() {
     try { this.preferences = parseDialoguePreferences(JSON.parse(localStorage.getItem(NPC_DIALOGUE_KEY) || '{}')); } catch { /* Keep readable defaults. */ }
     this.root.className = 'sv-npc-bubble'; this.root.hidden = true;
     this.root.setAttribute('role', 'group'); setDisplayAttribute(this.root, 'aria-label', msg('Diálogo del guía'));
-    this.text.className = 'sv-npc-bubble-text';
+    this.text.className = 'sv-npc-bubble-text';this.text.tabIndex=0;
+    for(const type of ['pointerdown','pointermove','pointerup','wheel','keydown','keyup'])this.root.addEventListener(type,e=>e.stopPropagation());
     const footer = document.createElement('footer'); this.count.className = 'sv-npc-page'; this.count.setAttribute('aria-hidden', 'true');
     this.next.type = 'button'; this.next.className = 'sv-npc-next'; this.next.onclick = () => this.advance();
     const close = document.createElement('button'); close.type = 'button'; close.className = 'sv-npc-close'; close.textContent = '×';
     setDisplayAttribute(close, 'aria-label', msg('Cerrar diálogo')); close.onclick = () => this.clear();
     footer.append(this.count, this.next, close); this.root.append(this.text, footer);
-    this.text.onclick = () => this.advance();
+
     this.announcement.className = 'sv-sr-only'; this.announcement.setAttribute('role', 'status');
     document.body.append(this.root, this.announcement);
     document.addEventListener('pointerdown', this.outside, true);
@@ -42,10 +44,11 @@ export class NpcSpeech {
     if (!this.current || event.key !== 'Escape') return;
     this.clear(); event.preventDefault(); event.stopPropagation();
   };
-  say(text:string, x:number, y:number, scene:string) {
+  say(source:DisplayText, x:number, y:number, scene:string) {
+    const text=isMessage(source)?t(source):source;
     if (this.current?.text === text && this.current.scene === scene && this.current.x === x && this.current.y === y) { this.advance(); return; }
     cancelAnimationFrame(this.animation); this.animation = 0;
-    this.current = {text, x, y, scene, page:0}; this.layoutKey = ''; this.pages = [];
+    this.current = {source,text, x, y, scene, page:0}; this.layoutKey = ''; this.pages = [];
     this.root.style.visibility = 'hidden'; this.root.hidden = false; this.announcement.textContent = text;
   }
   get isOpen(): boolean { return this.current !== null; }
@@ -81,15 +84,16 @@ export class NpcSpeech {
     const v = viewport?.() || {left:0,right:768,top:0};
     const scale = v.scale || 1, leftEdge = v.screenLeft ?? 0, topEdge = v.screenTop ?? 0;
     const rightEdge = v.screenRight ?? innerWidth, bottomEdge = v.screenBottom ?? innerHeight;
-    const width = Math.max(140, Math.min(240, rightEdge - leftEdge - 16));
-    const font = this.preferences.textSize === 'large' ? 16 : 14;
+    const size=this.preferences.size;const width = Math.max(80, Math.min({small:320,standard:440,large:560}[size], rightEdge - leftEdge - 16));
+    this.root.style.setProperty('--speech-height',`${Math.max(36,Math.min((bottomEdge-topEdge)*({small:.3,standard:.4,large:.55}[size]),bottomEdge-topEdge-90))}px`);
+    const font = {small:14,standard:16,large:18}[size]+(this.preferences.textSize==='large'?2:0);
     const key = `${speech.text}:${width}:${font}:${this.preferences.lines}`;
     if (key !== this.layoutKey) {
       ctx.save(); ctx.font = `600 ${font}px system-ui`;
-      this.pages = dialoguePages(speech.text, width - 26, this.preferences.lines, value => ctx.measureText(value).width); ctx.restore();
+      this.pages = [speech.text]; ctx.restore();
       speech.page = Math.min(speech.page, this.pages.length - 1); this.layoutKey = key;
       this.root.style.width = `${width}px`; this.root.style.setProperty('--speech-font', `${font}px`);
-      this.root.style.setProperty('--speech-lines', String(this.preferences.lines)); this.beginPage();
+      this.root.style.setProperty('--speech-lines', String({small:3,standard:6,large:8}[size])); this.beginPage();
     }
     this.root.style.setProperty('--speech-opacity', String(this.preferences.opacity));
     const anchorX = (v.canvasLeft ?? 0) + speech.x * scale, anchorY = (v.canvasTop ?? 0) + speech.y * scale;
@@ -107,19 +111,20 @@ export class NpcSpeech {
     const output = document.createElement('output'); field('Opacidad del fondo',opacity).append(output);
     const size = document.createElement('select'); setDisplayAttribute(size,'aria-label',msg('Tamaño del texto'));
     for (const [value,label] of [['normal','Normal'],['large','Grande']]) { const o=document.createElement('option');o.value=value;setDisplayText(o,msg(label));size.append(o); } field('Tamaño del texto',size);
-    const lines = document.createElement('select'); setDisplayAttribute(lines,'aria-label',msg('Texto por burbuja'));
-    for (const [value,label] of [['2','Breve · 2 líneas'],['3','Más amplio · 3 líneas']]) { const o=document.createElement('option');o.value=value;setDisplayText(o,msg(label));lines.append(o); } field('Texto por burbuja',lines);
+    const bubble = document.createElement('select');setDisplayAttribute(bubble,'aria-label',msg('Tamaño del diálogo NPC'));
+    for(const [value,label]of [['small','Pequeño'],['standard','Estándar'],['large','Grande']]){const o=document.createElement('option');o.value=value;setDisplayText(o,msg(label));bubble.append(o);}field('Tamaño del diálogo NPC',bubble);
     const progressive = document.createElement('input'); progressive.type='checkbox';field('Texto progresivo',progressive);
-    const hint=document.createElement('p');setDisplayText(hint,msg('Toca fuera para cerrar. Dentro, toca para completar el texto o pasar a la siguiente parte.'));details.append(hint);
+    const hint=document.createElement('p');setDisplayText(hint,msg('Toca fuera para cerrar. Usa los controles para mostrar el texto y desplázate para leerlo.'));details.append(hint);
     const error = document.createElement('p'); error.setAttribute('role','status');details.append(error);
-    const sync = () => {opacity.value=String(Math.round(this.preferences.opacity*100));output.textContent=`${opacity.value}%`;size.value=this.preferences.textSize;lines.value=String(this.preferences.lines);progressive.checked=this.preferences.progressive;}; this.settingControls.push(sync);sync();
+    const sync = () => {opacity.value=String(Math.round(this.preferences.opacity*100));output.textContent=`${opacity.value}%`;size.value=this.preferences.textSize;bubble.value=this.preferences.size;progressive.checked=this.preferences.progressive;}; this.settingControls.push(sync);sync();
     const save = () => {
-      this.preferences=parseDialoguePreferences({opacity:Number(opacity.value)/100,textSize:size.value,lines:Number(lines.value),progressive:progressive.checked});
+      this.preferences=parseDialoguePreferences({opacity:Number(opacity.value)/100,textSize:size.value,size:bubble.value,lines:this.preferences.lines,progressive:progressive.checked});
       try {localStorage.setItem(NPC_DIALOGUE_KEY,JSON.stringify(this.preferences));error.textContent='';} catch {setDisplayText(error,msg('No se pudo guardar la preferencia en este equipo.'));}
       this.layoutKey='';this.settingControls.forEach(update=>update());
     };
-    opacity.oninput=save;size.onchange=save;lines.onchange=save;progressive.onchange=save;
+    opacity.oninput=save;size.onchange=save;bubble.onchange=save;progressive.onchange=save;
+    const reset=document.createElement('button');reset.type='button';setDisplayText(reset,msg('Restablecer diálogos'));reset.onclick=()=>{this.preferences={...DEFAULT_DIALOGUE};sync();save();};details.append(reset);
     return details;
   }
-  dispose() { this.clear();document.removeEventListener('pointerdown',this.outside,true);document.removeEventListener('keydown',this.key,true);this.root.remove();this.announcement.remove(); }
+  dispose() { this.unlanguage();this.clear();document.removeEventListener('pointerdown',this.outside,true);document.removeEventListener('keydown',this.key,true);this.root.remove();this.announcement.remove(); }
 }

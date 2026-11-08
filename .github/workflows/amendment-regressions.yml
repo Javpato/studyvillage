@@ -1,0 +1,30 @@
+name: Amendment platform regressions
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:e2e -- amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
+      - run: npm run test:webkit -- amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: browser-failure-${{ matrix.os }}
+          path: test-results/

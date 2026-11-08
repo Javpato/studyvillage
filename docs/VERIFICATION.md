@@ -1,3 +1,15 @@
+# Amendment implementation candidate — 8 November 2026
+
+Work in progress on the existing `main` branch; this is not a verified release. Candidate source SHA and workflow URLs will be recorded after the candidate is committed/pushed, before extended browser checks.
+
+Implemented so far: concurrent completed-stroke acceptance and scoped rollback; wardrobe selection cleanup; larger configurable dialogue; automatic focus/rest model; pet furniture, sprites, owner simulation, petting/food/abilities and bot identities; validated repository roots and explicit open/remove links. Original Mac report: browser, input device and OS version unknown. Owner uses Linux and does not reproduce disappearing strokes. No original Mac setup has been retested.
+
+Completed: application/server type checking before the latest onboarding edit; 43 existing focused tests; 13 new pet/repository tests including eight complete seeded Werewolves matches and a complete Forest Blocks match. A food-interval failure was corrected and the pet suite passed. Final source requires rerunning types and the full baseline.
+
+Remaining: full application/server baseline; browser regressions and visual review; platform workflow; multi-client pet/board validation; persistence/limits hardening; remaining usability checks; final documentation and cleanup. Existing prior release evidence below does not verify this candidate.
+
+---
+
 # Published release — 8 November 2026
 
 **[StudyVillage v1.0.0-dev.8](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.8) is published**, with Windows EXE, Linux AppImage, universal macOS DMG and Android APK. Source: [`508e30d125528e5a82da976aaa0879b114996d70`](https://github.com/Javpato/studyvillage/commit/508e30d125528e5a82da976aaa0879b114996d70). [Release workflow 42498207603, attempt 2](https://github.com/Javpato/studyvillage/actions/runs/42498207603/attempts/2) completed successfully and published at 16:32 UTC. This is a development prerelease.

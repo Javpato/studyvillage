@@ -6,7 +6,7 @@ import {newLocalData} from '../../packages/runtime/src/storage/local-store';
 describe('phone layout',()=>{
  it('starts with the requested apps and folders',()=>{expect(defaultPhoneLayout().entries).toEqual([
   {type:'app',id:'village'},{type:'app',id:'contacts'},
-  {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden']},
+  {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden','pets']},
   {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor']},
  ]);});
  it('moves apps without duplication and preserves settings when deleting its folder',()=>{
@@ -51,6 +51,6 @@ it('inserts apps and whole folders into packed slots without nesting or losing c
  expect(layout.entries.map(e=>e.id)).toEqual(['village','settings','contacts','home']);
  layout=dropPhoneItem(layout,{type:'folder',id:'settings'},{type:'insert',folder:null,index:4});expect(layout).toEqual(original);
  expect(dropPhoneItem(layout,{type:'folder',id:'settings'},{type:'group',target:{type:'folder',id:'home'}})).toBe(layout);
- layout=dropPhoneItem(layout,{type:'app',id:'garden'},{type:'insert',folder:'home',index:1});expect(layout.entries[2]).toMatchObject({apps:['house','garden','rooms','decorate']});
- expect(original.entries[2]).toMatchObject({apps:['house','rooms','decorate','garden']});
+ layout=dropPhoneItem(layout,{type:'app',id:'garden'},{type:'insert',folder:'home',index:1});expect(layout.entries[2]).toMatchObject({apps:['house','garden','rooms','decorate','pets']});
+ expect(original.entries[2]).toMatchObject({apps:['house','rooms','decorate','garden','pets']});
 });

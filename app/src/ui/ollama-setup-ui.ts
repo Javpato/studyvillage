@@ -17,7 +17,7 @@ export class OllamaSetupPanel {
   finally{this.busy=false;if(generation===this.generation)this.render();}
  }
  private render(): void {
-  this.root.replaceChildren(); const head=el('header'); head.append(el('h2',msg('Configurar Ollama')),button(msg('Cerrar'),this.close)); this.root.append(head);
+  this.root.replaceChildren(); const head=el('header'); head.append(el('h2',msg('Configurar Ollama')),button(msg('Cerrar'),this.close)); this.root.append(head,el('p',msg('Ollama es opcional: ayuda a preparar materiales de estudio y bots de Gartic. Requiere instalar Ollama y configurar un modelo compatible. Sin él puedes estudiar, dibujar, usar el reloj y jugar con los bots normales.')));
   if(!this.ai.configurable()) {
    this.root.append(el('p',this.ai.sharedMode()?msg('La IA compartida pertenece al anfitrión. Solo el contenido que elijas se envía a su equipo.'):msg('Ollama local está disponible en la aplicación de escritorio. Un anfitrión móvil no ofrece IA compartida.')));
    for(const [key,name]of Object.entries(AI_FEATURES))this.root.append(el('p',`${t(name)}: ${t(this.ai.isReady(key as AiFeature)?'Lista para usar.':'No disponible')}`));

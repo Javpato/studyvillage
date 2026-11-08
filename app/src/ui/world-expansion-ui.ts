@@ -1,3 +1,6 @@
+import {PetReservations,type PetBot} from '../../../packages/core/src/pets/protocol';
+import {ownsPet} from '../../../packages/core/src/pets/model';
+import {LocalWorkspaces as PetWorkspaces} from '../../../packages/runtime/src/storage/workspaces';
 import {confirmSprite,editGuideText} from './sprite-dialogs';
 import {paintStationSource} from '../world/areas';
 import {TetrisGame,type TetrisAction,type TetrisView} from '../../../packages/core/src/minigames/tetris';
@@ -71,13 +74,14 @@ function btn(label: DisplayText, className = 'sv-button sv-button-small'): HTMLB
 }
 
 export interface WorldExpansionCallbacks {
+  pets?():PetBot[];petMatch?(key:string,ids:string[]):void;
   getView(): AppView | null;
   getCurrentArea(): BuiltinAreaId;
   setCurrentArea(area: BuiltinAreaId): void;
   openBoardById(boardId: string, label: string): void;
   navigateToPane(pane: 'world' | 'house' | 'board' | 'contacts' | 'diagnostics'): void;
   notify(msg: string): void;
-  speak(text:string,x:number,y:number):void;
+  speak(text:DisplayText,x:number,y:number):void;
   openFocus():void;
   openVoice():void;
   openMaterials():void;
@@ -166,9 +170,11 @@ export class WorldExpansionUIController {
       return { selfId: view?.identity.fingerprint || 'local-host', hostId: joined ? view!.network.hostId : null, authority:!joined||(!view!.network.server&&view!.network.isHost) };
     };
     const me = () => { const a = this.getActor(); return { name: a.displayName, color: a.color }; };
-    this.tetrisRoom=new SharedRoom('tetris',callbacks.actions,context,()=>new TetrisGame());
-    this.tetrisPanel=new TetrisPanel({send:a=>this.tetrisRoom.act(a),close:()=>this.closeModal(),me:()=>({id:context().selfId,name:me().name}),cameras:ids=>callbacks.actions.setGameCameraPolicy?.({canSend:true,canReceive:true,audience:null,receiveAudience:ids}),media:battle=>{this.activityOverlay.dataset.tetrisMode=battle?'battle':'solo';if(!battle)callbacks.actions.setTalking(false);if(battle){this.cameraDock.mount(this.tetrisPanel.mediaRoot);callbacks.actions.setCameraActivity('tetris');}else{this.cameraDock.unmount();callbacks.actions.setGameCameraPolicy?.(null);callbacks.actions.setCameraActivity('village');const selected=callbacks.getView()?.network.voice?.selected;if(selected?.game==='tetris')callbacks.actions.voiceCommand({action:'leave'});}}});
-    this.werewolvesRoom = new SharedRoom('werewolves', callbacks.actions, context, () => new WerewolvesGame(undefined, context().selfId));
+    const petReservations=new PetReservations(pet=>{const view=callbacks.getView();const house=view?.identity.fingerprint===pet.owner?view.ownHouse:view?.network.houses.find(h=>h.ownerId===pet.owner);return !!house&&ownsPet(house,space=>new PetWorkspaces(view!.identity.fingerprint).get(pet.owner,space),pet);});
+    const configurePets=<T extends {setPetReservations(r:PetReservations):void}>(game:T):T=>{game.setPetReservations(petReservations);return game;};
+    this.tetrisRoom=new SharedRoom('tetris',callbacks.actions,context,()=>configurePets(new TetrisGame()));
+    this.tetrisPanel=new TetrisPanel({pets:()=>callbacks.pets?.()??[],petReservations,reserved:ids=>callbacks.petMatch?.('local-tetris',ids),send:a=>this.tetrisRoom.act(a),close:()=>this.closeModal(),me:()=>({id:context().selfId,name:me().name}),cameras:ids=>callbacks.actions.setGameCameraPolicy?.({canSend:true,canReceive:true,audience:null,receiveAudience:ids}),media:battle=>{this.activityOverlay.dataset.tetrisMode=battle?'battle':'solo';if(!battle)callbacks.actions.setTalking(false);if(battle){this.cameraDock.mount(this.tetrisPanel.mediaRoot);callbacks.actions.setCameraActivity('tetris');}else{this.cameraDock.unmount();callbacks.actions.setGameCameraPolicy?.(null);callbacks.actions.setCameraActivity('village');const selected=callbacks.getView()?.network.voice?.selected;if(selected?.game==='tetris')callbacks.actions.voiceCommand({action:'leave'});}}});
+    this.werewolvesRoom = new SharedRoom('werewolves', callbacks.actions, context, () => configurePets(new WerewolvesGame(undefined, context().selfId)));
     this.garticRoom = new SharedRoom('gartic', callbacks.actions, context, () => new GarticGame(undefined, context().selfId));
     this.garticBots = new OllamaGarticBots(this.ollamaGateway, this.garticRoom, m => callbacks.notify(m));
     // As village host, a guest inside a room may ask for that room's copy before I ever opened it here.
@@ -176,7 +182,9 @@ export class WorldExpansionUIController {
     const lobby = this.makeScopedApps('', this.library, this.notesStore);
     this.studyRoom = lobby.studyRoom; this.studyPanel = lobby.studyPanel; this.projectsRoom = lobby.projectsRoom; this.projectsPanel = lobby.projectsPanel;
     this.scoped.set('', lobby);
-    this.werewolvesPanel = new WerewolvesPanel({ send: (a) => this.werewolvesRoom.act(a), close: () => this.closeModal(), me });
+    this.werewolvesPanel = new WerewolvesPanel({ pets:()=>callbacks.pets?.()??[],send: (a) => this.werewolvesRoom.act(a), close: () => this.closeModal(), me });
+    this.tetrisRoom.subscribe(view=>callbacks.petMatch?.('tetris',view&&['lobby','countdown','playing'].includes(view.phase)?view.players.flatMap(p=>p.pet?.owner===context().selfId?[p.pet.id]:[]):[]));
+    this.werewolvesRoom.subscribe(view=>callbacks.petMatch?.('werewolves',view&&view.phase!=='end'?view.players.flatMap(p=>p.pet?.owner===context().selfId?[p.pet.id]:[]):[]));
     this.garticPanel = new GarticPanel({ send: (a) => this.garticRoom.act(a), close: () => this.closeModal(), me, aiReady: () => this.ollamaGateway.isReady('gartic'), advanced: container => this.garticBotSettings(container) });
     this.ollamaGateway.subscribe(() => {
       if (!this.ollamaGateway.isReady('gartic')) this.garticBots.disable(); else if (this.garticRoom.canLead()) void this.garticBots.enable().catch(e => this.callbacks.notify(errorMessage(e)));
@@ -430,7 +438,7 @@ export class WorldExpansionUIController {
     }
 
     switch (obj.kind) {
-      case 'guide': this.callbacks.speak(typeof obj.state.guideText==='string'&&obj.state.guideText?obj.state.guideText:t(obj.description),obj.x+obj.w/2,obj.y);break;
+      case 'guide': this.callbacks.speak(typeof obj.state.guideText==='string'&&obj.state.guideText?obj.state.guideText:msg(obj.description),obj.x+obj.w/2,obj.y);break;
       case 'campfire_werewolves':
         this.openModal('werewolves');
         break;

@@ -18,7 +18,8 @@ function element<K extends keyof HTMLElementTagNameMap>(tag:K,label=''):HTMLElem
 function button(label:string,fn:()=>void):HTMLButtonElement{const b=element('button',label);b.type='button';b.onclick=fn;return b;}
 export class BoardEditor {
  readonly root=element('div');readonly style:BoardTextStyle={...DEFAULT_TEXT_STYLE};
- selected=new Set<string>();private board='';private gesture:Gesture|null=null;private preview:BoardStroke[]|null=null;private lasso=false;private active=false;private busy=false;
+ selected=new Set<string>();private board='';private gesture:Gesture|null=null;private preview:BoardStroke[]|null=null;private lasso=false;private active=false;private pending=0;
+ private get busy(){return this.pending>0;}
  private histories=new Map<string,{undo:Command[];redo:Command[]}>();private editor:HTMLTextAreaElement|null=null;private editing:BoardStroke|null=null;private textAt:BoardPoint|null=null;
  private clipboardOffset=0;private paintVersion=0;private textTool=false;private textColor='#315f51';private formatOpen=false;
  constructor(private ctx:Context){this.root.className='sv-board-context';ctx.wrap.append(this.root);this.renderToolbar();void ensureExcalifont().then(()=>this.changed()).catch(()=>{/* Choosing Excalifont retries and reports a load failure. */});}
@@ -26,17 +27,17 @@ export class BoardEditor {
  get version():number{return this.paintVersion;}
  private changed():void{this.paintVersion++;this.ctx.changed();}
  sync():void{if(this.board!==this.ctx.board()){this.cancel();this.selected.clear();this.board=this.ctx.board();this.renderToolbar();}for(const id of this.selected)if(!this.ctx.strokes().some(s=>s.id===id&&!s.deleted))this.selected.delete(id);}
- private history(){const id=this.ctx.board();if(!this.histories.has(id))this.histories.set(id,{undo:[],redo:[]});return this.histories.get(id)!;}
+ private history(id=this.ctx.board()){if(!this.histories.has(id))this.histories.set(id,{undo:[],redo:[]});return this.histories.get(id)!;}
  canUndo():boolean{return this.history().undo.length>0;}canRedo():boolean{return this.history().redo.length>0;}
  private selectedObjects():BoardStroke[]{if(!this.selected.size)return[];return this.ctx.strokes().filter(s=>this.selected.has(s.id)&&!s.deleted);}
  displayed(strokes:BoardStroke[]):BoardStroke[]{if(!this.preview)return strokes;const byId=new Map(this.preview.map(s=>[s.id,s]));return strokes.map(s=>byId.get(s.id)??s);}
  private owned(strokes:BoardStroke[]):void{if(!this.ctx.canEdit())throw new AppError('invalid',t('Esta pizarra es de solo lectura.'));if(!this.ctx.moderate()&&strokes.some(s=>s.author!==this.ctx.author()))throw new AppError('invalid',t('Los objetos de otras personas están bloqueados. Puedes copiarlos para crear tu propia versión.'));}
  async apply(changes:BoardStroke[],record=true):Promise<boolean>{
-  if(this.busy)return false;try{this.owned(changes);const all=this.ctx.all();const next=changes.map(s=>({...structuredClone(s),boardId:this.ctx.board(),seq:Math.max(s.seq,all.find(x=>x.id===s.id)?.seq??0)+1}));
+  const board=this.ctx.board();this.pending++;try{this.owned(changes);const all=this.ctx.all();const next=changes.map(s=>({...structuredClone(s),boardId:this.ctx.board(),seq:Math.max(s.seq,all.find(x=>x.id===s.id)?.seq??0)+1}));
    if(next.length>128||new TextEncoder().encode(JSON.stringify(next)).length>45000)throw new AppError('invalid',t('La selección es demasiado grande. Selecciona una zona más pequeña.'));
-   const before=next.flatMap(s=>{const old=all.find(x=>x.id===s.id);return old?[structuredClone(old)]:[];});this.busy=true;this.renderToolbar();await this.ctx.commit(next);
-   if(record){const h=this.history();h.undo.push({before,after:structuredClone(next)});if(h.undo.length>100)h.undo.shift();h.redo=[];}this.changed();return true;
-  }catch(error){this.ctx.notify(errorMessage(error));return false;}finally{this.busy=false;this.renderToolbar();this.ctx.changed();}
+   const before=next.flatMap(s=>{const old=all.find(x=>x.id===s.id);return old?[structuredClone(old)]:[];});this.renderToolbar();await this.ctx.commit(next);
+   if(record){const h=this.history(board);h.undo.push({before,after:structuredClone(next)});if(h.undo.length>100)h.undo.shift();h.redo=[];}this.changed();return true;
+  }catch(error){this.ctx.notify(errorMessage(error));return false;}finally{this.pending--;this.renderToolbar();this.ctx.changed();}
  }
  async undo():Promise<void>{await this.restore(false);}async redo():Promise<void>{await this.restore(true);}
  private async restore(redo:boolean):Promise<void>{const h=this.history(),source=redo?h.redo:h.undo,target=redo?h.undo:h.redo,command=source.at(-1);if(!command||this.busy)return;
@@ -87,7 +88,7 @@ export class BoardEditor {
  private renderToolbar():void{
   this.root.replaceChildren();const objects=this.selectedObjects();const text=objects.length===1&&objects[0].tool==='text'?objects[0]:null;
   this.root.hidden=!this.active&&!this.textTool&&!objects.length;
-  if(this.active){const selectShape=element('select');setDisplayAttribute(selectShape,'aria-label',msg('Tipo de selección'));for(const [value,label]of [['rectangle','Rectángulo'],['lasso','Lazo']]){const o=element('option',label);o.value=value;selectShape.append(o);}selectShape.value=this.lasso?'lasso':'rectangle';selectShape.onchange=()=>{this.lasso=selectShape.value==='lasso';};this.root.append(selectShape);}
+  if(this.active){const help=element('span','Arrastra el borde inferior derecho para cambiar el tamaño. El zoom solo cambia la vista.');help.className='sv-subtle';this.root.append(help);const selectShape=element('select');setDisplayAttribute(selectShape,'aria-label',msg('Tipo de selección'));for(const [value,label]of [['rectangle','Rectángulo'],['lasso','Lazo']]){const o=element('option',label);o.value=value;selectShape.append(o);}selectShape.value=this.lasso?'lasso':'rectangle';selectShape.onchange=()=>{this.lasso=selectShape.value==='lasso';};this.root.append(selectShape);}
   if(objects.length){
    if(text)this.root.append(button('Editar',()=>this.editText(text.points[0],text)));
    this.root.append(button('Copiar',()=>void this.copy()),button('Cortar',()=>void this.copy(true)),button('Duplicar',()=>void this.paste(true)),button('Eliminar',()=>void this.apply(objects.map(s=>({...s,deleted:true})))));

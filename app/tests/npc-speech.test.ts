@@ -51,7 +51,7 @@ describe('saved guide dialogue preferences', () => {
     expect(parseDialoguePreferences({ opacity: Infinity }).opacity).toBe(.9);
     expect(parseDialoguePreferences({ opacity: '0.5' }).opacity).toBe(.9);
     const value = { opacity: .6, textSize: 'large', lines: 3, progressive: false } as const;
-    expect(parseDialoguePreferences(value)).toEqual(value);
+    expect(parseDialoguePreferences(value)).toEqual({...value,size:'standard'});
   });
 
   it('returns an independent preference object and leaves defaults intact', () => {
@@ -59,7 +59,7 @@ describe('saved guide dialogue preferences', () => {
     const parsed = parseDialoguePreferences(saved);
     parsed.lines = 3;
     parsed.opacity = .4;
-    expect(saved).toEqual({ opacity: .9, textSize: 'normal', lines: 2, progressive: true });
+    expect(saved).toEqual({ size:'standard', opacity: .9, textSize: 'normal', lines: 2, progressive: true });
     expect(DEFAULT_DIALOGUE).toEqual(saved);
   });
 });
