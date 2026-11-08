@@ -24,3 +24,11 @@ Synthetic pointer and CI macOS results are regression evidence, not a direct ret
 ## Persistence and assets
 
 Pet configuration lives on stable house furniture instances; no per-frame writes. Own-room pet summaries are sent only to their owner so a second device can list and call pets without visiting every room. Room content and credentials are excluded from those summaries. Transient movement/animation/food clocks are not saved. Artwork replacement instructions and fallbacks are in `docs/SPRITES.md`; provenance is in `ASSETS_LICENSES.md`.
+
+## Reviewed layouts
+
+![Automatic focus and rest configuration](verification/focus-desktop.png)
+
+![Five independent pets and species houses](verification/pets-world.png)
+
+[Phone pet controls](verification/pets-phone.png) use a scrollable panel with visible names, modes and nearby-action feedback.

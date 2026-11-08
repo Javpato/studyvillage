@@ -16,8 +16,8 @@ export type Point={x:number;y:number};
 export interface PetEntity extends Point {id:string;owner:string;species:PetSpecies;scene:string;state:PetState;direction:'up'|'down'|'left'|'right';moving:boolean;phrase?:string;toy?:Point;reactionUntil:number}
 export const PET_BEHAVIOR={follow:48,followStart:20,stop:10,far:256,stuck:3000,recoveryCooldown:5000,speed:82,petting:1800,ability:3200,abilityCooldown:5000,foodMin:120000,foodMax:300000,eating:3500} as const;
 export interface PetNavigation {
- path(scene:string,from:Point,to:Point,home?:PetHome):Point[]|null;
- safe(scene:string,point:Point,home?:PetHome):Point|null;
+ path(scene:string,from:Point,to:Point,home?:PetHome,species?:PetSpecies):Point[]|null;
+ safe(scene:string,point:Point,home?:PetHome,species?:PetSpecies):Point|null;
  wander(home:PetHome,random:()=>number):Point|null;
  bowls(home:PetHome):{id:string;point:Point}[];
 }
@@ -46,7 +46,7 @@ export class PetController {
   const a=this.actors.get(id);if(!a||a.game||a.abilityCooldown>0||['petted','ability'].includes(a.entity.state))return false;
   const home=a.home.config.mode==='roam'?a.home:undefined;
   const point=target??{x:a.entity.x+48,y:a.entity.y};
-  const route=['dog','hamster','rabbit'].includes(a.home.species)?this.nav.path(a.entity.scene,a.entity,point,home):[];
+  const route=['dog','hamster','rabbit'].includes(a.home.species)?this.nav.path(a.entity.scene,a.entity,point,home,a.home.species):[];
   if(!route||Math.hypot(point.x-a.entity.x,point.y-a.entity.y)>128)return false;
   this.interrupt(a);a.entity.state='ability';a.wait=PET_BEHAVIOR.ability;a.abilityCooldown=PET_BEHAVIOR.abilityCooldown;a.path=route;a.target=point;a.returnToy=a.home.species==='dog';if(a.returnToy)a.entity.toy=point;
   if(a.home.species==='parrot')a.entity.phrase=a.home.config.phrase||'♪';a.entity.reactionUntil=now+PET_BEHAVIOR.ability;return true;
@@ -56,21 +56,21 @@ export class PetController {
   for(const a of this.actors.values()){
    const e=a.entity;e.moving=false;a.cooldown=Math.max(0,a.cooldown-ms);a.abilityCooldown=Math.max(0,a.abilityCooldown-ms);
    if(a.game){e.state='game';continue;}
-   if(a.home.config.mode==='follow'&&e.scene!==owner.scene){const slot=followers.indexOf(a),angle=slot*2.39996;const at=this.nav.safe(owner.scene,{x:owner.position.x+Math.cos(angle)*PET_BEHAVIOR.follow,y:owner.position.y+Math.sin(angle)*PET_BEHAVIOR.follow});if(!at)continue;this.interrupt(a);Object.assign(e,at,{scene:owner.scene});}
+   if(a.home.config.mode==='follow'&&e.scene!==owner.scene){const slot=followers.indexOf(a),angle=slot*2.39996;const at=this.nav.safe(owner.scene,{x:owner.position.x+Math.cos(angle)*PET_BEHAVIOR.follow,y:owner.position.y+Math.sin(angle)*PET_BEHAVIOR.follow},undefined,a.home.species);if(!at)continue;this.interrupt(a);Object.assign(e,at,{scene:owner.scene});}
    if(a.home.config.mode==='roam'&&e.scene!==a.home.scene){this.sendHome(e.id);}
    if(e.scene!==owner.scene)continue; // Ambient time is active simulation, never offline debt.
    if(a.home.config.mode==='roam')a.food-=ms;
    if(a.bowl&&!this.nav.bowls(a.home).some(b=>b.id===a.bowl)){this.interrupt(a);}
    if(['petted','eating','rest'].includes(e.state)){a.wait-=ms;if(a.wait>0)continue;this.interrupt(a);}
-   if(e.state==='ability'){a.wait-=ms;if(a.wait<=0){this.interrupt(a);}else if(!a.path.length){if(a.returnToy){a.returnToy=false;e.toy=undefined;a.path=this.nav.path(e.scene,e,owner.position,a.home.config.mode==='roam'?a.home:undefined)??[];}else continue;}}
+   if(e.state==='ability'){a.wait-=ms;if(a.wait<=0){this.interrupt(a);}else if(!a.path.length){if(a.returnToy){a.returnToy=false;e.toy=undefined;a.path=this.nav.path(e.scene,e,owner.position,a.home.config.mode==='roam'?a.home:undefined,a.home.species)??[];}else continue;}}
    if(e.state==='home'&&!a.path.length)this.interrupt(a);
    if(e.state!=='ability'&&e.state!=='home'){
     if(a.home.config.mode==='follow'){
      const slot=followers.indexOf(a),angle=slot*2.39996,target={x:owner.position.x+Math.cos(angle)*PET_BEHAVIOR.follow,y:owner.position.y+Math.sin(angle)*PET_BEHAVIOR.follow};
      const distance=Math.hypot(target.x-e.x,target.y-e.y);e.state='following';
-     if(distance>PET_BEHAVIOR.followStart||a.path.length&&distance>PET_BEHAVIOR.stop){if(!a.target||Math.hypot(target.x-a.target.x,target.y-a.target.y)>16||!a.path.length){a.target=target;a.path=this.nav.path(e.scene,e,target)??[];}
+     if(distance>PET_BEHAVIOR.followStart||a.path.length&&distance>PET_BEHAVIOR.stop){if(!a.target||Math.hypot(target.x-a.target.x,target.y-a.target.y)>16||!a.path.length){a.target=target;a.path=this.nav.path(e.scene,e,target,undefined,a.home.species)??[];}
       if(!a.path.length)a.stuck+=ms;
-      if(a.stuck>=PET_BEHAVIOR.stuck&&Math.hypot(owner.position.x-e.x,owner.position.y-e.y)>PET_BEHAVIOR.far&&!a.cooldown){const at=this.nav.safe(e.scene,target);if(at){Object.assign(e,at);a.path=[];a.stuck=0;a.cooldown=PET_BEHAVIOR.recoveryCooldown;}}
+      if(a.stuck>=PET_BEHAVIOR.stuck&&Math.hypot(owner.position.x-e.x,owner.position.y-e.y)>PET_BEHAVIOR.far&&!a.cooldown){const at=this.nav.safe(e.scene,target,undefined,a.home.species);if(at){Object.assign(e,at);a.path=[];a.stuck=0;a.cooldown=PET_BEHAVIOR.recoveryCooldown;}}
      }else{a.path=[];a.stuck=0;}
     }else{
      if(e.state==='food'&&!a.path.length){e.state='eating';a.wait=PET_BEHAVIOR.eating;a.food=this.foodDelay();continue;}
@@ -80,7 +80,7 @@ export class PetController {
      }
     }
    }
-   const target=a.path[0];if(target){const dx=target.x-e.x,dy=target.y-e.y,d=Math.hypot(dx,dy),step=Math.min(d,PET_BEHAVIOR.speed*ms/1000);const at={x:e.x+dx/(d||1)*step,y:e.y+dy/(d||1)*step};const safe=this.nav.safe(e.scene,at,a.home.config.mode==='roam'?a.home:undefined);
+   const target=a.path[0];if(target){const dx=target.x-e.x,dy=target.y-e.y,d=Math.hypot(dx,dy),step=Math.min(d,PET_BEHAVIOR.speed*ms/1000);const at={x:e.x+dx/(d||1)*step,y:e.y+dy/(d||1)*step};const safe=this.nav.safe(e.scene,at,a.home.config.mode==='roam'?a.home:undefined,a.home.species);
     if(safe&&Math.hypot(safe.x-at.x,safe.y-at.y)<1){Object.assign(e,at);e.moving=step>0;e.direction=Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up';a.stuck=0;if(d<3||step===d)a.path.shift();}else{a.stuck+=ms;a.path=[];}
    }
   }
