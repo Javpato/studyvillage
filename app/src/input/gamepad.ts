@@ -29,7 +29,9 @@ export class GamepadController {
   if(!this.root.closest('[hidden]')&&this.root.getClientRects().length)this.meter.textContent=pad?`${pad.buttons.map((b,i)=>b.pressed?i:'·').join(' ')}\n${pad.axes.map(a=>a.toFixed(2)).join(' ')}`:'';
   if(!pad||pad.mapping!=='standard'||!this.enabled||document.hidden||!document.hasFocus()){this.release();this.previous.clear();return;}
   const pressed=new Set(pad.buttons.flatMap((b,i)=>b.pressed?[i]:[])),edge=(i:number)=>pressed.has(i)&&!this.previous.has(i);
-  const context=this.contextOf();if(context!==this.context){this.release();this.context=context;this.previous=pressed;return;}
+  // Keep the previous frame's buttons: held inputs stay suppressed, but a fresh
+  // press on the same frame as a menu/world transition must still be handled.
+  const context=this.contextOf();if(context!==this.context){this.release();this.context=context;}
   const x=axisDirection(pad.axes[0]??0),y=axisDirection(pad.axes[1]??0);
   if(context==='world'){
    const keys=new Set<string>();if(x<0||pressed.has(14))keys.add('ArrowLeft');if(x>0||pressed.has(15))keys.add('ArrowRight');if(y<0||pressed.has(12))keys.add('ArrowUp');if(y>0||pressed.has(13))keys.add('ArrowDown');if(pressed.has(7))keys.add('Shift');

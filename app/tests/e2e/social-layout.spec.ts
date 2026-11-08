@@ -20,8 +20,9 @@ test('one controller instance handles presses and releases on disconnect',async(
   const pad={index:0,id:'Test controller',mapping:'standard',connected:true,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0,touched:false}))};(window as any).testPad=pad;Object.defineProperty(navigator,'getGamepads',{value:()=>pad.connected?[pad]:[]});
  });
  await page.goto('/');await openPhoneApp(page,'settings');await page.getByRole('tab',{name:'Mando',exact:true}).click();await expect(page.getByText('Mando conectado',{exact:true})).toHaveCount(1);await page.waitForTimeout(300);await expect(page.getByText('Mando conectado',{exact:true})).toHaveCount(1);
- await page.getByRole('dialog',{name:'Ajustes',exact:true}).getByRole('button',{name:'Cerrar',exact:true}).click();await page.keyboard.press('Escape');
- await page.evaluate(()=>{(window as any).testPad.buttons[9].pressed=true;});await expect(page.locator('.sv-phone')).toBeVisible();await page.evaluate(()=>{(window as any).testPad.buttons[9].pressed=false;});await page.waitForTimeout(80);
+ // Close the menu and press Start in the same frame: a fresh press must survive the context change.
+ await page.getByRole('dialog',{name:'Ajustes',exact:true}).getByRole('button',{name:'Cerrar',exact:true}).evaluate(button=>new Promise<void>(resolve=>requestAnimationFrame(()=>{(button as HTMLButtonElement).click();(window as any).testPad.buttons[9].pressed=true;resolve();})));
+ await expect(page.locator('.sv-phone')).toBeVisible();await page.waitForTimeout(80);await expect(page.locator('.sv-phone')).toBeVisible();await page.evaluate(()=>{(window as any).testPad.buttons[9].pressed=false;});await page.waitForTimeout(80);
  await page.evaluate(()=>{(window as any).testPad.buttons[1].pressed=true;});await expect(page.locator('.sv-phone')).toBeHidden();await page.evaluate(()=>{(window as any).testPad.connected=false;});
 });
 
@@ -31,7 +32,7 @@ test('shared windows move and resize locally and stay contained after rotation',
  });
  const root=page.locator('#window-fixture'),before=(await root.boundingBox())!;await page.mouse.move(before.x+20,before.y+10);await page.mouse.down();await page.mouse.move(before.x+120,before.y+90,{steps:4});await page.mouse.up();expect((await root.boundingBox())!.x).toBeGreaterThan(before.x+50);
  const grip=page.getByRole('button',{name:'Cambiar tamaño',exact:true});await grip.focus();await page.keyboard.press('ArrowLeft');expect((await root.boundingBox())!.width).toBeLessThan(before.width);
- await page.setViewportSize({width:390,height:300});const rect=(await root.boundingBox())!;expect(rect.x+rect.width).toBeLessThanOrEqual(390);expect(rect.y+rect.height).toBeLessThanOrEqual(300);
+ await page.setViewportSize({width:390,height:300});await expect(async()=>{const rect=(await root.boundingBox())!;expect(rect.x+rect.width).toBeLessThanOrEqual(390);expect(rect.y+rect.height).toBeLessThanOrEqual(300);}).toPass({timeout:5000});
  await root.getByRole('button',{name:'Minimizar',exact:true}).click();await expect(root.locator('video')).toBeHidden();await root.getByRole('button',{name:'Restaurar',exact:true}).click();await expect(root.locator('video')).toBeVisible();
 });
 

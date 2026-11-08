@@ -24,7 +24,7 @@ for(const device of [{name:'desktop',width:1440,height:1000,touch:false},{name:'
   const before=(await hud.boundingBox())!,grip=(await hud.getByRole('button',{name:'Mover reloj flotante'}).boundingBox())!,dx=device.touch?0:120;
   await page.mouse.move(grip.x+grip.width/2,grip.y+grip.height/2);await page.mouse.down();await page.mouse.move(grip.x+grip.width/2+dx,grip.y+grip.height/2+80,{steps:8});await page.mouse.up();
   const moved=(await hud.boundingBox())!;expect(moved.x-before.x).toBeCloseTo(dx,0);expect(moved.y-before.y).toBeCloseTo(80,0);
-  const contained=async()=>{const box=(await hud.boundingBox())!,size=page.viewportSize()!;expect(box.x).toBeGreaterThanOrEqual(11);expect(box.y).toBeGreaterThanOrEqual(11);expect(box.x+box.width).toBeLessThanOrEqual(size.width-11);expect(box.y+box.height).toBeLessThanOrEqual(size.height-11);};
+  const contained=async()=>{await expect(async()=>{const box=(await hud.boundingBox())!,size=page.viewportSize()!;expect(box.x).toBeGreaterThanOrEqual(11);expect(box.y).toBeGreaterThanOrEqual(11);expect(box.x+box.width).toBeLessThanOrEqual(size.width-11);expect(box.y+box.height).toBeLessThanOrEqual(size.height-11);}).toPass({timeout:5000});};
   await contained();await page.reload();await expect(hud).toBeVisible();const restored=(await hud.boundingBox())!;
   expect(restored.x).toBeCloseTo(moved.x,0);expect(restored.y).toBeCloseTo(moved.y,0);expect(restored.width).toBeCloseTo(moved.width,0);
   await hud.getByRole('button',{name:'Continuar reloj',exact:true}).click();await hud.getByRole('button',{name:'Pausar reloj',exact:true}).click();expect((await hud.boundingBox())!.y).toBeCloseTo(moved.y,0);

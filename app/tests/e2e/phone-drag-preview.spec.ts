@@ -17,7 +17,9 @@ for(const width of [390,820])test.describe(`touch drag at ${width}`,()=>{
   const session=await page.context().newCDPSession(page),x=a.x+a.width/2,y=a.y+a.height/2;
   const send=(type:'touchStart'|'touchMove'|'touchEnd'|'touchCancel',x:number,y:number)=>session.send('Input.dispatchTouchEvent',{type,touchPoints:type==='touchCancel'||type==='touchEnd'?[]:[{x,y,id:1}]});
   try{
-   await send('touchStart',x,y);await send('touchMove',x+20,y+25);const preview=page.locator('.sv-phone-drag-preview');await expect(preview).toBeVisible();const first=(await preview.boundingBox())!;await send('touchMove',x+40,y+45);const second=(await preview.boundingBox())!;expect(second.x-first.x).toBeCloseTo(20,0);expect(second.y-first.y).toBeCloseTo(20,0);
+   await send('touchStart',x,y);await send('touchMove',x+20,y+25);const preview=page.locator('.sv-phone-drag-preview');await expect(preview).toBeVisible();const first=(await preview.boundingBox())!;await send('touchMove',x+40,y+45);
+   // CDP acknowledges input before Chromium necessarily delivers its coalesced pointer event.
+   await expect.poll(async()=>((await preview.boundingBox())!.x-first.x)).toBeCloseTo(20,0);await expect.poll(async()=>((await preview.boundingBox())!.y-first.y)).toBeCloseTo(20,0);
    await page.screenshot({path:test.info().outputPath('phone-drag.png')});await send('touchCancel',0,0);await expect(preview).toHaveCount(0);await expect(source).not.toHaveClass(/sv-phone-drag-source/);await expect(page.locator('.sv-phone-home .sv-app-label')).toHaveText(['Aldea','Contactos','Hogar','Ajustes']);
   }finally{await session.detach();}
  });
