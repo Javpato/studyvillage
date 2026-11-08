@@ -7,7 +7,7 @@ Esta ampliación conserva los cambios anteriores descritos en [AMENDMENT.md](AME
 | Área | Cambio implementado | Componentes principales |
 |---|---|---|
 | Casas y mascotas invisibles | Catálogo e imágenes con revisión de contenido; caché PWA coherente; validación de fotogramas y sustituto visible por especie ante fallos; orden de profundidad junto a muebles y avatares | `assets/sprite-catalog.ts`, `assets/pet-assets.ts`, `pets/art.ts`, `pets/world.ts`, `house/draw.ts`, `ui/app.ts`, `scripts/sprite-revision.mjs`, `scripts/build-pwa.mjs` |
-| Interacción | E selecciona una mascota cercana con preferencia por la dirección del jugador, indicador y contorno. La misma acción de mundo sirve para mando y controles táctiles existentes. Panel compacto con acciones reales, separado de la gestión de la casa | `pets/world.ts`, `ui/app.ts`, `ui/garden-panel.ts`, `ui/world-expansion-ui.ts` |
+| Interacción | E selecciona una mascota cercana con preferencia por la dirección del jugador, indicador y contorno. La misma acción de mundo sirve para mando y controles táctiles existentes. Panel compacto con acciones reales, separado de la gestión de la casa | `pets/world.ts`, `ui/app.ts`, `ui/garden-ui.ts`, `ui/world-expansion-ui.ts` |
 | Carpeta del teléfono | Catálogo existente de iconos, paleta, color libre, hexadecimal, previsualización, guardar/cancelar/restablecer. Ajustes usa el engranaje según su ID, conservando personalizaciones | `ui/folder-appearance.ts`, `ui/phone-layout-editor.ts`, `ui/pixel-icons.ts`, `packages/core/src/phone/layout.ts` |
 | Mando | Acciones compartidas, navegación por foco, repetición limitada, zona muerta, entrada discreta y acciones de Bloques. Detección del último dispositivo, símbolos por familia reconocida y alternativa genérica | `input/actions.ts`, `input/gamepad.ts`, `ui/tetris-ui.ts`, `ui/study-ui.ts` |
 | Guía | Franja contextual y guía visual derivadas de los mismos mapeos; apertura/cierre con mando. Pausa individual de Bloques; los juegos compartidos mantienen sus reglas de tiempo | `input/gamepad.ts`, `ui/village-polish.css` |
@@ -15,6 +15,10 @@ Esta ampliación conserva los cambios anteriores descritos en [AMENDMENT.md](AME
 | Idiomas | Ollama: «Unavailable» / «Indisponible». Traducciones de estados, controles, carpetas, respuestas opcionales y número de jugadores; redacción francesa corregida. Detección de claves literales ausentes en el código, además de paridad y parámetros | `ui/ollama-setup-ui.ts`, `ui/study-ui.ts`, `ui/werewolves-ui.ts`, `i18n/{es,en,fr}.json`, `scripts/check-translations.mjs`, `scripts/translation-keys.mjs` |
 
 Las rutas de aplicación de la tabla son relativas a `app/src`, salvo las indicadas explícitamente. Las reglas de sustitución de sprites están en [SPRITES.md](SPRITES.md) y las acciones de los juegos en [MINIGAMES.md](MINIGAMES.md).
+
+## Resultado verificado
+
+Publicado en la web desde `33d934b`. Pasaron 514 pruebas de aplicación, 37 de servidor, cinco del puente nativo y 124 ejecuciones de navegador entre Chromium/WebKit y Linux/macOS. También se verificaron las cinco especies y Ollama EN/FR directamente en GitHub Pages. Los enlaces a las ejecuciones y las diferencias entre las pruebas locales, CI y dispositivos físicos están en el [registro final](VERIFICATION.md).
 
 ## Diagnóstico y pruebas
 
@@ -33,3 +37,10 @@ El paquete de escritorio actual se prueba con datos temporales separados: sandbo
 ## Límites de la verificación
 
 El mando de las pruebas se inyecta mediante la API Gamepad; no certifica emparejamiento físico USB/Bluetooth. Las pruebas locales con motores y participantes simulados no equivalen a una sesión multijugador por Internet. No se verificaron aquí nuevos instaladores Windows, macOS o Android. El estado de las pruebas automatizadas sobre macOS se detalla en el registro de verificación; no debe confundirse con el Mac físico del informe original.
+
+## Capturas revisadas
+
+- [Cinco casas y mascotas dibujadas en el mundo](images/pets-controls/pets-world.png).
+- [Interacción compacta en pantalla móvil](images/pets-controls/pet-panel-mobile.png).
+- [Personalización de carpeta](images/pets-controls/folder-appearance.png).
+- [Guía de controles en la aplicación real](images/pets-controls/controller-guide-actual.png). La captura muestra las teclas porque el último dispositivo utilizado era teclado/ratón; las pruebas comprueban el cambio a símbolos de mando.

@@ -40,7 +40,7 @@ El teléfono reúne los accesos cotidianos:
 - **Hogar:** Mi casa, Habitaciones, Decorar y Mi jardín.
 - **Ajustes:** Ajustes, Voz y Editar controles en computadora y dispositivos táctiles.
 
-Organiza el teléfono con clic derecho sobre un icono o manteniéndolo pulsado durante tres segundos. En edición puedes arrastrar accesos, agruparlos en carpetas, cambiar el nombre de una carpeta tocando su título y añadir accesos desde **Biblioteca de apps**. La × quita el acceso y conserva sus datos; Ajustes siempre permanece disponible. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad.
+Organiza el teléfono con clic derecho sobre un icono o manteniéndolo pulsado durante tres segundos. En edición puedes arrastrar accesos, agruparlos en carpetas, cambiar el nombre de una carpeta tocando su título y añadir accesos desde **Biblioteca de apps**. La × quita el acceso y conserva sus datos; Ajustes siempre permanece disponible. En **Personalizar carpeta** puedes elegir un icono existente y cualquier color, previsualizarlo, guardar, cancelar o restablecer la apariencia. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad.
 
 ## Compartir el tiempo
 
@@ -50,7 +50,7 @@ Para mantener una aldea en tu propio equipo o servidor, sigue la [guía de servi
 
 Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra colaborativa, tarjetas, quizzes, proyectos, música local y un reloj de concentración. Son actividades dentro de la aldea: tú eliges cuáles forman parte de tu día. Las herramientas manuales funcionan sin IA; la integración local con Ollama es opcional.
 
-La web y `main` incluyen ahora ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Los [detalles y límites de verificación](docs/AMENDMENT.md) corresponden a este candidato; los instaladores dev.8 conservan su versión etiquetada.
+La web y `main` incluyen ahora ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Acércate al animal y pulsa **E** para acariciarlo, llamarlo o enviarlo a casa. Consulta la [entrega inicial](docs/AMENDMENT.md) y las [correcciones de mascotas, teléfono, mando e idiomas](docs/PETS-CONTROLS.md). Los instaladores dev.8 conservan su versión etiquetada.
 
 ## Empezar a jugar
 
@@ -63,7 +63,7 @@ En iPhone y iPad, abre la web en Safari y usa **Compartir → Añadir a pantalla
 - **Doble clic o doble toque:** acercarte y usar casas, muebles y portales.
 - **M:** abrir o cerrar el teléfono. **Escape:** cerrar o volver.
 - En pantallas táctiles, usa los controles en pantalla y personalízalos desde Editar controles.
-- Para usar un mando estándar, abre **Ajustes → Mando**. El emparejamiento Bluetooth se hace en el sistema operativo.
+- Para usar un mando estándar, abre **Ajustes → Mando**. El emparejamiento Bluetooth se hace en el sistema operativo. Las ayudas cambian al dispositivo que estés usando; **Controles** muestra el mapeo del juego. En Gartic, escribir y dibujar requiere teclado, ratón o táctil; el mando permite navegar y enviar las acciones.
 
 Puedes explorar y usar tus herramientas personales sin iniciar sesión. Guarda una identidad cifrada para que tus amigos puedan reconocerte entre sesiones. Los datos personales se conservan localmente: exporta una copia completa desde Identidad antes de borrar datos del navegador o cambiar de dispositivo. La escritura guardada puede reabrirse sin conexión después de la primera carga web.
 
