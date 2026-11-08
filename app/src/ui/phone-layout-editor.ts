@@ -141,6 +141,7 @@ export class PhoneLayoutEditor {
   this.clearTarget();this.clearInsertion();this.settle(g.item);
  }
  handleEscape(){if(!this.editing)return false;if(this.gesture)this.cancel();else this.finish();return true;}
+ refresh(){this.render();this.decorate();}
  enter(){this.editing=true;this.render();this.decorate();}
  finish(){this.cancel();this.editing=false;this.library=false;this.render();this.decorate();}
  private change(layout:PhoneLayout){this.draft=normalizePhoneLayout(layout);try{savePhoneLayout(this.draft);this.error='';}catch{this.error='No se pudo guardar el teléfono. Tus cambios siguen aquí.';}this.saved(this.draft);this.render();this.decorate();}

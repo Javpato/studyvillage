@@ -935,7 +935,7 @@ class StudyUI {
     setText(this.phoneTitle, titles[page]);
     show(this.phoneBack, page !== 'home');
     for (const [key, el] of this.phonePages) show(el, key === page);
-    this.phoneEditor?.decorate();
+    this.phoneEditor?.refresh();
     this.refresh();
   }
 

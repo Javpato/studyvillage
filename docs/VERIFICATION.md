@@ -1,3 +1,15 @@
+# Pets, folders, controls and language corrections — verification checkpoint
+
+Initial candidate [`3798c38`](https://github.com/Javpato/studyvillage/commit/3798c38) was pushed before long checks. The follow-up candidate recorded by this commit includes the findings from those checks: closed-details focus, folder editor refresh, optional quiz labels and French player-count wording.
+
+Completed: full baseline on the initial candidate (514 app / 37 server tests, types, translations, web/PWA/server builds); production offline checks and a legacy-worker upgrade fixture in Chromium/WebKit; Chromium world rendering for five species and invalid-art fallbacks, reload/capacity/outdoor move/remove, E interaction, folder save/cancel/reset, Ollama EN/FR, twelve visible screens per language, actual Forest Blocks drop/pause, complete Quiz and Gartic mixed-input journeys. Werewolves controller night/day/result/replay actions passed; its fixture exit used hidden instead of the real unmount lifecycle and is corrected for the final rerun.
+
+[Initial Pages run](https://github.com/Javpato/studyvillage/actions/runs/42523150983) stopped at the offline fixture’s new-client controller assertion; no second-task web release was published. The fixture now keeps its installed client alive until the second client is controlled; the strict controller/offline assertions remain.
+
+Current type checks and 2,716 ES/EN/FR keys pass. Remaining: final full baseline, complete two-engine browser matrix, macOS CI, native Linux payload smoke check, visual review, publication checks and cleanup. No physical controller pairing or new installer release has been verified. Gartic uses controller navigation/actions and keyboard/mouse/touch for writing/drawing, as selected by the owner.
+
+---
+
 # Pets, phone and controller candidate — 8 November 2026
 
 Implementation checkpoint on the existing `main` branch; not yet a verified release. Reproduced invisible pets using current application code with the previous release sprite manifest: furniture was persisted and management listed the pet, while the world rendered neither sprite. Current published image bytes were present and correct. This establishes the mixed-version failure mechanism, not the contents of the reporter’s browser cache.

@@ -377,7 +377,7 @@ export class WerewolvesPanel {
         }
         if (v.me.isLeader) {
           const need = MIN_PLAYERS - v.players.length;
-          box.append(el('p', '', need > 0 ? msg("Faltan {p0} jugador{p1}. Espera a tus vecinos o añade bots.", { p0: need, p1: need === 1 ? '' : 'es' }) : msg('Todo listo. Cuando empieces, cada uno recibirá una carta al azar.')));
+          box.append(el('p', '', need > 0 ? need===1?msg('Falta una persona. Espera a tus vecinos o añade bots.'):msg('Faltan {count} personas. Espera a tus vecinos o añade bots.',{count:need}) : msg('Todo listo. Cuando empieces, cada uno recibirá una carta al azar.')));
           const add = secondary(msg('Añadir bot'), () => this.ctx.send({ kind: 'add_bot' }));
           add.disabled = v.players.length >= MAX_PLAYERS;
           const pets=this.ctx.pets?.()??[];if(pets.length){const select=el('select');setDisplayAttribute(select,'aria-label',msg('Elegir mascota'));for(const pet of pets){const o=el('option','',pet.name);o.value=pet.id;select.append(o);}box.append(select);const addPet=secondary(msg('Añadir mascota bot'),()=>{const pet=pets.find(p=>p.id===select.value);if(pet)this.ctx.send({kind:'add_bot',pet});});addPet.disabled=v.players.length>=MAX_PLAYERS;}
@@ -455,7 +455,7 @@ export class WerewolvesPanel {
         const p = v.verdict?.id ? v.players.find((x) => x.id === v.verdict!.id) : null;
         if (p) {
           const row = el('p', 'ww-death');
-          row.append(colorIcon(p.role ?? 'dead', 22), el('span', '', msg("{p0} era {p1}.", { p0: p.name, p1: p.role ? roleInfo(p.role).name.toLowerCase() : '¿?' })));
+          row.append(colorIcon(p.role ?? 'dead', 22), el('span', '', msg("{p0} era {p1}.", { p0: p.name, p1: p.role ? roleInfo(p.role).name.toLowerCase() : t('¿?') })));
           box.append(row);
         } else box.append(el('p', '', v.verdict?.tie ? msg('Empate: nadie es eliminado.') : msg('Nadie es eliminado hoy.')));
         if (v.me.isLeader) secondary(msg('Caer la noche'), () => this.ctx.send({ kind: 'continue' }));

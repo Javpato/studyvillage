@@ -33,3 +33,13 @@ When adding an activity, implement a pure domain engine, define bounded action/v
 ## Evidence
 
 `minigames.test.ts`, `werewolves-pact.test.ts`, `activity-scope.test.ts` and server tests exercise rules and authorization. Browser journeys cover activity stop, Werewolves selection/play and multiple clients. The existing historical verification report records prior seeded scenarios; rerun the relevant suite after changing mechanics rather than treating old counts as current evidence.
+
+## Controller input and help
+
+`app/src/input/actions.ts` is the common source for semantic actions, keyboard/controller bindings, glyphs, stick dead zone and navigation repeat timing. `gamepad.ts` adapts these actions to the focused UI or the existing Forest Blocks action interface. The same definitions generate the contextual strip and Controls guide. There is no separate controller remapping editor; future remapping should update these resolved definitions rather than hard-code help text.
+
+Forest Blocks supports movement, both rotations, hard drop, hold and its three power actions. Start/P opens its existing game menu (solo pause; multiplayer keeps normal room timing). View/F1 opens help. Werewolves and Quiz use focused buttons/seats, confirm and back. Left stick/D-pad navigates, shoulder buttons move focus, and right stick scrolls. Number/range/select fields retain their normal change handlers. Held confirm fires once; navigation repeats after a delay. Closing an activity releases world input ownership.
+
+Gartic intentionally uses mixed input, as chosen by the owner: controller navigation, tools, submit, albums and replay; keyboard/mouse/touch for text and drawing. The guide states this requirement. Shared multiplayer rounds are not paused independently by a participant opening help.
+
+Hints follow the last significant input, not just controller connection. Dead-zone noise is ignored; disconnect restores keyboard hints. Recognized PlayStation/Xbox IDs get family glyphs; unknown standard controllers get neutral positional symbols. Non-standard mappings show an unsupported-layout explanation. Automated browser tests inject Gamepad API samples; this does not certify physical USB/Bluetooth pairing.

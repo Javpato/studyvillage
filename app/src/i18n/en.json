@@ -20,7 +20,7 @@
   "¡Los hombres lobo ganan!": "The werewolves win!",
   "¡Quiz terminado!": "Quiz finished!",
   "¡Repaso terminado!": "Review finished!",
-  "¿?": "¿?",
+  "¿?": "?",
   "¿Borrar todo lo tuyo?": "Delete everything of yours?",
   "¿Cerrar el vecindario para todas las personas? Tu casa y tus archivos locales se conservan.": "Close the neighbourhood for everyone? Your house and local files will be kept.",
   "¿Cuál es la complejidad temporal de la búsqueda binaria en un arreglo ordenado?": "What is the time complexity of binary search on a sorted array?",
@@ -830,7 +830,6 @@
   "Expresión matemática formateada en LaTeX.": "Mathematical expression formatted in LaTeX.",
   "Fácil": "Easy",
   "Fallo al compartir": "Sharing failed",
-  "Faltan {p0} jugador{p1}. Espera a tus vecinos o añade bots.": "{p0} more player{p1} needed. Wait for your neighbours or add bots.",
   "Femenino": "Female",
   "Fin de la partida": "Game over",
   "Fino": "Thin",
@@ -2710,5 +2709,10 @@
   "Loup-Garou": "Werewolves",
   "Continuar": "Resume",
   "Reanudar": "Resume",
-  "Reservar": "Hold"
+  "Reservar": "Hold",
+  "Menú de partida": "Game menu",
+  "Stick izquierdo / cruceta: mover bloques.": "Left stick / D-pad: move blocks.",
+  " (opcional)": " (optional)",
+  "Falta una persona. Espera a tus vecinos o añade bots.": "One more player is needed. Wait for your neighbours or add bots.",
+  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "{count} more players are needed. Wait for your neighbours or add bots."
 }

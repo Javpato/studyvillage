@@ -22,7 +22,7 @@ import { errorMessage } from '../errors/messages';
 import { GarticGame, type GarticAction, type GarticView } from '../../../packages/core/src/minigames/gartic-phone';
 import { ACTIVITY_SCOPE, SharedRoom } from '../../../packages/runtime/src/session/shared-room';
 import { hasRoomAccess } from '../house/workspaces';
-import { WerewolvesGame, type WerewolvesAction, type WerewolvesView } from '../../../packages/core/src/minigames/werewolves';
+import { MAX_PLAYERS as MAX_WEREWOLVES_PLAYERS, WerewolvesGame, type WerewolvesAction, type WerewolvesView } from '../../../packages/core/src/minigames/werewolves';
 import { GroupProjectsBoard, type ProjectsAction, type ProjectsView } from '../../../packages/core/src/projects/group-projects';
 import { SecureNotesStore, type SecureNote } from '../../../packages/core/src/notes/secure-notes';
 import type { AppActions, AppMessage, AppView } from '../../../packages/core/src/protocol/types';
@@ -471,7 +471,7 @@ export class WorldExpansionUIController {
     this.openModal('object_inspector');
   }
 
-  petGames(){const games:{id:string;name:string}[]=[];if(this.tetrisPanel.canStartPet())games.push({id:'tetris',name:'Bloques del Bosque'});const wolves=this.werewolvesRoom.current();if(wolves?.phase==='lobby'&&this.werewolvesRoom.canLead()&&wolves.players.length<18)games.push({id:'werewolves',name:'Loup-Garou'});return games;}
+  petGames(){const games:{id:string;name:string}[]=[];if(this.tetrisPanel.canStartPet())games.push({id:'tetris',name:'Bloques del Bosque'});const wolves=this.werewolvesRoom.current();if(wolves?.phase==='lobby'&&this.werewolvesRoom.canLead()&&wolves.players.length<MAX_WEREWOLVES_PLAYERS)games.push({id:'werewolves',name:'Loup-Garou'});return games;}
   playWithPet(id:string,pet:PetBot){if(!this.petGames().some(g=>g.id===id))return;this.openModal(id==='werewolves'?'werewolves':'tetris');if(id==='tetris')this.tetrisPanel.startWithPet(pet);else this.werewolvesRoom.act({kind:'add_bot',pet});}
   private gamepadInMenu=false;
   gamepadPlaying(){return this.activeModalKind==='tetris'&&this.tetrisPanel.gamepadPlaying()&&!this.gamepadInMenu;}

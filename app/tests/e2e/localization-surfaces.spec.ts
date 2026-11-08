@@ -1,0 +1,13 @@
+import {test,expect} from '@playwright/test';
+import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
+import {readFileSync} from 'node:fs';
+const load=(lang:string):Record<string,string>=>JSON.parse(readFileSync(`app/src/i18n/${lang}.json`,'utf8'));const ES=load('es'),EN=load('en'),FR=load('fr');
+for(const lang of ['en','fr'] as const)test(`${lang}: visible phone, settings, study and game labels contain no untranslated registered messages`,async({page})=>{
+ test.setTimeout(120000);await page.addInitScript(language=>localStorage.setItem('studyvillage-language',language),lang);const target=lang==='en'?EN:FR;const spanish=new Set(Object.entries(ES).filter(([key,text])=>text.length>=4&&(target as Record<string,string>)[key]!==text&&!text.includes('{')).map(([,text])=>text));const failures:{app:string;text:string}[]=[];
+ for(const app of ['settings','house','rooms','decorate','pets','contacts','voice','focus','ink','study','projects','tetris']){await page.goto('/');await expect(page.getByTestId('phone-button')).toBeVisible();await openPhoneApp(page,app);const texts=await page.evaluate(()=>{const result:string[]=[];const visible=(e:Element)=>e.getClientRects().length&&!e.closest('[hidden]')&&getComputedStyle(e).visibility!=='hidden';const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);for(let n=walker.nextNode();n;n=walker.nextNode())if(n.parentElement&&visible(n.parentElement)&&!['SCRIPT','STYLE'].includes(n.parentElement.tagName))result.push(n.textContent!.trim());for(const e of document.querySelectorAll('[aria-label],[placeholder],[title]'))if(visible(e))for(const key of ['aria-label','placeholder','title'])if(e.getAttribute(key))result.push(e.getAttribute(key)!);return result;});for(const text of texts)if(spanish.has(text))failures.push({app,text});}
+ expect(failures).toEqual([]);
+});
+
+for(const lang of ['en','fr'] as const)test(`${lang}: quiz creation translates optional answers before display`,async({page})=>{
+ const tr=lang==='en'?EN:FR;await page.addInitScript(l=>localStorage.setItem('studyvillage-language',l),lang);await page.goto('/');await expect(page.getByTestId('phone-button')).toBeVisible();await openPhoneApp(page,'study');const root=page.locator('.sv-study-workspace');await root.locator('.sv-study-portal').last().click();await root.getByRole('button',{name:new RegExp(tr['Crear un quiz'])}).click();await root.getByLabel(tr['Nombre del quiz'],{exact:true}).fill('Translation fixture');await root.getByRole('button',{name:tr['Crear'],exact:true}).click();await expect(root.getByLabel(lang==='en'?'Answer 3 (optional)':'Réponse 3 (facultatif)',{exact:true})).toBeVisible();await expect(root).not.toContainText('(opcional)');
+});

@@ -75,10 +75,12 @@ async function verify(name,engine){
   await page.waitForFunction(async()=>(await navigator.serviceWorker.getRegistration())?.active?.state==='activated');
   // Open a new client after installation. An existing document can remain
   // uncontrolled across a reload in Chromium; the app deliberately never claims
-  // open editors or forces a reload while someone is writing.
-  await page.close();page=await context.newPage();page.setDefaultTimeout(20000);
+  // open editors or forces a reload while someone is writing. Keep the installed
+  // client alive until the new client is controlled (some CI Chromium lifecycles
+  // discard the idle worker between closing the final page and opening another).
+  const installedPage=page;page=await context.newPage();page.setDefaultTimeout(20000);
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(address);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  await page.goto(address);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);await installedPage.close();
   const installed=await page.evaluate(async key=>(await (await caches.open(key)).keys()).map(request=>new URL(request.url).pathname+new URL(request.url).search),cache);
   assert.deepEqual(installed.sort(),precache.map(name=>mount+name.slice(2)).sort(),'Incomplete offline package');
   await openNotebook(page);await options(page,'Página');

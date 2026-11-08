@@ -830,7 +830,6 @@
   "Expresión matemática formateada en LaTeX.": "Expresión matemática formateada en LaTeX.",
   "Fácil": "Fácil",
   "Fallo al compartir": "Fallo al compartir",
-  "Faltan {p0} jugador{p1}. Espera a tus vecinos o añade bots.": "Faltan {p0} jugador{p1}. Espera a tus vecinos o añade bots.",
   "Femenino": "Femenino",
   "Fin de la partida": "Fin de la partida",
   "Fino": "Fino",
@@ -2710,5 +2709,10 @@
   "Loup-Garou": "Loup-Garou",
   "Continuar": "Continuar",
   "Reanudar": "Reanudar",
-  "Reservar": "Reservar"
+  "Reservar": "Reservar",
+  "Menú de partida": "Menú de partida",
+  "Stick izquierdo / cruceta: mover bloques.": "Stick izquierdo / cruceta: mover bloques.",
+  " (opcional)": " (opcional)",
+  "Falta una persona. Espera a tus vecinos o añade bots.": "Falta una persona. Espera a tus vecinos o añade bots.",
+  "Faltan {count} personas. Espera a tus vecinos o añade bots.": "Faltan {count} personas. Espera a tus vecinos o añade bots."
 }

@@ -245,7 +245,6 @@ function paintFurniture(
   time: number,
   perItemSprite?: HTMLImageElement | null,
   privateSpace = false,
-  companions:{baseline:number;paint():void}[]=[],
 ): void {
   const { x, y, w, h } = furnitureRect(item);
   const wall = item.kind === 'frame' || item.kind === 'board';
