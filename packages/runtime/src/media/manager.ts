@@ -79,7 +79,7 @@ export class MediaManager {
     } catch { if (generation === this.consentGeneration) this.error = 'No se pudo activar el micrófono; revisa el permiso del sistema.'; }
     finally { if (generation === this.consentGeneration) this.microphonePending = false; this.changed(); }
   }
-  async startScreen(): Promise<void> {
+  async startScreen(withAudio = false): Promise<void> {
     if (this.screen || this.phase === 'REQUESTING_OS_PERMISSION') return;
     if (!this.context) { this.error = 'Conéctate a una aldea para compartir pantalla.'; this.changed(); return; }
     const devices = this.currentDevices();
@@ -95,7 +95,7 @@ export class MediaManager {
           height: { ideal: mobile ? 720 : 2160 },
           frameRate: { ideal: mobile ? 15 : 30, max: mobile ? 15 : 30 },
         },
-        audio: false,
+        audio: withAudio,
       });
       if (consent !== this.consentGeneration || generation !== this.screenGeneration || !this.context) { this.stopTracks(stream); return; }
       if (!stream.getVideoTracks().length) { this.stopTracks(stream); throw new Error('No video track'); }

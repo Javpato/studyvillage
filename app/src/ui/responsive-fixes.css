@@ -1,0 +1,49 @@
+/* Keep application surfaces inside the visible viewport, including the iOS keyboard. */
+.sv-phone,.sv-settings-dialog{box-sizing:border-box!important;max-width:calc(var(--sv-visual-width,100vw) - 16px)!important;max-height:calc(var(--sv-visual-height,100dvh) - 16px)!important;overflow:auto;}
+body .sv-phone{top:calc(var(--sv-visual-top,0px) + 8px);bottom:auto;right:calc(var(--sv-visual-right,0px) + 8px);}
+body .sv-settings-dialog[open]{position:fixed;top:calc(var(--sv-visual-top,0px) + 8px);bottom:auto;margin:0 auto;}
+.sv-phone-screen,.sv-phone-page,.sv-panel,.sv-join-form,.sv-media-controls{min-width:0;max-width:100%;box-sizing:border-box;}
+.sv-join-form input{min-width:0;width:100%;font-size:16px;scroll-margin:16px;}
+.sv-join-form{flex-wrap:wrap;}
+.sv-activity{box-sizing:border-box;max-width:100%;}
+.sv-tetris-split{display:grid;grid-template-columns:minmax(0,3fr) minmax(240px,2fr);gap:16px;align-items:start;}
+.sv-tetris-split:has(>.sv-tetris-media[hidden]){grid-template-columns:1fr;}
+.sv-tetris-split .sv-tetris-arena{grid-template-columns:minmax(0,1fr) minmax(100px,.55fr);gap:12px;}
+.sv-tetris-round-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;}
+.sv-tetris-round-controls .sv-activity-stop{position:static!important;inset:auto!important;}
+.sv-activity[data-kind=tetris] .sv-game-camera-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));max-height:65dvh;gap:10px;overflow:auto;}
+.sv-activity[data-kind=tetris] .sv-game-camera-tile{max-width:none;width:100%;min-width:0;display:flex;flex-direction:column;aspect-ratio:auto;}
+.sv-activity[data-kind=tetris] .sv-game-camera-tile video{position:static;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;}
+.sv-game-camera-tile video[hidden]{display:none!important;}
+.sv-camera-hide{position:relative;z-index:2;min-height:36px;}
+.sv-activity[data-kind=tetris] .sv-game-camera-caption{position:static;background:#254d3b;color:white;}
+.sv-garden-preview{contain:layout;scrollbar-gutter:stable;}
+@media(pointer:coarse){
+ body .sv-garden-tray.sv-garden-tray{box-sizing:border-box;max-height:38dvh;overflow:auto;padding:8px 12px;bottom:8px;}
+ .sv-garden-tray>p:not([role=status]),.sv-garden-catalog small{display:none;}
+ .sv-garden-tray.sv-garden-tray .sv-garden-catalog{max-height:86px;margin:4px 0;}
+ .sv-garden-tray.sv-garden-tray .sv-garden-catalog button{flex-basis:100px;}
+ .sv-garden-tray .sv-garden-zoom{width:auto;}
+}
+@media(max-width:600px){
+ .sv-tetris-split{grid-template-columns:minmax(0,1fr);}
+ .sv-tetris-split .sv-tetris-arena{grid-template-columns:minmax(0,1fr) 100px;}
+ .sv-tetris-media{grid-column:1;}
+ .sv-phone-screen{width:100%!important;}
+ .sv-phone-page :is(input,select,textarea){max-width:100%;box-sizing:border-box;}
+ .sv-phone-page :is(.sv-inline,.sv-contact-row){flex-wrap:wrap;}
+ .sv-phone-page{overflow-wrap:anywhere;}
+ .sv-canvas-wrap{overflow:hidden;min-width:0;max-width:100%;}
+ .sv-stage-pane,.sv-board-pane{min-width:0;max-width:100%;box-sizing:border-box;}
+}
+body .sv-screen-theater{position:static!important;height:0!important;min-height:0!important;padding:0!important;border:0!important;margin:0!important;}
+.sv-screen-theater>.sv-screen-theater-head{display:none;}
+body .sv-floating-screen{position:fixed;z-index:90;display:flex;flex-direction:column;min-width:0!important;max-width:none!important;min-height:0!important;margin:0!important;box-sizing:border-box;background:#19372e;border:2px solid #9b825e;border-radius:12px;box-shadow:0 8px 30px #0005;overflow:hidden;}
+body .sv-floating-screen video{width:100%;height:100%;min-height:0;flex:1;object-fit:contain;}
+body .sv-floating-screen .sv-media-tile-head{position:static;flex:none;display:flex;flex-wrap:wrap;gap:6px;max-height:50%;overflow:auto;cursor:move;touch-action:none;background:#f4eed9;color:#254d3b;padding:6px;}
+.sv-window-resize{position:absolute;right:0;bottom:0;width:32px;height:32px;touch-action:none;cursor:nwse-resize;}
+body .sv-floating-screen.is-minimized :is(video,.sv-window-resize){display:none;}
+body .sv-phone{height:calc(var(--sv-visual-height,100dvh) - 16px);padding:8px;align-items:center;}
+body .sv-phone-screen{max-height:100%;height:min(680px,100%);box-sizing:border-box;}
+body .sv-phone-page{min-height:0;overflow:auto;}
+@media(max-width:600px){body .sv-phone-screen{height:100%;}}

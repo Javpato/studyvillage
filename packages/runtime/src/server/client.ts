@@ -1,3 +1,4 @@
+import {emptyFriends,friendViewSchema,type FriendCommand} from '../../../core/src/social/friends';
 import {LocalWorkspaces} from '../storage/workspaces';
 import {unwrapMailboxResult,type MailboxCommand,type MailboxView} from '../../../core/src/house/mailbox';
 import { floorsOf, emptyWorkspace, spaceKey, sameSpace, type WorkspaceCommand, type WorkspaceView } from '../../../core/src/house/workspaces';
@@ -114,6 +115,7 @@ export class ServerVillageClient implements VillageActions {
   private appListeners = new Set<(message: AppMessage) => void>();
   private workspaceStorage:LocalWorkspaces;
   private workspaceState:WorkspaceView=emptyWorkspace();
+  private friendState=emptyFriends();
   private voiceState: VoiceView = emptyVoice();
   private voiceDirectory = new Map<string, VoicePeerPresence>();
   private mediaSession = '';
@@ -166,7 +168,7 @@ export class ServerVillageClient implements VillageActions {
       boardRef: this.board ?? undefined, strokes: [...this.strokes.values()].map(d => d.stroke),
       hostGraceRemainingMs: null, error: this.error, media: this.media.view, gameCamera: this.camera.view,
       workspace:this.workspaceState,
-      voice: this.voiceState, voiceDirectory: [...this.voiceDirectory.values()].map(p => p.identity),
+      friends:this.friendState,voice: this.voiceState, voiceDirectory: [...this.voiceDirectory.values()].map(p => p.identity),
       privateCall: { with: partner ?? this.voiceState.outgoing.find(i => i.kind === 'call')?.to ?? null, active: !!partner, incoming: this.voiceState.invitations.filter(i => i.kind === 'call').map(i => i.from) },
       server: this.status,
     };
@@ -226,6 +228,7 @@ export class ServerVillageClient implements VillageActions {
     switch (message.t) {
       case 'devices': {this.devices=message.devices;this.mediaActive=message.devices.some(d=>d.current&&d.media);if(!this.mediaActive){this.media.suspend();this.camera.suspend();this.endpoint.closeAll();}this.syncMedia();this.notify();return;}
       case 'workspace': {this.houseId=message.workspace.houseId;const changed=!sameSpace(this.position.space,message.workspace.space);this.workspaceState=message.workspace;if(changed)this.position={...this.position,x:384,y:344,space:message.workspace.space??undefined};if(this.houseId===this.id&&message.workspace.space&&message.workspace.document)this.workspaceStorage.put(this.id,message.workspace.space,message.workspace.document);this.syncMedia();this.notify();return;}
+      case 'friends': {this.friendState=friendViewSchema.parse(message.friends);this.notify();return;}
       case 'voice': {
         this.voiceState = message.voice; this.voiceDirectory = new Map(message.directory.map(p => [p.identity.fingerprint, p])); this.mediaSession = message.session;
         this.syncMedia(); this.notify(); return;
@@ -502,6 +505,7 @@ export class ServerVillageClient implements VillageActions {
       .finally(()=>{if(this.accessAttempt?.requestId===requestId)this.accessAttempt=null;this.notify();});
   }
   voiceCommand(command: VoiceCommand): void { this.fire({ op: 'voice', command }); }
+  friendCommand(command:FriendCommand):void {void this.request({op:'friend',command}).catch(error=>{this.error=error.message;this.notify();});}
   async mailboxCommand(command:MailboxCommand):Promise<MailboxView>{return unwrapMailboxResult(await this.request({op:'mailbox',command}));}
   setCameraActivity(activity: CameraActivity | null): void { if (activity === this.cameraActivity) return; this.cameraActivity = activity; this.syncCamera(); this.sendApp('camera', null, JSON.stringify({ game: activity, request: true })); this.notify(); }
   setGameCameraPolicy(policy:GameCameraPolicy|null):void{this.camera.setPolicy(policy);}
@@ -513,7 +517,7 @@ export class ServerVillageClient implements VillageActions {
   setDeafened(value: boolean): void { this.media.setDeafened(value); }
   setPushToTalk(value: boolean): void { this.media.setPushToTalk(value); }
   setTalking(value: boolean): void { this.media.setTalking(value); }
-  startScreen(): Promise<void> { this.requireMedia();return this.media.startScreen(); }
+  startScreen(withAudio = false): Promise<void> { this.requireMedia();return this.media.startScreen(withAudio); }
   stopScreen(): void { this.media.stopScreen(); }
 
   // ------------------------------------------------- not used in server mode --

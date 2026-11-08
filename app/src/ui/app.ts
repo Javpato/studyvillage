@@ -1,3 +1,5 @@
+import {GamepadController} from '../input/gamepad';
+import {mediaWindow} from '../input/media-window';
 import {confirmSprite,editGuideText} from './sprite-dialogs';
 import {FURNITURE_DESCRIPTIONS} from '../house/model';
 import {PencilTouchGuard,pointerSamples} from '../../../packages/documents/src/pen';
@@ -90,7 +92,7 @@ type PhonePage = 'home' | 'folder' | 'village' | 'voice' | 'decorate' | 'contact
 /** Where to walk to use something, and how to use it once there. */
 type Interaction = { x: number; y: number; near(): boolean; run(): void };
 type DiagnosticKind = Parameters<AppActions['runDiagnostic']>[0];
-type MediaMount = { wrapper: HTMLElement; element: HTMLMediaElement; stream: MediaStream; kind: 'audio' | 'screen' };
+type MediaMount = { dispose?:()=>void; wrapper: HTMLElement; element: HTMLMediaElement; stream: MediaStream; kind: 'audio' | 'screen' };
 
 function node<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', label: DisplayText = ''): HTMLElementTagNameMap[K] {
   const element = document.createElement(tag);
@@ -167,6 +169,9 @@ class StudyUI {
   private focusClock = new FocusClock();
   private connectionPanel=new ConnectionPanel();
   private garden:GardenPanel;
+  private gamepad!:GamepadController;
+  private seenRequests=new Set<string>();
+  private requestNoticeTarget:PhonePage|null=null;
   private mailbox:MailboxUI;
   private jukebox=new StudyJukebox();
   private headCameras!:HeadCameras;
@@ -341,6 +346,7 @@ class StudyUI {
   private muteButton!: HTMLButtonElement;
   private deafenButton!: HTMLButtonElement;
   private pttButton!: HTMLButtonElement;
+  private shareAudio = false;
   private screenButton!: HTMLButtonElement;
   private stopScreenButton!: HTMLButtonElement;
   private micMeterFill!: HTMLElement;
@@ -508,6 +514,12 @@ class StudyUI {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', this.onBlur);
+    this.gamepad=new GamepadController((key,down)=>{const event=new KeyboardEvent(down?'keydown':'keyup',{key});if(down)this.onKeyDown(event);else this.onKeyUp(event);},()=>{
+      const modal=!!document.querySelector('dialog[open]');
+      if(modal||!this.phone.hidden||this.garden.active||this.decorating)return 'menu';
+      if(this.activityOpen)return this.expansion.gamepadPlaying()?'game':'menu';return 'world';
+    },key=>this.expansion.gamepadInput(key),()=>this.expansion.gamepadMenu());
+    this.settingsSection('Mando').append(this.gamepad.root);
     this.raf = requestAnimationFrame(this.tick);
   }
 
@@ -612,7 +624,7 @@ class StudyUI {
     this.boardEditor?.dispose();
     cancelAnimationFrame(this.raf); this.offAi?.();
     this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();this.phoneEditor?.dispose();
-    this.mobileHud.dispose();
+    this.gamepad?.dispose();this.mobileHud.dispose();
     this.expansion.dispose();
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
@@ -622,7 +634,7 @@ class StudyUI {
     this.dpadKeys.clear();
     this.moveTarget = null;
     this.activeBoardPointers.clear();
-    for (const mount of this.mediaMounts.values()) mount.element.srcObject = null;
+    for (const mount of this.mediaMounts.values()){mount.dispose?.();mount.element.srcObject = null;}
     this.mediaMounts.clear();
     this.root.replaceChildren();
   }
@@ -764,6 +776,7 @@ class StudyUI {
     this.openButton = button(msg('Abrir mi aldea a otras personas'), 'sv-button sv-button-primary sv-wide');
     this.openButton.addEventListener('click', () => this.run(() => this.actions.openVillage()));
     this.joinInput = node('input', 'sv-input');
+    this.joinInput.autocapitalize='off';this.joinInput.spellcheck=false;this.joinInput.addEventListener('focus',()=>{setTimeout(()=>{if(document.activeElement===this.joinInput)this.joinInput.scrollIntoView({block:'nearest'});},250);});
     setDisplayAttribute(this.joinInput, "placeholder", msg('Pega una invitación'));
     setDisplayAttribute(this.joinInput, 'aria-label', msg('Código de invitación'));
     const joinForm = node('form', 'sv-join-form');
@@ -966,7 +979,7 @@ class StudyUI {
     this.hudScreen = quick('screen', msg('Compartir pantalla'), () => {
       const phase = this.view?.network.media.screenPhase;
       if (phase && ['REQUESTING_OS_PERMISSION', 'CAPTURING_LOCAL', 'NEGOTIATING', 'SENDING'].includes(phase)) this.actions.stopScreen();
-      else this.run(() => this.actions.startScreen());
+      else this.openPhone('voice');
     });
 
     this.phoneButton = button('', 'sv-phone-button');
@@ -988,7 +1001,7 @@ class StudyUI {
     const here = view.network.members.filter((member) => member.connected).length;
     setText(this.statusBadge, joined ? `${here} ${here === 1 ? 'persona' : 'personas'} en la aldea` : PHASE_LABEL[view.network.phase]);
     const requests = (view.network.isHost ? view.network.pendingJoins.length : 0)
-      + view.network.pendingVisits.filter((request) => request.houseId === view.identity.fingerprint).length+(view.network.workspace?.requests.length??0);
+      + view.network.pendingVisits.filter((request) => request.houseId === view.identity.fingerprint).length+(view.network.workspace?.requests.length??0)+(view.network.friends?.incoming.length??0)+(view.network.voice?.invitations.length??0);
     show(this.phoneBadge, requests > 0);
     setText(this.phoneBadge, String(requests));
     const inOwnHouse = this.pane === 'house' && this.houseOwnerId === view.identity.fingerprint;
@@ -1017,7 +1030,8 @@ class StudyUI {
     closeNotice.addEventListener('click', () => {
       this.dismissNotices();
     });
-    append(this.noticeBox, this.noticeText, closeNotice);
+    const openRequest=button(msg('Ver solicitud'),'sv-link-button');openRequest.onclick=()=>{if(this.requestNoticeTarget)this.openPhone(this.requestNoticeTarget);this.dismissNotices();};openRequest.dataset.requestNotice='true';
+    append(this.noticeBox, this.noticeText, openRequest, closeNotice);
     const heading = node('div', 'sv-page-heading');
     const headingCopy = node('div');
     this.title = node('h1', '', msg('La aldea'));
@@ -1397,7 +1411,7 @@ class StudyUI {
     append(codeButtons, exportButton, rotateButton,shareButton);
     codeCard.append(codeButtons);
     const importCard = node('div', 'sv-contact-import');
-    append(importCard, node('h3', '', msg('Añadir contacto')), node('p', 'sv-subtle', msg('Selecciona una tarjeta .json que te haya enviado esa persona.')));
+    append(importCard, node('h3', '', msg('Enviar solicitud de amistad')), node('p', 'sv-subtle', msg('Selecciona una tarjeta .json que te haya enviado esa persona.')));
     this.importInput = node('input', 'sv-file-input');
     this.importInput.type = 'file';
     this.importInput.accept = '.json,application/json';
@@ -1710,10 +1724,12 @@ class StudyUI {
     this.pttButton = button(msg('Pulsar para hablar'), 'sv-button sv-button-small');
     this.pttButton.addEventListener('click', () => { if (this.view) this.actions.setPushToTalk(!this.view.network.media.pushToTalk); });
     this.screenButton = button(msg('Compartir pantalla'), 'sv-button sv-button-small');
-    this.screenButton.addEventListener('click', () => this.run(() => this.actions.startScreen()));
+    this.screenButton.addEventListener('click', () => this.run(() => this.actions.startScreen(this.shareAudio)));
+    const audioOption=node('label','sv-inline'),audioCheck=node('input');audioCheck.type='checkbox';audioCheck.onchange=()=>{this.shareAudio=audioCheck.checked;};audioOption.append(audioCheck,node('span','',msg('Compartir audio')));
+
     this.stopScreenButton = button(msg('Detener pantalla'), 'sv-button sv-button-small sv-danger-text');
     this.stopScreenButton.addEventListener('click', () => this.actions.stopScreen());
-    append(controls, this.micButton, this.muteButton, this.deafenButton, this.pttButton, this.screenButton, this.stopScreenButton);
+    append(controls, this.micButton, this.muteButton, this.deafenButton, this.pttButton, this.screenButton, audioOption, this.stopScreenButton);
     this.mediaTiles = node('div', 'sv-media-tiles');
     append(this.mediaBox, this.mediaAudience, meterWrap, controls, this.mediaStatus, this.mediaError, this.privateBox, this.mediaTiles,
       node('p', 'sv-tiny', msg('Con «Pulsar para hablar», mantén la barra espaciadora para hablar.')));
@@ -1722,6 +1738,8 @@ class StudyUI {
   private refresh(): void {
     const view = this.view;
     if (!view) return;
+    for(const request of view.network.friends?.incoming??[]){const key=`friend:${request.id}`;if(!this.seenRequests.has(key)){this.seenRequests.add(key);this.requestNoticeTarget='contacts';this.localNotice=t('{name} te envía una solicitud de amistad',{name:request.from.displayName});this.localNoticeSeq++;}}
+    for(const invitation of view.network.voice?.invitations??[]){const key=`voice:${invitation.id}`;if(!this.seenRequests.has(key)){this.seenRequests.add(key);this.requestNoticeTarget='voice';const name=view.network.voiceDirectory?.find(p=>p.fingerprint===invitation.from)?.displayName??view.network.members.find(p=>p.identity.fingerprint===invitation.from)?.identity.displayName??t('Vecino');this.localNotice=t('{name} te invita a una llamada',{name});this.localNoticeSeq++;}}
     const phase = view.network.phase;
     const joined = phase === 'JOINED';
     const ready = !view.lockedIdentity;
@@ -1848,7 +1866,7 @@ class StudyUI {
         append(row, dot, label);
         if(member.identity.fingerprint!==view.identity.fingerprint){
           const saved=view.contacts.some(c=>c.identity.fingerprint===member.identity.fingerprint);
-          const add=button(saved?msg('En contactos'):msg('Añadir contacto'),'sv-link-button');add.disabled=saved;
+          const add=button(saved?msg('En contactos'):msg('Enviar solicitud de amistad'),'sv-link-button');add.disabled=saved;
           add.onclick=()=>this.run(()=>this.actions.addSessionContact(member.identity.fingerprint));row.append(add);
         }
         if (view.network.isHost && member.identity.fingerprint !== view.identity.fingerprint) {
@@ -2053,14 +2071,16 @@ class StudyUI {
     const view = this.view!;
     setText(this.friendCodeValue, view.friendCode);
     const people=view.network.phase==='JOINED'?[...new Map([...view.network.members.filter(m=>m.connected).map(m=>m.identity),...(view.network.voiceDirectory??[])].map(p=>[p.fingerprint,p])).values()].filter(p=>p.fingerprint!==view.identity.fingerprint):[];
-    const signature = JSON.stringify([view.contacts,people]);
+    const signature = JSON.stringify([view.contacts,people,view.network.friends]);
     if (this.contactsList.dataset.signature === signature) return;
     this.contactsList.dataset.signature = signature;
     this.contactsList.replaceChildren();this.sessionContacts.replaceChildren();
+    for(const request of view.network.friends?.incoming??[]){const row=node('div','sv-contact-row');row.append(node('span','',msg('{name} te envía una solicitud de amistad',{name:request.from.displayName})));for(const [label,accept]of [['Aceptar',true],['Rechazar',false]] as const){const b=button(msg(label),'sv-button');b.onclick=()=>this.actions.friendCommand({action:'respond',id:request.id,accept});row.append(b);}this.sessionContacts.append(row);}
+    for(const request of view.network.friends?.outgoing??[]){const row=node('div','sv-contact-row'),cancel=button(msg('Cancelar'),'sv-button');cancel.onclick=()=>this.actions.friendCommand({action:'cancel',id:request.id});row.append(node('span','',msg('Solicitud enviada a {name}',{name:request.to.displayName})),cancel);this.sessionContacts.append(row);}
     if(people.length)this.sessionContacts.append(node('h3','sv-section-title',msg('Personas en esta sesión')));
     for(const person of people){
       const row=node('div','sv-contact-row'),saved=view.contacts.some(c=>c.identity.fingerprint===person.fingerprint);
-      const add=button(saved?msg('En contactos'):msg('Añadir contacto'),'sv-button sv-button-small');add.disabled=saved;
+      const add=button(saved?msg('En contactos'):msg('Enviar solicitud de amistad'),'sv-button sv-button-small');add.disabled=saved||!!view.network.friends?.outgoing.some(r=>r.to.fingerprint===person.fingerprint);
       setDisplayAttribute(add,'aria-label',saved?msg('En contactos'):msg('Añadir a {name} a contactos',{name:person.displayName}));
       add.onclick=()=>this.run(()=>this.actions.addSessionContact(person.fingerprint));
       append(row,node('strong','',person.displayName),add);this.sessionContacts.append(row);
@@ -2134,7 +2154,7 @@ class StudyUI {
     this.micMeterFill.style.width = media.talking ? '82%' : media.micEnabled && !media.muted ? '28%' : '0%';
 
     const desired = new Map<string, { stream: MediaStream; kind: 'audio' | 'screen'; name: string; local: boolean }>();
-    if (media.localScreen && showingCurrentRoom) desired.set('local-screen', { stream: media.localScreen, kind: 'screen', name: 'Tu pantalla (HD)', local: true });
+    if (media.localScreen && showingCurrentRoom) desired.set('local-screen', { stream: media.localScreen, kind: 'screen', name: t(media.localScreen.getAudioTracks().length?'Tu pantalla · con audio':'Tu pantalla · sin audio'), local: true });
     for (const remote of showingCurrentRoom ? media.remote : []) {
       const name = defaultText(view.network.voiceDirectory?.find(person=>person.fingerprint===remote.identityId)?.displayName || view.network.members.find((member) => member.identity.fingerprint === remote.identityId)?.identity.displayName || '') || remote.identityId.slice(0, 10);
       desired.set(`${remote.kind}:${remote.identityId}`, { stream: remote.stream, kind: remote.kind, name, local: false });
@@ -2143,7 +2163,7 @@ class StudyUI {
       if (!desired.has(key)) {
         mount.element.pause();
         mount.element.srcObject = null;
-        mount.wrapper.remove();
+        mount.dispose?.();mount.wrapper.remove();
         this.mediaMounts.delete(key);
         if (this.spotlightKey === key) this.spotlightKey = null;
       }
@@ -2178,7 +2198,7 @@ class StudyUI {
             const fallback=()=>{try{if(video.webkitEnterFullscreen){video.webkitEnterFullscreen();return;}}catch{}wrapper.classList.toggle('is-expanded-screen');};
             try{if(element.requestFullscreen)void element.requestFullscreen().catch(fallback);else fallback();}catch{fallback();}
           });
-          append(btnGroup, spotBtn, fullBtn);
+          if(item.local){const stop=button(msg('Detener emisión'),'sv-button sv-button-small');stop.onclick=()=>this.actions.stopScreen();btnGroup.append(stop);}append(btnGroup, fullBtn);
           append(head, titleEl, btnGroup);
           append(wrapper, head, element);
           this.screenTheaterGrid.append(wrapper);
@@ -2187,6 +2207,7 @@ class StudyUI {
           this.mediaTiles.append(wrapper);
         }
         mount = { wrapper, element, stream: item.stream, kind: item.kind };
+        if(item.kind==='screen')mount.dispose=mediaWindow(wrapper,wrapper.querySelector<HTMLElement>('.sv-media-tile-head')!,screenCount-1);
         this.mediaMounts.set(key, mount);
         element.srcObject = item.stream;
         void element.play().catch(() => this.offerMediaPlayback(wrapper,element));
@@ -2769,7 +2790,7 @@ class StudyUI {
   private speechScene():string {return `${this.pane}:${this.currentArea}:${this.houseOwnerId}:${spaceKey(this.localPosition.space)}`;}
 
   private notify(message: string): void {
-    this.localNotice = message;
+    this.requestNoticeTarget=null;this.localNotice = message;
     this.localNoticeSeq++;
     if (this.noticeTimer) clearTimeout(this.noticeTimer);
     this.noticeTimer = setTimeout(() => { this.noticeTimer = null; if (this.localNotice === message) { this.localNotice = null; this.refresh(); } }, 6_000);
@@ -2778,6 +2799,7 @@ class StudyUI {
 
   /** Only the newest notice counts: a new one replaces what is shown, and older ones just disappear. */
   private currentNotice(view: AppView): string | null {
+    const action=this.noticeBox.querySelector<HTMLElement>('[data-request-notice]');if(action)action.hidden=!this.requestNoticeTarget;
     const now = { error: view.network.error || null, local: this.localNotice ? `${this.localNoticeSeq}\u0000${this.localNotice}` : null, app: view.notice || null };
     for (const key of ['error', 'app', 'local'] as const) {
       const value = now[key];
@@ -2785,7 +2807,7 @@ class StudyUI {
       const previous = this.noticeSources[key];
       this.noticeSources[key] = value;
       const text = key === 'local' ? this.localNotice : value;
-      if (text) this.showNotice(text, key === 'error' ? 10_000 : 7_000);
+      if (text) {if(key!=='local')this.requestNoticeTarget=null;this.showNotice(text, key === 'error' ? 10_000 : this.requestNoticeTarget?6_000:7_000);}
       else if (previous && this.shownNotice === (key === 'local' ? previous.slice(previous.indexOf('\u0000') + 1) : previous)) this.shownNotice = null;
     }
     return this.shownNotice;
@@ -2800,7 +2822,7 @@ class StudyUI {
 
   /** Closing removes every pending notice, including a network error, until something new happens. */
   private dismissNotices(): void {
-    this.shownNotice = null;
+    this.requestNoticeTarget=null;this.shownNotice = null;
     if (this.shownNoticeTimer) clearTimeout(this.shownNoticeTimer);
     this.shownNoticeTimer = null;
     this.localNotice = null;
@@ -3484,7 +3506,13 @@ class StudyUI {
   private tick = (now: number): void => {
     if (document.hidden || (this.lastFrame && now - this.lastFrame < 1000 / 61)) {
       if (document.hidden) this.lastFrame = now;
-      this.raf = requestAnimationFrame(this.tick); return;
+      this.gamepad=new GamepadController((key,down)=>{const event=new KeyboardEvent(down?'keydown':'keyup',{key});if(down)this.onKeyDown(event);else this.onKeyUp(event);},()=>{
+      const modal=!!document.querySelector('dialog[open]');
+      if(modal||!this.phone.hidden||this.garden.active||this.decorating)return 'menu';
+      if(this.activityOpen)return this.expansion.gamepadPlaying()?'game':'menu';return 'world';
+    },key=>this.expansion.gamepadInput(key),()=>this.expansion.gamepadMenu());
+    this.settingsSection('Mando').append(this.gamepad.root);
+    this.raf = requestAnimationFrame(this.tick); return;
     }
     const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.05) : 0;
     this.lastFrame = now;
@@ -3732,6 +3760,12 @@ class StudyUI {
       }
     }
     this.updatePortraitCamera();
+    this.gamepad=new GamepadController((key,down)=>{const event=new KeyboardEvent(down?'keydown':'keyup',{key});if(down)this.onKeyDown(event);else this.onKeyUp(event);},()=>{
+      const modal=!!document.querySelector('dialog[open]');
+      if(modal||!this.phone.hidden||this.garden.active||this.decorating)return 'menu';
+      if(this.activityOpen)return this.expansion.gamepadPlaying()?'game':'menu';return 'world';
+    },key=>this.expansion.gamepadInput(key),()=>this.expansion.gamepadMenu());
+    this.settingsSection('Mando').append(this.gamepad.root);
     this.raf = requestAnimationFrame(this.tick);
   };
 
@@ -3786,3 +3820,5 @@ export function createStudyUI(root: HTMLElement, actions: AppActions): { update(
   const ui = new StudyUI(root, actions);
   return { update: (view) => ui.update(view), destroy: () => ui.destroy() };
 }
+
+import './responsive-fixes.css';

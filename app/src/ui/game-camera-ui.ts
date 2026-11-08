@@ -45,7 +45,7 @@ export class GameCameraDock {
         const caption=document.createElement('div');caption.className='sv-game-camera-caption';
         const dot=document.createElement('span');dot.className='sv-game-camera-live';dot.setAttribute('aria-hidden','true');
         const name=document.createElement('span');const quality=document.createElement('span');quality.className='sv-game-camera-quality';
-        const hide=document.createElement('button');setDisplayText(hide,msg('Ocultar cámara'));hide.onclick=()=>{if(this.hidden.has(id))this.hidden.delete(id);else this.hidden.add(id);video.hidden=this.hidden.has(id);setDisplayText(hide,msg(video.hidden?'Mostrar cámara':'Ocultar cámara'));};video.hidden=this.hidden.has(id);caption.append(hide);
+        const hide=document.createElement('button');setDisplayText(hide,msg('Ocultar cámara'));hide.onclick=()=>{if(this.hidden.has(id))this.hidden.delete(id);else this.hidden.add(id);video.hidden=this.hidden.has(id);setDisplayText(hide,msg(video.hidden?'Mostrar cámara':'Ocultar cámara'));};video.hidden=this.hidden.has(id);hide.className='sv-camera-hide';setDisplayText(hide,msg(video.hidden?'Mostrar cámara':'Ocultar cámara'));card.append(hide);
         caption.append(dot,name,quality);card.append(video,caption);this.gallery.append(card);
         const current:Tile={root:card,video,name,quality,stream:item.stream};this.tiles.set(id,current);tile=current;
         const updateQuality=()=>{setDisplayText(quality, video.videoWidth>=1920&&video.videoHeight>=1080 ? msg('Full HD') : Math.min(video.videoWidth,video.videoHeight)>=720 ? msg('HD') : '');};

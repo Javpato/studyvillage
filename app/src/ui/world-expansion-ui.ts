@@ -463,7 +463,12 @@ export class WorldExpansionUIController {
     this.openModal('object_inspector');
   }
 
+  private gamepadInMenu=false;
+  gamepadPlaying(){return this.activeModalKind==='tetris'&&this.tetrisPanel.gamepadPlaying()&&!this.gamepadInMenu;}
+  gamepadInput(key:string){this.tetrisPanel.input(key);}
+  gamepadMenu(){if(this.activeModalKind!=='tetris')return;this.gamepadInMenu=!this.gamepadInMenu;this.tetrisPanel.gamepadMenu(this.gamepadInMenu);}
   openModal(kind: ModalKind): void {
+    this.gamepadInMenu=false;
     this.closeModal();
     this.activeModalKind = kind;
     this.callbacks.activityChanged(true);
@@ -477,9 +482,9 @@ export class WorldExpansionUIController {
         ? [this.werewolvesRoom, this.werewolvesPanel] as const
         : kind === 'gartic' ? [this.garticRoom, this.garticPanel] as const : [apps.projectsRoom, apps.projectsPanel] as const;
       panel.mount(this.activityOverlay);
-      const stopControl=kind==='tetris'||kind==='werewolves'||kind==='gartic'?new ActivityStopControl(this.activityOverlay,()=>{if(!room.canStop())return;if(kind==='gartic')this.garticBots.cancel();room.stop();}):null;
+      const stopControl=kind==='tetris'||kind==='werewolves'||kind==='gartic'?new ActivityStopControl(kind==='tetris'?this.tetrisPanel.roundControls:this.activityOverlay,()=>{if(!room.canStop())return;if(kind==='gartic')this.garticBots.cancel();room.stop();}):null;
       // Each room/panel pair shares one view type; TypeScript cannot see that through the union.
-      const offView = (room as SharedRoom<unknown, unknown>).subscribe((view, error) => { (panel as { update(v: unknown, e: string | null): void }).update(view, error);stopControl?.update((view as {phase?:string}|null)?.phase,room.canStop());if(kind==='werewolves'){const game=this.werewolvesRoom.current();if(game)this.callbacks.actions.setGameCameraPolicy?.({canSend:game.canBroadcastCamera,canReceive:game.canSeeCameras,audience:game.cameraAudience,epoch:game.cameraPhase});this.cameraDock.policy(game);const current=this.callbacks.getView();if(current)this.cameraDock.update(current);} });
+      const offView = (room as SharedRoom<unknown, unknown>).subscribe((view, error) => { (panel as { update(v: unknown, e: string | null): void }).update(view, error);stopControl?.update((view as {phase?:string}|null)?.phase,room.canStop()&&(kind!=='tetris'||this.tetrisPanel.isBattle()));if(kind==='werewolves'){const game=this.werewolvesRoom.current();if(game)this.callbacks.actions.setGameCameraPolicy?.({canSend:game.canBroadcastCamera,canReceive:game.canSeeCameras,audience:game.cameraAudience,epoch:game.cameraPhase});this.cameraDock.policy(game);const current=this.callbacks.getView();if(current)this.cameraDock.update(current);} });
       // A language change redraws the open game in place; the round, drafts and drawings stay.
       const offLanguage = subscribeLanguage(() => (panel as { update(v: unknown, e: string | null): void }).update((room as SharedRoom<unknown, unknown>).current(), null));
       this.activityUnsubscribe = () => { offView(); offLanguage(); stopControl?.dispose(); };

@@ -1,3 +1,4 @@
+import type {FriendCommand,FriendView} from '../social/friends';
 import type { GardenItem } from './garden';
 import type {MailboxCommand,MailboxView} from '../house/mailbox';
 export type { GardenItem } from './garden';
@@ -53,6 +54,7 @@ export type ScreenPhase = 'OFF' | 'REQUESTING_OS_PERMISSION' | 'CAPTURING_LOCAL'
 export interface RemoteMedia { identityId: IdentityId; kind: 'audio' | 'screen'; stream: MediaStream }
 export interface MediaView { screenAvailable?: boolean; micEnabled: boolean; muted: boolean; deafened: boolean; pushToTalk: boolean; talking: boolean; screenPhase: ScreenPhase; localScreen: MediaStream | null; remote: RemoteMedia[]; audience: string; error: string | null }
 export interface NetworkView {
+  friends?:FriendView;
   pendingAccess?:AccessRequest|null;
   devices?:{id:string;name:string;current:boolean;media:boolean}[];
   serverHouse?: PublicHouse;
@@ -75,6 +77,7 @@ export interface ServerStatus {
   devices?: { id:string; name:string; current:boolean; media:boolean }[];
 }
 export interface VillageActions {
+  friendCommand(command:FriendCommand):void;
   cancelAccessRequest():void;
   mailboxCommand(command:MailboxCommand):Promise<MailboxView>;
   selectMediaDevice?(id:string):void;
@@ -88,7 +91,7 @@ export interface VillageActions {
   kickMember(identityId: IdentityId): void; kickVisitor(identityId: IdentityId): void;
   toggleMicrophone(): Promise<void>; setMuted(muted: boolean): void;
   setDeafened(deafened: boolean): void; setPushToTalk(enabled: boolean): void; setTalking(talking: boolean): void;
-  startScreen(): Promise<void>; stopScreen(): void;
+  startScreen(withAudio?: boolean): Promise<void>; stopScreen(): void;
   setCameraActivity(activity: CameraActivity | null): void;
   toggleGameCamera(): Promise<void>;
   setGameCameraPolicy?(policy:GameCameraPolicy|null):void;

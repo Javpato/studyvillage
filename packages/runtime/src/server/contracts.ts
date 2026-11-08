@@ -1,3 +1,4 @@
+import {friendCommandSchema,type FriendView} from '../../../core/src/social/friends';
 import { workspaceCommandSchema, type WorkspaceView } from '../../../core/src/house/workspaces';
 import { voiceCommandSchema, type VoiceView } from '../media/voice';
 /**
@@ -12,7 +13,7 @@ import { appearanceSchema } from '../../../core/src/assets/appearance';
 import { appChannelSchema, boardCommitSchema, boardRefSchema, fingerprintSchema, identitySchema, idSchema, positionSchema, signedHouseSchema, signedStrokeSchema } from '../../../core/src/protocol/schema';
 import { LIMITS, type AccessRequest } from '../../../core/src/protocol/types';
 
-export const SERVER_PROTOCOL = 7;
+export const SERVER_PROTOCOL = 8;
 export const PLOTS_PER_NEIGHBORHOOD = 6;
 export const MAX_NEIGHBORHOODS = 4;
 export const MAX_ONLINE = 24;
@@ -57,6 +58,7 @@ export const operationSchema = z.discriminatedUnion('op', [
   z.strictObject({op:z.literal('mailbox'),command:mailboxCommandSchema}),
   z.strictObject({op:z.literal('device.media'),deviceId:z.string().regex(/^[A-Za-z0-9_-]{8,64}$/)}),
   z.strictObject({ op: z.literal('workspace'), command: workspaceCommandSchema }),
+  z.strictObject({op:z.literal('friend'),command:friendCommandSchema}),
   z.strictObject({ op: z.literal('voice'), command: voiceCommandSchema }),
   z.strictObject({ op: z.literal('presence'), position: positionSchema, houseId: fingerprintSchema.nullable() }),
   z.strictObject({ op: z.literal('appearance'), appearance: appearanceSchema }),
@@ -98,6 +100,7 @@ export interface InviteView { id: string; label: string; code?: string; uses: nu
 export type VoicePeerPresence = Pick<PresenceView, 'identity' | 'endpoint' | 'mediaToken'>;
 
 export type ServerMessage =
+  | {t:'friends';friends:FriendView}
   | { t:'devices'; devices:{id:string;name:string;current:boolean;media:boolean}[] }
   | { t:'workspace'; workspace:WorkspaceView }
   | { t: 'voice'; voice: VoiceView; directory: VoicePeerPresence[]; session: string }

@@ -1,3 +1,4 @@
+import {friendCommandSchema,friendViewSchema} from '../social/friends';
 import { gardenSchema } from './garden';
 import { doorPositionsSchema, accessListSchema, floorsSchema, houseSpaceSchema, workspaceCommandSchema, workspaceViewSchema } from '../house/workspaces';
 import { voiceCommandSchema, voiceViewSchema } from '../media/voice';
@@ -81,6 +82,8 @@ export type Transcript = z.infer<typeof transcriptSchema>;
 export const payloadSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('workspace.command'), command: workspaceCommandSchema }),
   z.strictObject({ type: z.literal('workspace.state'), workspace: workspaceViewSchema }),
+  z.strictObject({type:z.literal('friend.command'),command:friendCommandSchema}),
+  z.strictObject({type:z.literal('friend.state'),friends:friendViewSchema}),
   z.strictObject({ type: z.literal('voice.command'), command: voiceCommandSchema }),
   z.strictObject({ type: z.literal('voice.state'), voice: voiceViewSchema }),
   z.strictObject({ type: z.literal('voice.error'), message: z.string().max(200) }),

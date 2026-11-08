@@ -206,32 +206,7 @@ export const DEFAULT_AREA_OBJECTS: readonly InteractiveObjectConfig[] = [
     state: {},
     revision: 1,
   },
-  {
-    id: 'community:project-station',
-    areaId: 'community',
-    kind: 'computer_project',
-    defaultLabel: 'Terminal de Proyectos',
-    displayName: 'Estación de Proyectos',
-    description: 'Proyectos del grupo: abre el repositorio o únete a la sesión Live Share en VS Code.',
-    promptKey: 'E · Proyectos en VS Code',
-    x: 132,
-    y: 304,
-    w: 78,
-    h: 48,
-    layer: 'object',
-    hasCollision: true,
-    interactionRadius: INTERACTION_REACH,
-    ownerId: null,
-    visibility: 'everyone',
-    usePermission: 'public',
-    editPermission: 'host_only',
-    allowedUsers: [],
-    customSpriteDataUrl: null,
-    customColor: null,
-    linkedProjectId: 'project:community-main',
-    state: {},
-    revision: 1,
-  },
+
 
 
   // ---------------------------------------------------------------------------

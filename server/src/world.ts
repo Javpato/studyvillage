@@ -1,3 +1,4 @@
+import {Friends} from '../../packages/core/src/social/friends';
 import { InkAuthority } from '../../packages/documents/src/authority';
 import {MailboxAuthority,MailboxError,mailboxResult} from '../../packages/core/src/house/mailbox';
 import { hasHouseAccess, WorkspaceCoordinator, parseScopedBoard, sameSpace } from '../../packages/core/src/house/workspaces';
@@ -30,7 +31,7 @@ export interface WorldOptions { name: string; ai?:AiProvider; engines: Partial<R
 
 /** People present in one neighbourhood at once; keeps each scene's media mesh small. */
 export const NEIGHBORHOOD_PRESENCE = 12;
-const MUTATING = new Set(['house.publish', 'house.decide', 'house.kick', 'board.commit', 'import', 'admin.capacity', 'admin.invite.create', 'admin.invite.revoke', 'travel']);
+const MUTATING = new Set(['friend','house.publish', 'house.decide', 'house.kick', 'board.commit', 'import', 'admin.capacity', 'admin.invite.create', 'admin.invite.revoke', 'travel']);
 
 class Reject extends Error { constructor(readonly code: ErrorCode) { super(code); } }
 
@@ -50,6 +51,7 @@ export class World {
   private mailbox:MailboxAuthority;
   private workspace: WorkspaceCoordinator;
   private ink:InkAuthority;
+  private friends:Friends;
   private voice = new VoiceHub();
   private connections = new Map<string, Connection>();
   private mediaDevices = new Map<string,string>();
@@ -61,6 +63,7 @@ export class World {
   private readonly now: () => number;
   private readonly prune: ReturnType<typeof setInterval>;
   constructor(readonly store: Store, private readonly options: WorldOptions) {
+    this.friends=new Friends(JSON.parse(store.meta('friends-v1')??'[]'));
     this.now = options.now ?? Date.now;
     this.mailbox=new MailboxAuthority({load:owner=>this.store.mailbox(owner),save:(owner,notes)=>this.store.putMailbox(owner,notes)});
     this.workspace=new WorkspaceCoordinator(id=>{const c=this.byFingerprint(id);return c?.identity?{identity:c.identity,connected:true,houseId:c.houseId,position:c.position}:undefined;},
@@ -288,6 +291,7 @@ export class World {
         this.changed(from); this.changed(target); return { neighborhood: target };
       });
       case 'media.private': this.voice.apply(me, { action: 'call', target: body.with }, this.onlineIds(), String(c.neighborhood)); this.broadcastVoice(); return null;
+      case 'friend': {const next=new Friends(this.friends.records.map(r=>structuredClone(r)));next.apply(me,body.command,[...this.connections.values()].flatMap(c=>c.identity?[c.identity]:[]));this.store.transaction(()=>this.store.setMeta('friends-v1',JSON.stringify(next.records)));this.friends=next;this.broadcastVoice();return null;}
       case 'voice': if (body.command.action === 'game.end') throw new Reject('forbidden'); this.voice.apply(me, body.command, this.onlineIds(), body.command.action==='game'&&body.command.game==='tetris'?'forest':String(c.neighborhood)); this.broadcastVoice(); return null;
       case 'media.signal': {
         const peer = this.byFingerprint(body.to);
@@ -373,6 +377,7 @@ export class World {
   private boardKey(neighborhood: number, ref: string): string { return ref.startsWith('house:') ? ref : `n${neighborhood}|${ref}`; }
   private onlineIds(): string[] { return [...new Set([...this.connections.values()].flatMap(c => c.identity ? [c.identity.fingerprint] : []))]; }
   private broadcastVoice(): void {
+    for(const c of this.connections.values())if(c.identity)this.send(c,{t:'friends',friends:this.friends.view(c.identity.fingerprint)});
     this.voice.prune(this.onlineIds());
     const directory = this.onlineIds().flatMap(id=>{const c=this.byFingerprint(id);return c?.identity?[{identity:c.identity,endpoint:c.endpoint,mediaToken:c.mediaToken}]:[];});
     for (const c of this.connections.values()) if (c.identity) this.send(c, { t: 'voice', voice: this.voice.view(c.identity.fingerprint), directory, session: this.store.worldId });

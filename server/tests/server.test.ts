@@ -580,3 +580,16 @@ it('broadcasts shared difficulty and authoritative NPC moves to human Forest Blo
   const move=guest.next(m=>m.t==='app'&&m.channel==='tetris'&&JSON.parse(m.data).v?.players.some((p:{bot?:boolean;seq:number})=>p.bot&&p.seq>=0));await move;
  }finally{await guest.close();await admin.close();}
 },12000);
+
+it('keeps friendship requests private and durable across server restart and sender absence',async()=>{
+ const dir=tempDir();let r=await boot(dir);const {admin,invite}=await adminAndInvite(r);const guest=await TestClient.create('Friend'),other=await TestClient.create('Other');
+ await guest.connect(r.port,{invite:invite.code});await other.connect(r.port,{invite:invite.code});
+ expect((await admin.request({op:'friend',command:{action:'request',target:guest.id}})).ok).toBe(true);
+ const last=(c:TestClient)=>c.messages.filter((m):m is Extract<ServerMessage,{t:'friends'}>=>m.t==='friends').at(-1)!.friends;
+ const request=last(guest).incoming[0];expect(request.from.fingerprint).toBe(admin.id);expect(last(other).incoming).toEqual([]);
+ expect((await other.request({op:'friend',command:{action:'respond',id:request.id,accept:true}})).ok).toBe(false);
+ await Promise.all([admin.close(),guest.close(),other.close()]);await r.close();running.splice(running.indexOf(r),1);r=await boot(dir);
+ await guest.connect(r.port);expect(last(guest).incoming[0].id).toBe(request.id);
+ expect((await guest.request({op:'friend',command:{action:'respond',id:request.id,accept:true}})).ok).toBe(true);
+ await admin.connect(r.port);expect(last(admin).accepted.map(p=>p.fingerprint)).toContain(guest.id);await Promise.all([admin.close(),guest.close()]);
+});

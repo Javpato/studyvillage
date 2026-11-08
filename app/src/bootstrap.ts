@@ -60,7 +60,13 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
   const appListeners = new Set<(message: AppMessage) => void>();
   const subscribe = () => {
     client.setCameraActivity(cameraActivity);
-    const offView = client.subscribe(view => { network = view; update(); });
+    const offView = client.subscribe(view => { network = view; update();
+      const source=client,owner=identity.public.fingerprint;
+      for(const person of view.friends?.accepted??[])if(!data.contacts.some(c=>c.identity.fingerprint===person.fingerprint))void validatePublicIdentity(person).then(verified=>{
+        if(source!==client||owner!==identity.public.fingerprint||data.contacts.some(c=>c.identity.fingerprint===verified.fingerprint)||data.contacts.length>=100)return;
+        data.contacts=[...data.contacts,{schemaVersion:1,identity:verified}];return persist().then(update);
+      }).catch(report);
+    });
     const offApp = client.onApp(message => { for (const listener of appListeners) listener(message); });
     unsubscribe = () => { offView(); offApp(); };
   };
@@ -110,7 +116,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
     setDeafened: deafened => client.setDeafened(deafened),
     setPushToTalk: enabled => client.setPushToTalk(enabled),
     setTalking: talking => client.setTalking(talking),
-    startScreen: () => run(() => client.startScreen()),
+    startScreen: withAudio => run(() => client.startScreen(withAudio)),
     stopScreen: () => client.stopScreen(),
     setCameraActivity: activity => {cameraActivity=activity;client.setCameraActivity(activity);},
     setGameCameraPolicy: policy => client.setGameCameraPolicy?.(policy),
@@ -124,6 +130,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
     }),
     workspaceCommand: command => client.workspaceCommand(command),
     mailboxCommand: async command => { if(lockedIdentity)throw userError(t('Desbloquea tu identidad guardada para abrir el buzón.')); return client.mailboxCommand(command); },
+    friendCommand: command => client.friendCommand(command),
     voiceCommand: command => client.voiceCommand(command),
     requestPrivate: (identityId) => client.requestPrivate(identityId),
     sendApp: (channel, to, data) => client.sendApp(channel, to, data),
@@ -214,10 +221,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
       if(!person||id===identity.public.fingerprint)throw userError(t('Esa persona ya no está en la sesión.'));
       if(data.contacts.some(c=>c.identity.fingerprint===id))return;
       if(data.contacts.length>=100)throw new Error('La agenda admite hasta 100 contactos.');
-      const verified=await validatePublicIdentity(person);
-      if(data.contacts.some(c=>c.identity.fingerprint===id))return;
-      if(data.contacts.length>=100)throw new Error('La agenda admite hasta 100 contactos.');
-      data.contacts=[...data.contacts,{schemaVersion:1,identity:verified}];await persist();update();
+      client.friendCommand({action:'request',target:id});
     }),
     setContactNickname: (id,nickname) => run(async () => {
       const name=nickname.trim();if(name.length>48)throw userError(t('El apodo admite hasta 48 caracteres.'));

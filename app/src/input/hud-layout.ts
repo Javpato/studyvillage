@@ -12,11 +12,12 @@ const KEY='studyvillage-hud-layout-v1';
 export function defaultHud(profile:HudProfile):HudLayout{
  let clock:HudWidget={x:80,y:16,scale:1,color:null,visible:false};try{const old=JSON.parse(localStorage.getItem('studyvillage-focus-clock-v1')||'null');if(old)clock={...clock,x:old.position.x*100,y:old.position.y*100,visible:old.hud??old.started};}catch{}
  const portrait=profile.endsWith('portrait');
+ const desktop=profile.startsWith('desktop');
  const phonePortrait=profile==='phone-portrait';
  const item=(x:number,y:number):HudWidget=>({x,y,scale:phonePortrait?.6:.75,color:null,visible:true});
  // Phone portrait: the screen fills the top two thirds, so the controls sit in a short deck below it.
  if(phonePortrait)return{clock,movement:item(20,86),interact:item(84,90),sprint:item(84,81),ptt:item(60,90),microphone:item(9,73),deafen:item(21,73),screen:item(33,73),camera:item(45,73),location:item(29,5)};
- return{clock,movement:item(portrait?19:12,portrait?82:75),interact:item(portrait?84:91,portrait?83:78),sprint:item(portrait?84:91,portrait?72:57),ptt:item(portrait?61:76,portrait?83:78),microphone:item(portrait?10:7,portrait?64:50),deafen:item(portrait?24:15,portrait?64:50),screen:item(portrait?38:23,portrait?64:50),camera:item(portrait?52:31,portrait?64:50),location:item(portrait?29:20,6)};
+ return{clock,movement:item(portrait?19:12,portrait?82:75),interact:item(portrait?84:91,portrait?83:78),sprint:item(portrait?84:91,portrait?72:57),ptt:item(portrait?61:76,portrait?83:78),microphone:item(portrait?10:7,desktop?94:portrait?64:50),deafen:item(portrait?24:15,desktop?94:portrait?64:50),screen:item(portrait?38:23,desktop?94:portrait?64:50),camera:item(portrait?52:31,desktop?94:portrait?64:50),location:item(portrait?29:20,6)};
 }
 export function loadHud(profile:HudProfile):HudLayout{
  try{const value=storeSchema.parse(JSON.parse(localStorage.getItem(KEY)||'{}'));return {...defaultHud(profile),...value[profile]};}catch{return defaultHud(profile);}

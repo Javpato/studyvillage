@@ -134,3 +134,10 @@ it('hides an unsupported screen capture API but keeps permission denial retryabl
  const denied=new MediaManager(()=>{},{getUserMedia:async()=>fakeStream('audio').stream,getDisplayMedia:async()=>{throw new DOMException('Denied','NotAllowedError');}});
  denied.setContext(context());await denied.startScreen();expect(denied.view.screenAvailable).toBe(true);expect(denied.view.screenPhase).toBe('DENIED');denied.dispose();
 });
+
+it('requests optional display audio and stops both tracks when sharing ends',async()=>{
+ const video=fakeStream('video'),audio=fakeStream('audio');let requested:DisplayMediaStreamOptions|undefined;
+ const stream={getTracks:()=>[video.track,audio.track],getVideoTracks:()=>[video.track],getAudioTracks:()=>[audio.track]} as unknown as MediaStream;
+ const manager=new MediaManager(()=>{},{getUserMedia:async()=>audio.stream,getDisplayMedia:async options=>{requested=options;return stream;}});
+ manager.setContext(context());await manager.startScreen(true);expect(requested?.audio).toBe(true);expect(manager.view.localScreen?.getAudioTracks()).toHaveLength(1);manager.stopScreen();expect(video.track.stopped).toBe(true);expect(audio.track.stopped).toBe(true);
+});

@@ -1,3 +1,4 @@
+import {Friends,emptyFriends,type FriendCommand} from '../../../core/src/social/friends';
 import {LocalWorkspaces} from '../storage/workspaces';
 import {LocalMailbox} from '../storage/mailbox';
 import {PeerMailbox} from './mailbox';
@@ -103,6 +104,8 @@ export class VillageClient implements VillageActions {
   private workspaceStorage: LocalWorkspaces;
   private mailbox:PeerMailbox;
   private offlinePosition: Position = {x:384,y:344,direction:'up',moving:false};
+  private friends = new Friends();
+  private friendState=emptyFriends();
   private voiceHub = new VoiceHub();
   private voiceState: VoiceView = emptyVoice();
   private privateWith: string | null = null;
@@ -152,7 +155,7 @@ export class VillageClient implements VillageActions {
       hostGraceRemainingMs: this.hostDeadline === null ? null : Math.max(0, this.hostDeadline - this.clock.now()),
       error: this.error, media: this.media.view, gameCamera: this.camera.view,
       workspace: this.phase === 'JOINED' ? this.workspaceState : this.workspace.view(this.id),
-      voice: this.voiceState,
+      friends:this.friendState,voice: this.voiceState,
       voiceDirectory: [...this.members.values()].filter(m => m.connected).map(m => m.identity),
       privateCall: this.privateCallView(),
     };
@@ -438,6 +441,8 @@ export class VillageClient implements VillageActions {
       if(owner===this.id&&payload.workspace.space&&payload.workspace.document)this.workspaceStorage.put(owner,payload.workspace.space,payload.workspace.document);
       this.syncMedia();this.notify();return;
     }
+    if(payload.type==='friend.command'){if(!this.isHost)throw new Error('Only coordinator');this.applyFriends(sender,payload.command);return;}
+    if(payload.type==='friend.state'){if(!fromHost||this.isHost)throw new Error('Only coordinator');this.friendState=payload.friends;this.notify();return;}
     if (payload.type === 'voice.command') {
       if (!this.isHost) throw new Error('Only coordinator accepts voice commands');
       this.applyVoice(sender, payload.command); return;
@@ -857,9 +862,19 @@ export class VillageClient implements VillageActions {
     return { with: partner ?? this.voiceState.outgoing.find(i => i.kind === 'call')?.to ?? null, active: !!partner,
       incoming: this.voiceState.invitations.filter(i => i.kind === 'call').map(i => i.from) };
   }
+  private publishFriends():void {
+    this.friendState=this.friends.view(this.id);
+    for(const link of this.links)if(link.approved&&!link.closed&&link.identity)this.send(link,{type:'friend.state',friends:this.friends.view(link.identity.fingerprint)});
+  }
+  private applyFriends(who:string,command:FriendCommand):void {
+    try{this.friends.apply(who,command,[...this.members.values()].filter(m=>m.connected).map(m=>m.identity));this.publishFriends();this.notify();}
+    catch(error){const message=error instanceof Error?error.message:'Error';if(who===this.id)this.setError(message);else {const link=this.linkFor(who);if(link)this.send(link,{type:'voice.error',message});}}
+  }
+  friendCommand(command:FriendCommand):void {if(this.phase!=='JOINED')return;if(this.isHost)this.applyFriends(this.id,command);else this.sendHost({type:'friend.command',command});}
   private publishVoice(): void {
     if (!this.isHost) return;
     const online = [...this.members.values()].filter(m => m.connected).map(m => m.identity.fingerprint);
+    this.publishFriends();
     this.voiceHub.prune(online);
     this.voiceState = this.voiceHub.view(this.id);
     for (const link of this.links) if (link.approved && !link.closed && link.identity) this.send(link, { type: 'voice.state', voice: this.voiceHub.view(link.identity.fingerprint) });
@@ -959,7 +974,7 @@ export class VillageClient implements VillageActions {
   setDeafened(value: boolean): void { this.media.setDeafened(value); }
   setPushToTalk(value: boolean): void { this.media.setPushToTalk(value); }
   setTalking(value: boolean): void { this.media.setTalking(value); }
-  startScreen(): Promise<void> { this.requireMedia();return this.media.startScreen(); }
+  startScreen(withAudio = false): Promise<void> { this.requireMedia();return this.media.startScreen(withAudio); }
   stopScreen(): void { this.media.stopScreen(); }
 
   private linkClosed(link: Link): void {
@@ -1056,7 +1071,7 @@ export class VillageClient implements VillageActions {
     this.generation++; this.leaving = true; this.media.suspend(); this.camera.suspend(); this.leaveResolve?.();
     for(const id of this.members.keys())this.workspace.disconnect(id);
     this.workspaceState=emptyWorkspace();this.offlinePosition={x:384,y:344,direction:'up',moving:false};
-    this.voiceHub = new VoiceHub(); this.voiceState = emptyVoice();
+    this.friends=new Friends();this.friendState=emptyFriends();this.voiceHub = new VoiceHub(); this.voiceState = emptyVoice();
     this.privateWith = null; this.privateOf.clear(); this.cameraActivity = null; this.cameraActivities.clear();
     if (this.tickTimer) this.clock.clearTimeout(this.tickTimer);
     if (this.moveTimer) this.clock.clearTimeout(this.moveTimer);

@@ -65,7 +65,7 @@ else {
         const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
         if (!sources.length) return callback({});
         const result = await dialog.showMessageBox(window, { title: 'Share screen / Compartir pantalla', message: 'Choose what to share / Elige qué compartir', buttons: ['Cancel / Cancelar', ...sources.map(s => s.name)], cancelId: 0, defaultId: 0 });
-        callback(result.response > 0 ? { video: sources[result.response - 1] } : {});
+        callback(result.response > 0 ? { video: sources[result.response - 1], ...(request.audioRequested && process.platform === 'win32' ? {audio:'loopback'} : {}) } : {});
       } catch { callback({}); }
     }, { useSystemPicker: true });
     session.defaultSession.on('will-download', (event, item, contents) => {
