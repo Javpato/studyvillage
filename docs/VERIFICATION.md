@@ -1,3 +1,11 @@
+# Final verification corrections
+
+Both CI platforms passed 27/28 Chromium cases on `0673856`; the failing immediate-movement check exposed native dialog `close` arriving after new movement input. Pet interaction cleanup is now synchronous and idempotent, with the native close event sharing the same cleanup path. Local Chromium passed all 28 cases; production WebKit is running. Current desktop payload passed Linux sandbox/storage/export/reload checks.
+
+Pages CI diagnostic: Chromium 156’s fresh tab was not controlled although registration had activated and the complete expected cache existed. The fixture now tries a normal reload before its strict controller/cache/offline checks; no worker is forcibly claimed and no application reload is introduced. [Diagnostic run](https://github.com/Javpato/studyvillage/actions/runs/42525099368). Publication remains pending a successful run.
+
+---
+
 # Pets, folders, controls and language corrections — verification checkpoint
 
 Current candidate: [`0673856`](https://github.com/Javpato/studyvillage/commit/0673856), pushed to `main`. [Pages run](https://github.com/Javpato/studyvillage/actions/runs/42524747307) and [Linux/macOS run](https://github.com/Javpato/studyvillage/actions/runs/42524778039) are tracked here. Pages again stopped at the new-client controller assertion on CI while both local engines passed. Additional controller/registration diagnostics are being collected; the candidate is not yet a published web release.
