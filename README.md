@@ -6,15 +6,15 @@ Una aldea acogedora en pixel art para tener tu propio rincón, visitar a tus ami
 
 ## Estado y descargas
 
-La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages. Los instaladores tienen versiones propias: consulta la [última entrega de desarrollo](https://github.com/Javpato/studyvillage/releases) y descarga el archivo de tu sistema. **`1.0.0-dev.8` es la versión preparada en este código**; una entrega solo está publicada cuando aparecen sus cuatro instaladores y las sumas de comprobación en Releases.
+**[1.0.0-dev.8 está publicada](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.8)** con cuatro instaladores verificados, información de compilación y sumas SHA-256. Descarga el archivo de tu sistema en la tabla. La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages; cada entrega de instaladores queda asociada a su propia etiqueta de versión.
 
 | Dispositivo | Qué abrir o descargar |
 |---|---|
 | Navegador, iPhone o iPad | [Web de StudyVillage](https://javpato.github.io/studyvillage/); en Safari, Compartir → Añadir a pantalla de inicio |
-| Windows x64 | `StudyVillage-Setup-x64.exe` |
-| Linux x64 | `StudyVillage-linux-x64.AppImage` |
-| macOS Intel o Apple Silicon | `StudyVillage-macos-universal.dmg` — el mismo archivo para ambos |
-| Android | `StudyVillage-development.apk` |
+| Windows x64 | [StudyVillage-Setup-x64.exe](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-Setup-x64.exe) |
+| Linux x64 | [StudyVillage-linux-x64.AppImage](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-linux-x64.AppImage) |
+| macOS Intel o Apple Silicon | [StudyVillage-macos-universal.dmg](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-macos-universal.dmg) — el mismo archivo para ambos |
+| Android | [StudyVillage-development.apk](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-development.apk) |
 
 Son versiones de desarrollo. Los instaladores de escritorio no tienen firma comercial ni notarización; el APK usa firma de desarrollo. Exporta una copia de tus datos antes de desinstalar o cambiar de dispositivo. No hay instalador nativo de iOS.
 
@@ -24,8 +24,9 @@ Son versiones de desarrollo. Los instaladores de escritorio no tienen firma come
 - Pantallas compartidas que cada persona puede mover, redimensionar o minimizar para sí misma; audio opcional cuando el navegador y sistema lo permiten.
 - **Ajustes → Mando:** guía de conexión USB/Bluetooth, detección, prueba de botones y controles para menús, aldea y Bloques del Bosque. Escribir y dibujar siguen usando teclado, ratón o pantalla táctil.
 - Bloques del Bosque con juego a la izquierda, cámaras a la derecha, ocultación local del vídeo y «Terminar partida» junto a «Comenzar».
-- Mejoras de teléfono/iPad, campo de invitación sobre el teclado, jardín más visible y tamaño estable con zoom; llamadas abajo a la izquierda en ordenador.
+- Mejoras de teléfono/iPad, campo de invitación sobre el teclado, jardín más visible y tamaño estable con zoom; controles de llamada abajo a la izquierda en ordenador.
 - Teléfono organizable por carpetas, mejoras de sprites y partidas de Bloques contra NPC incluidas desde los cambios posteriores a dev.7.
+- Reloj flotante que conserva su posición y tamaño al arrastrarlo, ocultarlo y recargar, también con controles personalizados.
 
 Las solicitudes de amistad sobreviven a desconexiones en servidores actualizados. **Actualizar la web o un instalador no actualiza el servidor de tu aldea:** su administrador debe actualizarlo desde esta misma versión. Los servidores anteriores conservan las demás funciones. Consulta [las notas completas](docs/RELEASE_NOTES.md).
 
@@ -85,7 +86,7 @@ npm run mac:build     # DMG universal; ejecutar desde macOS
 npm run android:apk   # APK; requiere JDK 21 y Android SDK 36
 ```
 
-Las Releases se construyen desde una etiqueta de versión: los cuatro instaladores comparten el mismo cliente web y solo se publican cuando terminan sus verificaciones. Se adjuntan información de compilación y sumas SHA-256. Los scripts de empaquetado mantienen únicamente la entrega local vigente en `deliverables/`.
+Las Releases identifican un commit mediante una etiqueta de versión: los cuatro instaladores comparten el mismo cliente web y solo se publican cuando terminan sus verificaciones. Se adjuntan información de compilación y sumas SHA-256. La entrega local vigente está en `deliverables/release-current/`; los scripts de empaquetado también generan sus carpetas de trabajo por plataforma.
 
 Más información: [funciones](docs/FEATURES.md), [arquitectura](docs/ARCHITECTURE.md), [cuadernos y tinta](docs/INK.md), [recursos gráficos](docs/SPRITES.md) y [verificaciones y límites](docs/VERIFICATION.md). Las pruebas automatizadas y una compilación correcta no sustituyen las comprobaciones en dispositivos físicos.
 
