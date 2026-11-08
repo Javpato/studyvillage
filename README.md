@@ -50,6 +50,8 @@ Para mantener una aldea en tu propio equipo o servidor, sigue la [guía de servi
 
 Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra colaborativa, tarjetas, quizzes, proyectos, música local y un reloj de concentración. Son actividades dentro de la aldea: tú eliges cuáles forman parte de tu día. Las herramientas manuales funcionan sin IA; la integración local con Ollama es opcional.
 
+La web y `main` incluyen ahora ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Los [detalles y límites de verificación](docs/AMENDMENT.md) corresponden a este candidato; los instaladores dev.8 conservan su versión etiquetada.
+
 ## Empezar a jugar
 
 Abre el enlace web o descarga un único archivo para tu sistema en Releases: **Windows x64 (.exe), Linux x64 (.AppImage), macOS Intel y Apple Silicon (un mismo .dmg universal), o Android (.apk)**. En Windows, ejecuta el instalador. En Linux, da permiso de ejecución al AppImage y ábrelo. En macOS, abre el DMG y arrastra StudyVillage a Aplicaciones. Las entregas de desarrollo de escritorio no tienen firma comercial ni notarización; Android usa firma de desarrollo.

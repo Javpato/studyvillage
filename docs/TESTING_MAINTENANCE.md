@@ -48,3 +48,11 @@ Documentation cleanup should merge useful technical content first, repair links,
 ## Documentation conventions
 
 Explain observable behavior and its implementation together. Link to the responsible source and tests, state data ownership and failure behavior, and label historical or unverified claims. Update API/version/configuration tables when changing their source. Avoid promising complete platform support from a build-only check. Use the [handbook index](README.md) to discover the canonical guide before adding a new overlapping Markdown file.
+
+## Amendment regressions
+
+The disappearing-stroke report came from a Mac (browser, input device and OS version unknown); the Linux owner does not reproduce it. `amendments.spec.ts` reproduces rapid consecutive completions in the shared personal/library editor at DPR 1 and 2, outside release, duplicate lost capture, undo/redo and persistence. `board-pencil.spec.ts` covers cancellation, coalesced input, palm precedence and missing release. Do not infer original-device success from Linux tests or synthetic events. `.github/workflows/amendment-regressions.yml` checks Chromium and WebKit on Linux and macOS.
+
+`pets.test.ts` includes complete Werewolves and Forest Blocks simulations, legal-view policy, house limits, collision recovery, follower slots, food and interrupted behaviors. Separate server clients test scene isolation, ownership, limits, cross-game reservations, reconnect and paired-device authority. These are local protocol tests, not an external-network session.
+
+Use `wardrobe.spec.ts`, `npc-speech.spec.ts`, `study-desk.spec.ts`, `backup.spec.ts` and the amendment cases for UI/persistence checks. Keep the tested source steady: Vite reloads from concurrent implementation changes can detach controls mid-test. Rerun any affected case after edits stop and record the interrupted run separately.

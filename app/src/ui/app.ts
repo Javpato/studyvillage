@@ -446,7 +446,7 @@ class StudyUI {
         actions.workspaceCommand({action:'commit',base:doc.revision,document:{...doc,theme:house.theme,furniture:house.furniture.map(f=>({...f,color:f.color??'#9f7847'}))}});
       }else actions.updateOwnHouse(house);
     } };
-    this.pets=new PetWorld({view:()=>this.view,scene:()=>this.petScene(),position:()=>this.localPosition,stop:()=>this.stopMoving(),obstacles:()=>this.pane==='house'?houseObstacles(this.currentHouse()??this.view!.ownHouse):this.currentArea==='residential'?worldObstacles(occupiedParcels(this.view!)):[...this.expansion.objectRegistry.obstaclesForArea(this.currentArea),...lampObstacles(this.currentArea)],save:(home,config)=>{
+    this.pets=new PetWorld({speak:(text,x,y)=>this.speech.say(text,x,y,this.speechScene()),view:()=>this.view,scene:()=>this.petScene(),position:()=>this.localPosition,stop:()=>this.stopMoving(),obstacles:()=>this.pane==='house'?houseObstacles(this.currentHouse()??this.view!.ownHouse):this.currentArea==='residential'?worldObstacles(occupiedParcels(this.view!)):[...this.expansion.objectRegistry.obstaclesForArea(this.currentArea),...lampObstacles(this.currentArea)],save:(home,config)=>{
       const view=this.view;if(!view)return;
       if(home.scene==='area:residential')actions.updateOwnHouse({...view.ownHouse,garden:view.ownHouse.garden?.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
       else {const key=home.scene.split(':').slice(2);if(key[0]==='lobby')actions.updateOwnHouse({...view.ownHouse,furniture:view.ownHouse.furniture.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
@@ -3703,7 +3703,7 @@ class StudyUI {
               if (candidate) { const r = furnitureRect(candidate); ctx.save(); ctx.fillStyle = this.decorationInvalid ? '#d8444450' : '#59b87140'; ctx.fillRect(r.x, r.y, r.w, r.h); ctx.strokeStyle = this.decorationInvalid ? '#b52828' : '#387e45'; ctx.strokeRect(r.x, r.y, r.w, r.h); ctx.restore(); }
             }
           }
-          this.pets.draw(ctx,now,this.stageCanvas);this.headCameras.draw(ctx,people);
+          this.pets.draw(ctx,now);this.headCameras.draw(ctx,people);
           this.speech.draw(ctx,this.speechScene(),()=>{const r=this.stageCanvas.getBoundingClientRect(),w=this.stageWrap.getBoundingClientRect();return{left:Math.max(0,(w.left-r.left)*768/r.width),right:Math.min(768,(w.right-r.left)*768/r.width),top:Math.max(0,(w.top-r.top)*432/r.height),screenLeft:Math.max(0,w.left),screenTop:Math.max(0,w.top),screenRight:Math.min(innerWidth,w.right),screenBottom:Math.min(innerHeight,w.bottom),canvasLeft:r.left,canvasTop:r.top,scale:r.width/768};});
           if (this.moveTarget) {
             ctx.save();

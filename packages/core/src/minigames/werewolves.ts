@@ -295,10 +295,13 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
       }
       case 'leave': {
         if (!actor) return;
-        for(const pet of this.players.filter(p=>p.pet?.owner===actorId)){this.petMatch.remove(pet.pet!.id,pet.pet!.owner);if(pet.alive)this.kill(pet.id,'leave');}this.players=this.players.filter(p=>p.pet?.owner!==actorId);
+        const owned=this.players.filter(p=>p.pet?.owner===actorId),hadLivingPet=owned.some(p=>p.alive);
         if (this.phase === 'lobby' || this.phase === 'end') {
-          this.players = this.players.filter((p) => p.id !== actorId);
-        } else if (actor.alive) {
+          for(const pet of owned)this.petMatch.remove(pet.pet!.id,pet.pet!.owner);
+          this.players = this.players.filter((p) => p.id !== actorId&&p.pet?.owner!==actorId);
+        } else if (actor.alive||hadLivingPet) {
+          // Retain eliminated seats until the match ends: a hunter can still owe a final action.
+          for(const pet of owned)if(pet.alive)this.kill(pet.id,'leave');
           this.kill(actor.id,'leave');
           this.say('info', '{name} abandona la partida.', { name: actor.name });
           if (this.phase !== 'hunter') {

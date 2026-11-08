@@ -14,7 +14,7 @@ export interface PetHome {id:string;owner:string;furnitureId:string;species:PetS
 export type PetState='idle'|'roaming'|'following'|'food'|'eating'|'petted'|'home'|'game'|'ability'|'rest';
 export type Point={x:number;y:number};
 export interface PetEntity extends Point {id:string;owner:string;species:PetSpecies;scene:string;state:PetState;direction:'up'|'down'|'left'|'right';moving:boolean;phrase?:string;toy?:Point;reactionUntil:number}
-export const PET_BEHAVIOR={follow:48,stop:32,far:256,stuck:3000,recoveryCooldown:5000,speed:82,petting:1800,ability:3200,abilityCooldown:5000,foodMin:120000,foodMax:300000,eating:3500} as const;
+export const PET_BEHAVIOR={follow:48,followStart:20,stop:10,far:256,stuck:3000,recoveryCooldown:5000,speed:82,petting:1800,ability:3200,abilityCooldown:5000,foodMin:120000,foodMax:300000,eating:3500} as const;
 export interface PetNavigation {
  path(scene:string,from:Point,to:Point,home?:PetHome):Point[]|null;
  safe(scene:string,point:Point,home?:PetHome):Point|null;
@@ -56,7 +56,7 @@ export class PetController {
   for(const a of this.actors.values()){
    const e=a.entity;e.moving=false;a.cooldown=Math.max(0,a.cooldown-ms);a.abilityCooldown=Math.max(0,a.abilityCooldown-ms);
    if(a.game){e.state='game';continue;}
-   if(a.home.config.mode==='follow'&&e.scene!==owner.scene){const at=this.nav.safe(owner.scene,owner.position);if(!at)continue;this.interrupt(a);Object.assign(e,at,{scene:owner.scene});}
+   if(a.home.config.mode==='follow'&&e.scene!==owner.scene){const slot=followers.indexOf(a),angle=slot*2.39996;const at=this.nav.safe(owner.scene,{x:owner.position.x+Math.cos(angle)*PET_BEHAVIOR.follow,y:owner.position.y+Math.sin(angle)*PET_BEHAVIOR.follow});if(!at)continue;this.interrupt(a);Object.assign(e,at,{scene:owner.scene});}
    if(a.home.config.mode==='roam'&&e.scene!==a.home.scene){this.sendHome(e.id);}
    if(e.scene!==owner.scene)continue; // Ambient time is active simulation, never offline debt.
    if(a.home.config.mode==='roam')a.food-=ms;
@@ -68,7 +68,7 @@ export class PetController {
     if(a.home.config.mode==='follow'){
      const slot=followers.indexOf(a),angle=slot*2.39996,target={x:owner.position.x+Math.cos(angle)*PET_BEHAVIOR.follow,y:owner.position.y+Math.sin(angle)*PET_BEHAVIOR.follow};
      const distance=Math.hypot(target.x-e.x,target.y-e.y);e.state='following';
-     if(distance>PET_BEHAVIOR.follow||a.path.length&&distance>PET_BEHAVIOR.stop){if(!a.target||Math.hypot(target.x-a.target.x,target.y-a.target.y)>16||!a.path.length){a.target=target;a.path=this.nav.path(e.scene,e,target)??[];}
+     if(distance>PET_BEHAVIOR.followStart||a.path.length&&distance>PET_BEHAVIOR.stop){if(!a.target||Math.hypot(target.x-a.target.x,target.y-a.target.y)>16||!a.path.length){a.target=target;a.path=this.nav.path(e.scene,e,target)??[];}
       if(!a.path.length)a.stuck+=ms;
       if(a.stuck>=PET_BEHAVIOR.stuck&&Math.hypot(owner.position.x-e.x,owner.position.y-e.y)>PET_BEHAVIOR.far&&!a.cooldown){const at=this.nav.safe(e.scene,target);if(at){Object.assign(e,at);a.path=[];a.stuck=0;a.cooldown=PET_BEHAVIOR.recoveryCooldown;}}
      }else{a.path=[];a.stuck=0;}

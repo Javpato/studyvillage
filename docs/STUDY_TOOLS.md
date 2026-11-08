@@ -24,7 +24,7 @@ Group projects use a core activity model and runtime coordination. Keep organize
 
 ## Focus clock
 
-The focus UI accepts hours, minutes and seconds, supports work/break intervals and can expose a movable optional HUD. `focus-clock-model.ts` is separated from presentation so timing behavior can be tested. The timer's state must survive panel closure and the documented pause/reload flow; a visual interval callback alone is not durable timekeeping.
+The focus UI accepts hours, minutes and seconds, automatically repeats focus/rest intervals (25/5 minutes by default) and can expose a movable optional HUD. `focus-clock-model.ts` is separated from presentation so timing behavior can be tested. Deadlines recover the correct phase after delayed callbacks. Pause freezes the current phase, resume continues it, and Reset stops the session at a full focus interval. Both durations can be edited together; edits affect subsequent phases. Hiding the panel or HUD does not stop timing.
 
 HUD position, visibility and safe layout are managed separately from the clock's duration. On small screens the clock should remain reachable without obscuring essential controls. Use focus-clock and HUD layout tests when changing timer state, positioning or persistence.
 
@@ -36,7 +36,7 @@ Test the file picker/drop path, playback controls, closing and reopening, explic
 
 ## Mailbox and guides
 
-Private mailboxes use the core mailbox schemas and runtime storage/session adapters. A resident's inbox is not public house metadata. Guide dialogue is configured through NPC models and appears near its speaker; dialogue settings include opacity, text size, line count and progressive presentation. Guides can be moved or removed rather than forced into existing homes.
+Private mailboxes use the core mailbox schemas and runtime storage/session adapters. A resident's inbox is not public house metadata. Guide dialogue is configured through NPC models and appears near its speaker; dialogue settings include opacity, text size, Small/Standard/Large bubble size, reset and progressive presentation. Guides can be moved or removed rather than forced into existing homes.
 
 ## Verification
 
