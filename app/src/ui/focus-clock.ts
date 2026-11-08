@@ -1,4 +1,5 @@
 import {layoutViewport,subscribeViewport} from '../input/browser-viewport';
+import {currentHudProfile,loadHud,saveHud,type HudWidget} from '../input/hud-layout';
 import {msg,setDisplayText,setDisplayAttribute,subscribeLanguage} from '../i18n';
 import {FocusClockModel,FOCUS_CLOCK_KEY,newFocusClockState,parseFocusClockState,durationFromFields,clockParts,formatClock,type FocusMode} from './focus-clock-model';
 import './study-desk.css';
@@ -13,6 +14,7 @@ export class FocusClock {
  private start=button('Comenzar',()=>this.toggle(),'sv-desk-button sv-desk-primary');private fields:HTMLInputElement[]=[];private modes=new Map<FocusMode,HTMLButtonElement>();private presets=element('div','sv-focus-presets');
  private hudFace=element('span','sv-focus-hud-time');private hudPhase=element('span','sv-focus-hud-mode');private hudPlay=button('',()=>this.toggle(),'sv-desk-icon-button');private switches=new Set<HTMLInputElement>();
  private valid=true;private pointer:{id:number;x:number;y:number;left:number;top:number}|null=null;
+ private hudLayout:HudWidget|null=null;
  private resize=()=>this.placeHud();private visibility=()=>{if(this.model.tick())this.save();this.paint();};
  constructor(){
   let saved=newFocusClockState();try{const raw=localStorage.getItem(FOCUS_CLOCK_KEY);if(raw)saved=parseFocusClockState(JSON.parse(raw));}catch{/* Keep an unreadable preference untouched until the user changes a setting. */}this.model=new FocusClockModel(saved);
@@ -33,20 +35,36 @@ export class FocusClock {
  private toggle():void{if(!this.valid)return;if(this.model.running)this.model.pause();else this.model.start();this.save();this.paint();this.placeHud();}
  private save():void{try{localStorage.setItem(FOCUS_CLOCK_KEY,JSON.stringify(this.model.state));}catch{setDisplayText(this.error,msg('El reloj sigue funcionando, pero no se pudo guardar su configuración.'));}}
  private visibilitySwitch():HTMLElement{const label=element('label','sv-desk-switch');const input=element('input');input.type='checkbox';input.checked=this.model.visible;setDisplayAttribute(input,'aria-label',msg('Mostrar reloj flotante'));input.onchange=()=>this.setHudVisible(input.checked);label.append(input,element('span','','Mostrar reloj flotante'));this.switches.add(input);return label;}
- setHudVisible(show:boolean):void{this.model.state.hud=show;this.save();this.paint();this.placeHud();}
+ setHudVisible(show:boolean):void{this.model.state.hud=show;this.paint();this.placeHud();this.saveHudPosition();}
+ /** The clock keeps one coordinate system for its own handle and the controls editor. */
+ applyHudLayout(value:HudWidget|null):void{
+  this.hudLayout=value;
+  this.hud.style.translate='none';this.hud.style.transformOrigin='top left';
+  if(value?.color)this.hud.style.setProperty('background',value.color,'important');else this.hud.style.removeProperty('background');
+  if(value){this.model.state.hud=value.visible;this.paint();const size=this.hudSize(),viewport=layoutViewport();this.positionHud(viewport.width*value.x/100-size.width/2,viewport.height*value.y/100-size.height/2);this.save();}
+  else this.placeHud();
+ }
  /** Mounted by the application's Settings → Controls panel. */
- settingsControl():HTMLElement{const box=element('section','sv-focus-settings');box.append(this.visibilitySwitch(),element('p','sv-subtle','Arrastra el reloj por su asa. Ocultarlo no detiene la sesión.'),button('Recolocar reloj',()=>{this.model.state.position={x:1,y:.16};this.save();this.placeHud();},'sv-button'));return box;}
+ settingsControl():HTMLElement{const box=element('section','sv-focus-settings');box.append(this.visibilitySwitch(),element('p','sv-subtle','Arrastra el reloj por su asa. Ocultarlo no detiene la sesión.'),button('Recolocar reloj',()=>{this.model.state.position={x:1,y:.16};this.placeHud();this.saveHudPosition();},'sv-button'));return box;}
  private buildHud():void{
   setDisplayAttribute(this.hud,'aria-label',msg('Reloj flotante'));const handle=button('⠿',()=>{},'sv-focus-hud-handle');setDisplayAttribute(handle,'aria-label',msg('Mover reloj flotante'));setDisplayAttribute(handle,'title',msg('Arrastra para mover; usa las flechas con el teclado'));
   handle.onpointerdown=event=>{if(event.button!==0)return;event.preventDefault();event.stopPropagation();const rect=this.hud.getBoundingClientRect();this.pointer={id:event.pointerId,x:event.clientX,y:event.clientY,left:rect.left,top:rect.top};handle.setPointerCapture(event.pointerId);this.hud.classList.add('is-dragging');};
   handle.onpointermove=event=>{if(this.pointer?.id!==event.pointerId)return;const p=this.pointer;this.positionHud(p.left+event.clientX-p.x,p.top+event.clientY-p.y);};
-  const finish=(event:PointerEvent)=>{if(this.pointer?.id!==event.pointerId)return;this.pointer=null;this.hud.classList.remove('is-dragging');if(handle.hasPointerCapture(event.pointerId))handle.releasePointerCapture(event.pointerId);this.save();};handle.onpointerup=finish;handle.onpointercancel=finish;
-  handle.onkeydown=event=>{const direction={ArrowLeft:[-16,0],ArrowRight:[16,0],ArrowUp:[0,-16],ArrowDown:[0,16]}[event.key];if(!direction)return;event.preventDefault();event.stopPropagation();const rect=this.hud.getBoundingClientRect();this.positionHud(rect.left+direction[0],rect.top+direction[1]);this.save();};
+  const finish=(event:PointerEvent)=>{if(this.pointer?.id!==event.pointerId)return;this.pointer=null;this.hud.classList.remove('is-dragging');if(handle.hasPointerCapture(event.pointerId))handle.releasePointerCapture(event.pointerId);this.saveHudPosition();};handle.onpointerup=finish;handle.onpointercancel=finish;
+  handle.onkeydown=event=>{const direction={ArrowLeft:[-16,0],ArrowRight:[16,0],ArrowUp:[0,-16],ArrowDown:[0,16]}[event.key];if(!direction)return;event.preventDefault();event.stopPropagation();const rect=this.hud.getBoundingClientRect();this.positionHud(rect.left+direction[0],rect.top+direction[1]);this.saveHudPosition();};
   const open=button('',()=>this.open(),'sv-focus-hud-open');setDisplayAttribute(open,'aria-label',msg('Abrir reloj de concentración'));open.append(this.hudPhase,this.hudFace);
   const hide=button('×',()=>this.setHudVisible(false),'sv-desk-icon-button');setDisplayAttribute(hide,'aria-label',msg('Ocultar reloj flotante'));this.hud.append(handle,open,this.hudPlay,hide);
  }
- private positionHud(x:number,y:number):void{const width=this.hud.offsetWidth||264,height=this.hud.offsetHeight||66;const maxX=Math.max(12,layoutViewport().width-width-12),maxY=Math.max(12,layoutViewport().height-height-12);const left=Math.min(maxX,Math.max(12,x)),top=Math.min(maxY,Math.max(12,y));this.model.state.position={x:maxX===12?0:(left-12)/(maxX-12),y:maxY===12?0:(top-12)/(maxY-12)};this.hud.style.left=`${left}px`;this.hud.style.top=`${top}px`;}
- private placeHud():void{const width=this.hud.offsetWidth||264,height=this.hud.offsetHeight||66;this.positionHud(12+this.model.state.position.x*Math.max(0,layoutViewport().width-width-24),12+this.model.state.position.y*Math.max(0,layoutViewport().height-height-24));}
+ private hudSize():{width:number;height:number}{const width=this.hud.offsetWidth||276,height=this.hud.offsetHeight||66,viewport=layoutViewport();const scale=Math.max(.01,Math.min(this.hudLayout?.scale??1,(viewport.width-24)/width,(viewport.height-24)/height));this.hud.style.scale=String(scale);return{width:width*scale,height:height*scale};}
+ private positionHud(x:number,y:number):void{const {width,height}=this.hudSize();const maxX=Math.max(12,layoutViewport().width-width-12),maxY=Math.max(12,layoutViewport().height-height-12);const left=Math.min(maxX,Math.max(12,x)),top=Math.min(maxY,Math.max(12,y));this.model.state.position={x:maxX===12?0:(left-12)/(maxX-12),y:maxY===12?0:(top-12)/(maxY-12)};this.hud.style.left=`${left}px`;this.hud.style.top=`${top}px`;}
+ private placeHud():void{const {width,height}=this.hudSize();this.positionHud(12+this.model.state.position.x*Math.max(0,layoutViewport().width-width-24),12+this.model.state.position.y*Math.max(0,layoutViewport().height-height-24));}
+ private saveHudPosition():void{
+  this.save();if(!this.hudLayout)return;
+  const viewport=layoutViewport(),size=this.hudSize();
+  const x=(parseFloat(this.hud.style.left)+size.width/2)/viewport.width*100,y=(parseFloat(this.hud.style.top)+size.height/2)/viewport.height*100;
+  const value={...this.hudLayout,x:Math.max(0,Math.min(100,x)),y:Math.max(0,Math.min(100,y)),visible:this.model.visible};
+  try{const profile=currentHudProfile();saveHud(profile,{...loadHud(profile),clock:value});this.hudLayout=value;}catch{setDisplayText(this.error,msg('El reloj sigue funcionando, pero no se pudo guardar su configuración.'));}
+ }
  private paint():void{
   const {remaining,mode}=this.model.state;this.face.textContent=formatClock(remaining);this.hudFace.textContent=formatClock(remaining);setDisplayText(this.phase,msg(mode==='focus'?'Concentración':'Descanso'));setDisplayText(this.hudPhase,msg(mode==='focus'?'Concentración':'Descanso'));this.root.dataset.mode=mode;this.hud.dataset.running=String(this.model.running);
   this.ring.style.setProperty('--clock-progress',`${Math.max(0,Math.min(1,remaining/this.model.duration))*360}deg`);setDisplayText(this.status,msg(remaining===0?'Tiempo cumplido. Respira y estírate.':this.model.running?'Un paso cada vez.':remaining!==this.model.duration?'En pausa. Continúa cuando quieras.':'Tu siguiente paso empieza aquí.'));

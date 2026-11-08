@@ -1,7 +1,7 @@
 import {layoutViewport,subscribeViewport} from '../input/browser-viewport';
 import { msg, t, setDisplayText, setDisplayAttribute, subscribeLanguage, type DisplayText } from '../i18n';
-import { HUD_IDS, currentHudProfile, defaultHud, loadHud, mobileKind, saveHudLayouts, type HudId, type HudLayout, type HudProfile } from '../input/hud-layout';
-export interface HudTarget { id:HudId; label:DisplayText; element:HTMLElement;apply?:(visible:boolean)=>void }
+import { HUD_IDS, currentHudProfile, defaultHud, loadHud, mobileKind, saveHudLayouts, type HudId, type HudLayout, type HudProfile, type HudWidget } from '../input/hud-layout';
+export interface HudTarget { id:HudId; label:DisplayText; element:HTMLElement;apply?:(visible:boolean)=>void;layout?:(value:HudWidget|null)=>void }
 const element=<K extends keyof HTMLElementTagNameMap>(tag:K,label?:DisplayText):HTMLElementTagNameMap[K]=>{const e=document.createElement(tag);if(label)setDisplayText(e,label);return e;};
 const button=(label:DisplayText,run:()=>void)=>{const b=element('button',label);b.type='button';b.className='sv-button sv-button-small';b.onclick=run;return b;};
 export class MobileHudEditor {
@@ -21,12 +21,14 @@ export class MobileHudEditor {
  private resized=()=>{const geometry=JSON.stringify(layoutViewport()),changed=geometry!==this.viewportGeometry;this.viewportGeometry=geometry;this.release();this.layout=loadHud(currentHudProfile());this.apply();if(this.root.open){if(changed)this.render();}else this.profile=currentHudProfile();};
  private apply():void{
   const mobile=this.mobile;document.documentElement.classList.toggle('sv-mobile-device',mobile);this.availability(mobile);
-  for(const [element,style]of this.original)element.style.cssText=style;
+  for(const [element,style]of this.original)if(!this.targets.some(target=>target.element===element&&target.layout))element.style.cssText=style;
 
   for(const target of this.targets){
    if(!mobile&&['movement','interact','sprint','ptt'].includes(target.id))continue;
    const value=this.layout[target.id],el=target.element;
    let saved=false;try{saved=!!JSON.parse(localStorage.getItem('studyvillage-hud-layout-v1')||'{}')[currentHudProfile()]?.[target.id];}catch{}
+   // A draggable widget owns its geometry; do not add a second centering transform.
+   if(target.layout){target.layout(saved?value:null);continue;}
    if(saved)target.apply?.(value.visible);
    el.style.transition='none';el.style.position='fixed';el.style.margin='0';el.style.right='auto';el.style.bottom='auto';el.style.translate='-50% -50%';el.style.scale=String(value.scale);el.style.transformOrigin='center';
    const rect=el.getBoundingClientRect();const halfW=Math.max(22,rect.width/2),halfH=Math.max(22,rect.height/2);

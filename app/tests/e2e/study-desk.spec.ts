@@ -8,8 +8,31 @@ test('focus clock accepts hours/minutes/seconds and the optional HUD moves, hide
  const hud=page.getByRole('complementary',{name:'Reloj flotante'});await expect(hud).toBeVisible();await hud.getByRole('button',{name:'Pausar reloj',exact:true}).click();
  const handle=hud.getByRole('button',{name:'Mover reloj flotante'}),before=(await hud.boundingBox())!,grip=(await handle.boundingBox())!;await page.mouse.move(grip.x+grip.width/2,grip.y+grip.height/2);await page.mouse.down();await page.mouse.move(grip.x-240,grip.y+100,{steps:8});await page.mouse.up();const moved=(await hud.boundingBox())!;expect(moved.x).toBeLessThanOrEqual(Math.max(12,before.x-200));expect(moved.x).toBeGreaterThanOrEqual(12);expect(moved.y).toBeGreaterThan(before.y+60);
  await page.reload();await expect(hud).toBeVisible();const restored=(await hud.boundingBox())!;expect(Math.abs(restored.x-moved.x)).toBeLessThan(3);expect(Math.abs(restored.y-moved.y)).toBeLessThan(3);await hud.getByRole('button',{name:'Ocultar reloj flotante'}).click();await page.reload();await expect(hud).toBeHidden();
- await phone(page,'phone-settings');const settings=page.getByRole('dialog',{name:'Ajustes'});await settings.getByRole('tab',{name:'Controles',exact:true}).click();await settings.getByLabel('Mostrar reloj flotante',{exact:true}).check();await expect(hud).toBeVisible();await settings.getByRole('button',{name:'Cerrar',exact:true}).click();
+ await phone(page,'phone-settings');const settings=page.getByRole('dialog',{name:'Ajustes'});await settings.getByRole('tab',{name:'Controles',exact:true}).click();await settings.getByRole('button',{name:'Editar controles',exact:true}).click();const editor=page.getByRole('dialog',{name:'Editor de controles'});await editor.getByLabel('Control para editar').selectOption('clock');await editor.getByLabel('Mostrar en pantalla').check();await editor.getByRole('button',{name:'Guardar controles',exact:true}).click();await expect(hud).toBeVisible();
  await hud.getByRole('button',{name:'Abrir reloj de concentración'}).click();await clock.getByRole('button',{name:'Descanso',exact:true}).click();await clock.getByLabel('Minutos',{exact:true}).fill('0');await clock.getByLabel('Segundos',{exact:true}).fill('2');await clock.getByRole('button',{name:'Comenzar',exact:true}).click();await expect(clock.getByRole('status').filter({hasText:'Tiempo cumplido.'})).toBeVisible({timeout:5000});
+});
+for(const device of [{name:'desktop',width:1440,height:1000,touch:false},{name:'phone',width:390,height:844,touch:true}])test.describe(`custom clock on ${device.name}`,()=>{
+ test.use({viewport:device,hasTouch:device.touch,isMobile:device.touch});
+ test('editor size, handle movement and visibility survive reload without jumping',async({page})=>{
+  await page.goto('/');await openPhoneApp(page,'hud-editor');
+  const editor=page.getByRole('dialog',{name:'Editor de controles'});
+  await editor.getByLabel('Control para editar').selectOption('clock');
+  await editor.getByLabel('Mostrar en pantalla').check();
+  for(const [label,value]of [['Tamaño',device.touch?'1.75':'1.25'],['Posición horizontal','50'],['Posición vertical','30']])await editor.getByLabel(label,{exact:true}).evaluate((node,value)=>{(node as HTMLInputElement).value=value;node.dispatchEvent(new Event('input',{bubbles:true}));},value);
+  await editor.getByRole('button',{name:'Guardar controles',exact:true}).click();
+  const hud=page.getByRole('complementary',{name:'Reloj flotante'});await expect(hud).toBeVisible();
+  const before=(await hud.boundingBox())!,grip=(await hud.getByRole('button',{name:'Mover reloj flotante'}).boundingBox())!,dx=device.touch?0:120;
+  await page.mouse.move(grip.x+grip.width/2,grip.y+grip.height/2);await page.mouse.down();await page.mouse.move(grip.x+grip.width/2+dx,grip.y+grip.height/2+80,{steps:8});await page.mouse.up();
+  const moved=(await hud.boundingBox())!;expect(moved.x-before.x).toBeCloseTo(dx,0);expect(moved.y-before.y).toBeCloseTo(80,0);
+  const contained=async()=>{const box=(await hud.boundingBox())!,size=page.viewportSize()!;expect(box.x).toBeGreaterThanOrEqual(11);expect(box.y).toBeGreaterThanOrEqual(11);expect(box.x+box.width).toBeLessThanOrEqual(size.width-11);expect(box.y+box.height).toBeLessThanOrEqual(size.height-11);};
+  await contained();await page.reload();await expect(hud).toBeVisible();const restored=(await hud.boundingBox())!;
+  expect(restored.x).toBeCloseTo(moved.x,0);expect(restored.y).toBeCloseTo(moved.y,0);expect(restored.width).toBeCloseTo(moved.width,0);
+  await hud.getByRole('button',{name:'Continuar reloj',exact:true}).click();await hud.getByRole('button',{name:'Pausar reloj',exact:true}).click();expect((await hud.boundingBox())!.y).toBeCloseTo(moved.y,0);
+  await page.setViewportSize({width:device.height,height:device.width});await contained();await page.setViewportSize({width:device.width,height:device.height});await contained();
+  const beforeHide=(await hud.boundingBox())!;await hud.getByRole('button',{name:'Ocultar reloj flotante'}).click();await page.reload();await expect(hud).toBeHidden();
+  await openPhoneApp(page,'focus');const clock=page.getByRole('dialog',{name:'Reloj de concentración'});await clock.getByLabel('Mostrar reloj flotante').check();await clock.getByRole('button',{name:'Cerrar',exact:true}).click();await expect(hud).toBeVisible();const shown=(await hud.boundingBox())!;
+  expect(shown.x).toBeCloseTo(beforeHide.x,0);expect(shown.y).toBeCloseTo(beforeHide.y,0);expect(shown.width).toBeCloseTo(beforeHide.width,0);
+ });
 });
 test('jukebox accepts dropped local audio, plays with custom controls and keeps playback when closed',async({page})=>{
  await page.goto('/');await phone(page,'phone-music');const panel=page.getByRole('dialog',{name:'Jukebox de estudio'});const data=wav();

@@ -11,6 +11,7 @@ Esta entrega reúne los cambios de la aldea posteriores a dev.7 y actualiza los 
 - Bloques del Bosque: juego a la izquierda y cámaras a la derecha, botón exterior para ocultar vídeo localmente y terminar junto a comenzar. Incluye dificultades, práctica y rivales NPC.
 - Correcciones de contención en teléfono, teclado del código de aldea en iPad, distribución del jardín y estabilidad de tamaño con zoom. Controles de llamada predeterminados abajo a la izquierda en ordenador.
 - Organización del teléfono por carpetas, mejoras de arrastre y descripciones/previsualización de sprites. Se retira la estación de proyectos de la plaza; sus datos y otros accesos se conservan.
+- Reloj flotante: arrastre sin saltos después de editar los controles, tamaño contenido en teléfono y posición/visibilidad conservadas al recargar.
 - README y manual técnico reorganizados por funciones y componentes.
 
 ## Actualizar

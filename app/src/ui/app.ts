@@ -503,7 +503,7 @@ class StudyUI {
       {id:'deafen',label:msg('Dejar de escuchar'),element:this.hudDeafen},
       {id:'camera',label:msg('Cámara'),element:this.hudCamera},
       {id:'screen',label:msg('Compartir pantalla'),element:this.hudScreen},
-      {id:'clock',label:msg('Reloj flotante'),element:this.focusClock.hud,apply:visible=>this.focusClock.setHudVisible(visible)},
+      {id:'clock',label:msg('Reloj flotante'),element:this.focusClock.hud,layout:value=>this.focusClock.applyHudLayout(value)},
       {id:'location',label:msg('Ubicación'),element:this.shell.querySelector<HTMLElement>('.sv-hud-place')!},
     ],()=>{this.stopMoving();this.actions.setTalking(false);},()=>{this.hudEditTile.hidden=false;});
 
