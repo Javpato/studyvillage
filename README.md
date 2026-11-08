@@ -45,6 +45,8 @@ Organiza el teléfono con clic derecho sobre un icono o manteniéndolo pulsado d
 
 Abre una aldea temporal e invita a tus amigos, o únete a un servidor persistente. Visita sus casas respetando sus permisos, conversa por voz y activa la cámara cuando lo decidas. En la plaza puedes jugar a Hombres Lobo, Gartic Phone o **Bloques del Bosque**, con partidas individuales y batallas de bloques para 2–16 personas.
 
+Para mantener una aldea en tu propio equipo o servidor, sigue la [guía de servidores propios](docs/SELF_HOSTING.md): Ubuntu/Linux, Windows, macOS, Docker, túneles sin abrir puertos, HTTPS, redes privadas, invitaciones y copias de seguridad.
+
 Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra colaborativa, tarjetas, quizzes, proyectos, música local y un reloj de concentración. Son actividades dentro de la aldea: tú eliges cuáles forman parte de tu día. Las herramientas manuales funcionan sin IA; la integración local con Ollama es opcional.
 
 ## Empezar a jugar

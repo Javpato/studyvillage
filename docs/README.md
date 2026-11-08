@@ -6,6 +6,7 @@ Start with Features → Setup → Architecture. Then follow the subsystem you ar
 |---|---|
 | [Features](FEATURES.md) | Overview and current feature boundaries |
 | [Setup](SETUP.md) | Install, develop, host and troubleshoot setup |
+| [Servidor propio / Self-hosting](SELF_HOSTING.md) | Step-by-step hosting on Linux, Windows, macOS or Docker; closed ports, tunnels, HTTPS, private networks and backups |
 | [Architecture](ARCHITECTURE.md) | Layers, startup, ownership and compatibility |
 | [World Assets](WORLD_ASSETS.md) | Canvas world, houses, furniture and garden geometry |
 | [Sprites](SPRITES.md) | PNG catalogue, dimensions and artwork replacement |

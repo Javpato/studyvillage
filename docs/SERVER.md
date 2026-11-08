@@ -1,5 +1,7 @@
 # Persistent server and wire API
 
+For installation and deployment, start with the [step-by-step self-hosting guide](SELF_HOSTING.md), including servers with closed inbound ports. This document describes the server internals and wire API.
+
 Source entry points: [server/src/main.ts](../server/src/main.ts), [server/src/world.ts](../server/src/world.ts), [packages/runtime/src/server/contracts.ts](../packages/runtime/src/server/contracts.ts), [server/tests/server.test.ts](../server/tests/server.test.ts).
 
 ## Responsibilities and entry points
