@@ -8,12 +8,12 @@ export const petConfigSchema=z.strictObject({id:z.string().regex(/^[A-Za-z0-9_-]
 export type PetConfig=z.infer<typeof petConfigSchema>;
 export const petSpecies=(kind:string):PetSpecies|null=>PET_HOUSES.includes(kind as typeof PET_HOUSES[number])?kind.slice(4) as PetSpecies:null;
 export const petCount=(items:readonly {kind:string}[])=>items.filter(i=>petSpecies(i.kind)).length;
-export function assertPetLimit(groups:readonly (readonly {kind:string}[])[]):void{if(groups.reduce((n,g)=>n+petCount(g),0)>PET_LIMIT)throw new Error(PET_LIMIT_MESSAGE);}
+export function assertPetLimit(groups:readonly (readonly {kind:string;id?:string;pet?:PetConfig}[])[]):void{const pets=groups.flat().filter(i=>petSpecies(i.kind));if(pets.length>PET_LIMIT)throw new Error(PET_LIMIT_MESSAGE);const ids=pets.map(i=>i.pet?.id??i.id).filter(id=>id!==undefined);if(new Set(ids).size!==ids.length)throw new Error('Esta mascota ya tiene una casa.');}
 export function newPetConfig(id:string):PetConfig{return{id,mode:'roam'};}
 export interface PetHome {id:string;owner:string;furnitureId:string;species:PetSpecies;scene:string;x:number;y:number;config:PetConfig}
 export type PetState='idle'|'roaming'|'following'|'food'|'eating'|'petted'|'home'|'game'|'ability'|'rest';
 export type Point={x:number;y:number};
-export interface PetEntity extends Point {id:string;owner:string;species:PetSpecies;scene:string;state:PetState;direction:'up'|'down'|'left'|'right';moving:boolean;phrase?:string;reactionUntil:number}
+export interface PetEntity extends Point {id:string;owner:string;species:PetSpecies;scene:string;state:PetState;direction:'up'|'down'|'left'|'right';moving:boolean;phrase?:string;toy?:Point;reactionUntil:number}
 export const PET_BEHAVIOR={follow:48,stop:32,far:256,stuck:3000,recoveryCooldown:5000,speed:82,petting:1800,ability:3200,abilityCooldown:5000,foodMin:120000,foodMax:300000,eating:3500} as const;
 export interface PetNavigation {
  path(scene:string,from:Point,to:Point,home?:PetHome):Point[]|null;
@@ -31,14 +31,14 @@ export class PetController {
   const ids=new Set(homes.map(h=>h.id));for(const [id,a]of this.actors)if(!ids.has(id)){this.releaseBowl(a);this.actors.delete(id);}
   for(const home of homes){const old=this.actors.get(home.id);if(old){const moved=old.home.scene!==home.scene||old.home.x!==home.x||old.home.y!==home.y;old.home=home;if(old.lastCommand!==home.config.mode){old.lastCommand=home.config.mode;this.interrupt(old);}
     if(moved&&home.config.mode==='roam')this.sendHome(home.id);continue;}
-   const at=this.nav.safe(home.scene,home,home)??home;
+   const at=this.nav.safe(home.scene,home,home);if(!at)continue;
    this.actors.set(home.id,{home,entity:{id:home.id,owner:home.owner,species:home.species,scene:home.scene,x:at.x,y:at.y,state:'idle',direction:'down',moving:false,reactionUntil:0},path:[],target:null,wait:1000,food:this.foodDelay(),stuck:0,cooldown:0,abilityCooldown:0,bowl:null,returnToy:false,game:false,lastCommand:home.config.mode});
   }
  }
  entities():PetEntity[]{return [...this.actors.values()].map(a=>({...a.entity}));}
  home(id:string){return this.actors.get(id)?.home;}
  private releaseBowl(a:Actor){if(a.bowl)this.bowls.delete(a.bowl);a.bowl=null;}
- private interrupt(a:Actor){this.releaseBowl(a);a.path=[];a.target=null;a.wait=0;a.returnToy=false;a.entity.phrase=undefined;a.entity.moving=false;a.entity.state=a.game?'game':'idle';}
+ private interrupt(a:Actor){this.releaseBowl(a);a.path=[];a.target=null;a.wait=0;a.returnToy=false;a.entity.phrase=undefined;a.entity.toy=undefined;a.entity.moving=false;a.entity.state=a.game?'game':'idle';}
  reserve(id:string,on:boolean){const a=this.actors.get(id);if(!a)return;a.game=on;this.interrupt(a);if(!on)this.sendHome(id);}
  sendHome(id:string){const a=this.actors.get(id);if(!a||a.game)return;this.interrupt(a);const at=this.nav.safe(a.home.scene,a.home,a.home);if(at){if(a.entity.scene===a.home.scene){a.path=this.nav.path(a.home.scene,a.entity,at,a.home)??[];a.entity.state='home';}else Object.assign(a.entity,at,{scene:a.home.scene,state:'idle'});a.wait=0;}}
  pet(id:string,now:number):boolean{const a=this.actors.get(id);if(!a||a.game||['petted','ability'].includes(a.entity.state))return false;this.interrupt(a);a.entity.state='petted';a.wait=PET_BEHAVIOR.petting;a.entity.reactionUntil=now+a.wait;return true;}
@@ -48,7 +48,7 @@ export class PetController {
   const point=target??{x:a.entity.x+48,y:a.entity.y};
   const route=['dog','hamster','rabbit'].includes(a.home.species)?this.nav.path(a.entity.scene,a.entity,point,home):[];
   if(!route||Math.hypot(point.x-a.entity.x,point.y-a.entity.y)>128)return false;
-  this.interrupt(a);a.entity.state='ability';a.wait=PET_BEHAVIOR.ability;a.abilityCooldown=PET_BEHAVIOR.abilityCooldown;a.path=route;a.target=point;a.returnToy=a.home.species==='dog';
+  this.interrupt(a);a.entity.state='ability';a.wait=PET_BEHAVIOR.ability;a.abilityCooldown=PET_BEHAVIOR.abilityCooldown;a.path=route;a.target=point;a.returnToy=a.home.species==='dog';if(a.returnToy)a.entity.toy=point;
   if(a.home.species==='parrot')a.entity.phrase=a.home.config.phrase||'♪';a.entity.reactionUntil=now+PET_BEHAVIOR.ability;return true;
  }
  tick(dt:number,now:number,owner:{scene:string;position:Point}){
@@ -62,7 +62,7 @@ export class PetController {
    if(a.home.config.mode==='roam')a.food-=ms;
    if(a.bowl&&!this.nav.bowls(a.home).some(b=>b.id===a.bowl)){this.interrupt(a);}
    if(['petted','eating','rest'].includes(e.state)){a.wait-=ms;if(a.wait>0)continue;this.interrupt(a);}
-   if(e.state==='ability'){a.wait-=ms;if(a.wait<=0){this.interrupt(a);}else if(!a.path.length){if(a.returnToy){a.returnToy=false;a.path=this.nav.path(e.scene,e,owner.position,a.home.config.mode==='roam'?a.home:undefined)??[];}else continue;}}
+   if(e.state==='ability'){a.wait-=ms;if(a.wait<=0){this.interrupt(a);}else if(!a.path.length){if(a.returnToy){a.returnToy=false;e.toy=undefined;a.path=this.nav.path(e.scene,e,owner.position,a.home.config.mode==='roam'?a.home:undefined)??[];}else continue;}}
    if(e.state==='home'&&!a.path.length)this.interrupt(a);
    if(e.state!=='ability'&&e.state!=='home'){
     if(a.home.config.mode==='follow'){

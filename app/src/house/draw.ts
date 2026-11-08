@@ -518,15 +518,7 @@ export function drawHouseInterior(
     for (let i = 0; i < 9; i += 1) fill(ctx, shade(earth2, -18), 352 + i * 8, 385, 3, 8);
   }
 
-  // Hanging sign with the house name.
-  const label = defaultText(house.name).slice(0, 28);
-  ctx.font = '700 12px Inter, ui-sans-serif, system-ui, sans-serif';
-  const signW = Math.max(150, Math.min(300, Math.ceil(ctx.measureText(label).width) + 40));
-  const signX = 384 - signW / 2;
-  fill(ctx, room.trim, 384 - 2, 0, 4, 10);
-  plate(ctx, signX, 8, signW, 26, PALETTE.paper[3], room.trim);
-  fill(ctx, shade(PALETTE.paper[3], -10), signX + 6, 28, signW - 12, 2);
-  text(ctx, label, 384, 26, PALETTE.paper[0], 12);
+  drawWorldLabel(ctx,defaultText(house.name),384,8,300);
 
   const sprites: Sprite[] = [];
   for(const portal of entrances)sprites.push({baseline:portal.y,paint:()=>drawSpacePortal(ctx,portal)});

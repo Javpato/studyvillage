@@ -1,3 +1,4 @@
+import {assertPetLimit} from '../../../core/src/pets/model';
 import {phoneLayoutSchema} from '../../../core/src/phone/layout';
 import { AppError } from '../../../core/src/errors';
 import { z } from 'zod';
@@ -56,6 +57,7 @@ export async function parseBackup(text:string):Promise<AppBackup>{
  for(const contact of local.contacts)await validatePublicIdentity(contact.identity);
  if(Object.keys(parsed.values).length>2000)throw new AppError('invalid','Copia fuera de límites.');for(const [key,value]of Object.entries(parsed.values))validateEntry(key,value);
  if(parsed.references&&Object.keys(parsed.references).length>2000)throw new AppError('invalid','Copia fuera de límites.');
+ const rooms=JSON.parse(parsed.values['studyvillage-workspaces-v1']??'{}') as Record<string,{furniture:{kind:string;id:string;pet?:import('../../../core/src/pets/model').PetConfig}[]}>;assertPetLimit([local.house?.furniture??[],local.house?.garden??[],...Object.entries(rooms).filter(([key])=>key.startsWith('own/')).map(([,doc])=>doc.furniture)]);
  const notebooks=NotebookRepository.parseSnapshot(parsed.notebooks);
  for(const attachment of notebooks.attachments)if(await hash(decode(attachment.base64))!==attachment.sha256)throw new AppError('invalid','La copia contiene un adjunto dañado.');
  return {...parsed,local,notebooks};

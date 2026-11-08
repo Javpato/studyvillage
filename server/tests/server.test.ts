@@ -594,3 +594,36 @@ it('keeps friendship requests private and durable across server restart and send
  expect((await guest.request({op:'friend',command:{action:'respond',id:request.id,accept:true}})).ok).toBe(true);
  const accepted=admin.next(m=>m.t==='friends'&&m.friends.accepted.length===1);await admin.connect(r.port);await accepted;expect(last(admin).accepted.map(p=>p.fingerprint)).toContain(guest.id);await Promise.all([admin.close(),guest.close()]);
 });
+
+it('routes owned pets between clients in one scene and rejects forged pets and excess houses',async()=>{
+ const r=await boot(),{admin,invite}=await adminAndInvite(r),guest=await TestClient.create('Pet viewer');await guest.connect(r.port,{invite:invite.code});
+ const furniture=Array.from({length:5},(_,i)=>({id:`pet${i}`,kind:'pet-cat' as const,x:80+i*110,y:180,publicAlias:'',pet:{id:`pet${i}`,mode:'roam' as const}}));
+ const home={...house(admin.id),furniture,floors:[{id:'floor',name:'Floor',rooms:[{id:'room',name:'Room'}]}]};
+ expect(await admin.request({op:'house.publish',document:await admin.signHouse(home)})).toMatchObject({ok:true});
+ expect(await admin.request({op:'house.publish',document:await admin.signHouse({...home,revision:3,furniture:[...furniture,{...furniture[0],id:'extra',pet:{id:'extra',mode:'roam'}}]})})).toMatchObject({ok:false});
+ expect(await admin.request({op:'house.publish',document:await admin.signHouse({...home,revision:3,furniture:[...furniture.slice(0,4),{...furniture[4],pet:{id:'pet0',mode:'roam'}}]})})).toMatchObject({ok:false});
+ const entity={id:'pet0',owner:admin.id,species:'cat',scene:'area:residential',state:'idle',x:100,y:100,direction:'down',moving:false,reactionUntil:0};
+ const send=(pets:unknown[],seq=1)=>admin.request({op:'app.send',channel:'pets',to:null,data:JSON.stringify({version:1,seq,pets})});
+ const received=guest.next(m=>m.t==='app'&&m.channel==='pets');expect(await send([entity])).toMatchObject({ok:true});expect(JSON.parse((await received as Extract<ServerMessage,{t:'app'}>).data).pets).toEqual([entity]);
+ expect(await send([{...entity,id:'invented'}])).toMatchObject({ok:false});expect(await send([{...entity,owner:guest.id}])).toMatchObject({ok:false});expect(await send([{...entity,scene:'house:private'}])).toMatchObject({ok:false});
+ const at={areaId:'residential',x:384,y:344,direction:'up',moving:false};admin.send({op:'presence',position:at,houseId:admin.id});
+ await admin.request({op:'workspace',command:{action:'enter',owner:admin.id,space:{floorId:'floor',roomId:null}}});
+ await admin.request({op:'workspace',command:{action:'enter',owner:admin.id,space:{floorId:'floor',roomId:'room'}}});
+ const doc=admin.messages.filter((m):m is Extract<ServerMessage,{t:'workspace'}>=>m.t==='workspace').at(-1)!.workspace.document!;
+ expect(await admin.request({op:'workspace',command:{action:'commit',base:doc.revision,document:{...doc,furniture:[{...furniture[0],id:'extra',pet:{id:'extra',mode:'roam'}}]}}})).toMatchObject({ok:false});
+ const before=guest.messages.filter(m=>m.t==='app'&&m.channel==='pets').length;expect(await send([{...entity,scene:`house:${admin.id}:floor:room`}],2)).toMatchObject({ok:true});
+ await guest.request({op:'app.send',channel:'werewolves',to:SERVER_AUTHORITY,data:JSON.stringify({t:'hello'})});expect(guest.messages.filter(m=>m.t==='app'&&m.channel==='pets')).toHaveLength(before);
+ await admin.close();await guest.close();
+});
+
+it('shares pet reservations across both games and releases them when the owner disconnects',async()=>{
+ const r=await boot(),{admin,invite}=await adminAndInvite(r),guest=await TestClient.create('Other player');await guest.connect(r.port,{invite:invite.code});
+ const pet={id:'cat',owner:admin.id,species:'cat',name:'Mina'};
+ expect(await admin.request({op:'house.publish',document:await admin.signHouse({...house(admin.id),furniture:[{id:'cat',kind:'pet-cat',x:100,y:180,publicAlias:'',pet:{id:'cat',mode:'roam'}}]})})).toMatchObject({ok:true});
+ const act=(client:TestClient,channel:string,a:unknown)=>client.request({op:'app.send',channel,to:SERVER_AUTHORITY,data:JSON.stringify({t:'act',a})});
+ const view=(client:TestClient,channel:string)=>client.messages.filter((m):m is Extract<ServerMessage,{t:'app'}>=>m.t==='app'&&m.channel===channel).map(m=>JSON.parse(m.data)).filter(m=>m.t==='view').at(-1)?.v;
+ await act(admin,'werewolves',{kind:'join',name:'Admin',color:'#336699'});await act(guest,'werewolves',{kind:'join',name:'Guest',color:'#336699'});await act(admin,'werewolves',{kind:'add_bot',pet});expect(view(admin,'werewolves').players.some((p:any)=>p.pet?.id==='cat')).toBe(true);
+ await act(admin,'tetris',{type:'join',name:'Admin'});await act(admin,'tetris',{type:'bot',operation:'add',pet});expect(view(admin,'tetris').players.filter((p:any)=>p.pet)).toHaveLength(0);
+ const updated=guest.next(m=>m.t==='app'&&m.channel==='werewolves'&&!JSON.parse(m.data).v?.players.some((p:any)=>p.pet));await admin.close();await updated;
+ const again=new TestClient(admin.identity);await again.connect(r.port);await act(again,'tetris',{type:'join',name:'Admin'});await act(again,'tetris',{type:'bot',operation:'add',pet});expect(view(again,'tetris').players.filter((p:any)=>p.pet)).toHaveLength(1);await again.close();await guest.close();
+});

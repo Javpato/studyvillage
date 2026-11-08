@@ -1,3 +1,4 @@
+import {drawWorldLabel} from '../ui/world-label';
 import { sprite } from '../assets/sprite-catalog';
 import { INTERACTION_REACH } from './interactions';
 import { STREET_LIGHTS, lampSource, drawStreetLight } from './lights';
@@ -594,20 +595,7 @@ function paintStationObject(
 
   // Nameplate below or above station
   // Default object names are app text; a name someone typed only changes if it matches one exactly.
-  const label = t(obj.displayName).slice(0, 26);
-  ctx.font = '700 8.5px Inter, ui-sans-serif, system-ui, sans-serif';
-  const tw = Math.min(148, Math.ceil(ctx.measureText(label).width) + 14);
-  const ly = obj.layer === 'wall' ? y + h + 3 : y - 17;
-  plate(
-    ctx,
-    x + w / 2 - tw / 2,
-    ly,
-    tw,
-    14,
-    nearby ? ember4 : 'rgba(251,244,226,0.94)',
-    'rgba(30,55,48,0.55)',
-  );
-  text(ctx, label, x + w / 2, ly + 10, PALETTE.paper[0], 8.5);
+  drawWorldLabel(ctx,t(obj.displayName),x+w/2,obj.layer==='wall'?y+h+3:y-24,180);
 }
 
 export function paintStationSource(ctx:CanvasRenderingContext2D,obj:InteractiveObjectConfig,registry:InteractiveObjectRegistry):void{paintStationObject(ctx,obj,registry,false,false,0,true);}

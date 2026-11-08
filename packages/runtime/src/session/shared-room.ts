@@ -18,6 +18,7 @@ const TICK_MS = 400;
 export class SharedRoom<Action, View, Engine extends RoomEngine<Action, View> = RoomEngine<Action, View>> {
   private engine: Engine | null = null;
   private modeKey = '';
+  private departures=new Set<string>();
   private watchers = new Set<string>();
   private view: View | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -42,8 +43,8 @@ export class SharedRoom<Action, View, Engine extends RoomEngine<Action, View> = 
   sync(): void {
     const { selfId, hostId } = this.context();
     const key = hostId ? `online:${hostId}:${this.isAuthority()}` : `local:${selfId}`;
-    if (key === this.modeKey) return;
-    this.modeKey = key;
+    if (key === this.modeKey) {const present=this.context().present;if(this.engine&&present&&(this.channel==='werewolves'||this.channel==='tetris')){let changed=false;for(const id of this.engine.audience())if(!present.includes(id)&&!this.departures.has(id)){this.departures.add(id);this.engine.apply(id,(this.channel==='werewolves'?{kind:'leave'}:{type:'leave'}) as Action,Date.now());this.watchers.delete(id);changed=true;}if(changed)this.publish();}return;}
+    this.modeKey = key;this.departures.clear();
     this.engine?.cancel?.(Date.now());this.engine = this.isAuthority() ? this.createEngine() : null;
     this.watchers.clear();
     this.view = null; this.lead = false;

@@ -1,3 +1,4 @@
+import {drawWorldLabel} from '../ui/world-label';
 import { sprite } from '../assets/sprite-catalog';
 import { INTERACTION_REACH } from '../world/interactions';
 import { fill, plate, text } from '../ui/art';
@@ -19,7 +20,7 @@ export function spacePortals(house:PublicHouse,space?:HouseSpace):SpacePortal[]{
 export function nearestSpacePortal(house:PublicHouse,position:Position,reach=INTERACTION_REACH):SpacePortal|null{return spacePortals(house,position.space).find(p=>Math.hypot(p.x-position.x,p.y-position.y)<=reach)??null;}
 export function drawSpacePortal(ctx:CanvasRenderingContext2D,portal:SpacePortal):void{
   const{x,y}=portal;const asset=sprite('room-door');if(asset)ctx.drawImage(asset,x-22,y-40);else{ctx.save();ctx.translate(x-22,y-40);paintSpaceDoorSource(ctx);ctx.restore();}
-  plate(ctx,x-55,y-60,110,17,'#f4e7cd','#705133');text(ctx,portal.label.slice(0,20),x,y-48,'#433225',8);
+  drawWorldLabel(ctx,portal.label,x,y-60,132);
 }
 
 /** Drop positions belonging to deleted doors when a layout is edited. */

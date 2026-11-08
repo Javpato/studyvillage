@@ -295,7 +295,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
       }
       case 'leave': {
         if (!actor) return;
-        for(const pet of this.players.filter(p=>p.pet?.owner===actorId)){this.petMatch.remove(pet.pet!.id);if(pet.alive)this.kill(pet.id,'leave');}this.players=this.players.filter(p=>p.pet?.owner!==actorId);
+        for(const pet of this.players.filter(p=>p.pet?.owner===actorId)){this.petMatch.remove(pet.pet!.id,pet.pet!.owner);if(pet.alive)this.kill(pet.id,'leave');}this.players=this.players.filter(p=>p.pet?.owner!==actorId);
         if (this.phase === 'lobby' || this.phase === 'end') {
           this.players = this.players.filter((p) => p.id !== actorId);
         } else if (actor.alive) {
@@ -326,7 +326,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
       case 'remove_bot': {
         this.requireLeader(actorId);
         if (this.phase !== 'lobby') return;
-        const removed=this.players.find(p=>p.id===action.id);if(removed?.pet)this.petMatch.remove(removed.pet.id);
+        const removed=this.players.find(p=>p.id===action.id);if(removed?.pet)this.petMatch.remove(removed.pet.id,removed.pet.owner);
         this.players = this.players.filter((p) => !(p.bot && p.id === action.id));
         return;
       }
@@ -472,6 +472,7 @@ export class WerewolvesGame implements RoomEngine<WerewolvesAction, WerewolvesVi
   }
 
   tick(now: number): boolean {
+    if(!this.petMatch.valid()){this.cancel();return true;}
     if (this.phase === 'lobby' || this.phase === 'end') return false;
     let changed = false;
     if(now>=this.botAt&&['execution','succession','scapegoat','reveal','hunter'].includes(this.phase))changed=this.botsAct(now);

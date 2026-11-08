@@ -3,7 +3,7 @@ import {assertPetLimit,ownerPetGroups,ownsPet} from '../../packages/core/src/pet
 import {Friends} from '../../packages/core/src/social/friends';
 import { InkAuthority } from '../../packages/documents/src/authority';
 import {MailboxAuthority,MailboxError,mailboxResult} from '../../packages/core/src/house/mailbox';
-import { hasHouseAccess, WorkspaceCoordinator, parseScopedBoard, sameSpace } from '../../packages/core/src/house/workspaces';
+import { hasHouseAccess, WorkspaceCoordinator, parseScopedBoard, sameSpace, spaceKey } from '../../packages/core/src/house/workspaces';
 import { botDrawingPng } from './bot-image';
 import type { GarticGame } from '../../packages/core/src/minigames/gartic-phone';
 import { botResponse, AiError, aiWireSchema, type AiProvider, type AiReply } from '../../packages/runtime/src/ai/contracts';
@@ -463,7 +463,7 @@ export class World {
 
   private relayApp(c: Connection, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'pets' | 'sprites', to: string | null, data: string): null {
     const me = c.identity!.fingerprint;
-    if(channel==='pets'){const packet=petSnapshotSchema.safeParse(JSON.parse(data));if(!packet.success||packet.data.pets.some(p=>p.owner!==me)||this.byFingerprint(me)!==c||to===SERVER_AUTHORITY)throw new Reject('forbidden');for(const target of this.present(c.neighborhood).filter(o=>o!==c&&c.houseId===o.houseId&&(c.houseId?sameSpace(c.position.space,o.position.space):areaOf(c.position)===areaOf(o.position))))this.send(target,{t:'app',channel,from:me,data});return null;}
+    if(channel==='pets'){const packet=petSnapshotSchema.safeParse(JSON.parse(data));if(!packet.success||packet.data.pets.some(p=>{const house=(this.store.house(me)?.document as SignedHouse|undefined)?.house;const scene=c.houseId?`house:${c.houseId}:${spaceKey(c.position.space)}`:`area:${areaOf(c.position)}`;return p.owner!==me||p.scene!==scene||!house||!ownsPet(house,space=>this.store.workspace(me,space),p);})||this.byFingerprint(me)!==c||to===SERVER_AUTHORITY)throw new Reject('forbidden');for(const target of this.present(c.neighborhood).filter(o=>o!==c&&c.houseId===o.houseId&&(c.houseId?sameSpace(c.position.space,o.position.space):areaOf(c.position)===areaOf(o.position))))this.send(target,{t:'app',channel,from:me,data});return null;}
     if(channel==='camera'&&this.byFingerprint(me)!==c)throw new Reject('forbidden');
     if(channel==='ink'){if(to!==SERVER_AUTHORITY)throw new Reject('forbidden');void this.ink.receive(c.id,me,String(c.neighborhood),data);return null;}
     if(channel === 'ai') {
@@ -567,7 +567,7 @@ class ActivityRoom {
   cameraAllowed(from:string,to:string):boolean{return (this.engine.canBroadcastCamera?.(from)??true)&&(this.engine.canReceiveCamera?.(to,from)??true);}
   organizer(): string | null { return this.watchers.find(id => this.present(id)) ?? null; }
   private botOwner():string{return `bots:${this.neighborhood}:${this.channel}:${this.scope}`;}
-  dispose(): void { this.ai?.cancel(this.botOwner()); if (this.timer) clearInterval(this.timer); this.timer = null; }
+  dispose(): void { if(this.channel==='werewolves'||this.channel==='tetris')this.engine.cancel?.(this.now());this.ai?.cancel(this.botOwner()); if (this.timer) clearInterval(this.timer); this.timer = null; }
 
   receive(from: string, raw: string): void {
     let wire: { t?: string; a?: unknown; c?: string; d?: unknown };
@@ -581,9 +581,10 @@ class ActivityRoom {
     } catch (error) { this.deliver(from, JSON.stringify({ t: 'error', m: error instanceof Error ? error.message.slice(0, 200) : 'Error' })); }
   }
   leave(id: string): void {
+    if(this.channel==='werewolves'||this.channel==='tetris'){try{this.engine.apply(id,this.channel==='werewolves'?{kind:'leave'}:{type:'leave'},this.now());}catch{/* A spectator has no participant to remove. */}}
     const wasOrganizer = this.organizer() === id;
     this.watchers = this.watchers.filter(w => w !== id);
-    if (wasOrganizer) {
+    if (wasOrganizer||this.channel==='werewolves'||this.channel==='tetris') {
       // AI belongs to the server and continues while other participants remain.
       this.publish(this.now());
     }

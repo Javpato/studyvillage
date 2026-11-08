@@ -167,7 +167,7 @@ export class WorldExpansionUIController {
     const context = () => {
       const view = this.callbacks.getView();
       const joined = view?.network.phase === 'JOINED';
-      return { selfId: view?.identity.fingerprint || 'local-host', hostId: joined ? view!.network.hostId : null, authority:!joined||(!view!.network.server&&view!.network.isHost) };
+      return { present:joined?view!.network.members.filter(m=>m.connected).map(m=>m.identity.fingerprint):undefined,selfId: view?.identity.fingerprint || 'local-host', hostId: joined ? view!.network.hostId : null, authority:!joined||(!view!.network.server&&view!.network.isHost) };
     };
     const me = () => { const a = this.getActor(); return { name: a.displayName, color: a.color }; };
     const petReservations=new PetReservations(pet=>{const view=callbacks.getView();const house=view?.identity.fingerprint===pet.owner?view.ownHouse:view?.network.houses.find(h=>h.ownerId===pet.owner);return !!house&&ownsPet(house,space=>new PetWorkspaces(view!.identity.fingerprint).get(pet.owner,space),pet);});
@@ -196,7 +196,7 @@ export class WorldExpansionUIController {
   private roomContext() {
     const view = this.callbacks.getView();
     const joined = view?.network.phase === 'JOINED';
-    return { selfId: view?.identity.fingerprint || 'local-host', hostId: joined ? view!.network.hostId : null, authority:!joined||(!view!.network.server&&view!.network.isHost) };
+    return { present:joined?view!.network.members.filter(m=>m.connected).map(m=>m.identity.fingerprint):undefined,selfId: view?.identity.fingerprint || 'local-host', hostId: joined ? view!.network.hostId : null, authority:!joined||(!view!.network.server&&view!.network.isHost) };
   }
 
   /** Projects, flashcards, quizzes and notes of one scope. Each room gets its own, created on first use. */

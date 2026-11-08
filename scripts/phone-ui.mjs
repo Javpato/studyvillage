@@ -7,7 +7,7 @@ export async function openPhoneApp(page,id){
  if(await phone.getAttribute('data-page')!=='home')await phone.locator('.sv-phone-head button').first().click();
  const target=page.getByTestId(`phone-${id}`);
  if(await target.isVisible()){await target.click();return;}
- const folder=['house','rooms','decorate','garden'].includes(id)?'home':'settings';
+ const folder=['house','rooms','decorate','garden','pets'].includes(id)?'home':'settings';
  await page.getByTestId(`phone-folder-${folder}`).click();
  if(await target.isVisible()){await target.click();return;}
  const lang=await page.locator('html').getAttribute('lang')||'es';
@@ -19,7 +19,7 @@ export async function openPhoneApp(page,id){
  }
  await page.getByTestId('phone-settings').click({button:'right'});
  await page.getByRole('button',{name:t('Biblioteca de apps'),exact:true}).click();
- const names={ink:'Cuaderno de tinta',music:'Música',study:'Estudio',projects:'Proyectos',focus:'Concentración',tetris:'Bloques del Bosque'};
+ const names={pets:'Mascotas',ink:'Cuaderno de tinta',music:'Música',study:'Estudio',projects:'Proyectos',focus:'Concentración',tetris:'Bloques del Bosque'};
  await page.locator('.sv-phone-library').getByRole('button',{name:t(names[id]),exact:true}).click();
  await page.getByRole('button',{name:t('Listo'),exact:true}).click();
  await phone.locator('.sv-phone-head button').first().click();await page.getByTestId(`phone-${id}`).click();

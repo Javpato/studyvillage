@@ -1,3 +1,4 @@
+import {drawWorldLabel} from '../ui/world-label';
 import {gardenItemRect,resolveGardenItem} from '../../../packages/core/src/world/garden';
 import {sprite} from '../assets/sprite-catalog';
 import { STREET_LIGHTS, drawStreetLight } from './lights';
@@ -306,31 +307,9 @@ function paintHouse(ctx:CanvasRenderingContext2D,item:OccupiedParcel,time:number
   const {x,y,w,h,slot}=item.parcel,warm=item.house.theme==='peach',trim=warm?'#9c5340':'#27584a';
   const asset=sprite(`house-exterior-${warm?'peach':'mint'}`);
   if(asset){const frame=Math.floor(time/0.78)%4;ctx.drawImage(asset,frame*160,0,160,160,x-16,y-56,160,160);}else paintHouseSource(ctx,item,time);
-  // Name board over the door. The type is shrunk, then ellipsised, so a long
-  // house name degrades gracefully instead of being cut mid-word.
-  const boardW = w - 16;
-  const houseName = defaultText(item.house.name.trim());
-  let label = houseName;
-  let size = 9;
-  ctx.font = `700 ${size}px Inter, ui-sans-serif, system-ui, sans-serif`;
-  if (ctx.measureText(label).width > boardW - 8) {
-    size = 8;
-    ctx.font = `700 ${size}px Inter, ui-sans-serif, system-ui, sans-serif`;
-    while (label.length > 4 && ctx.measureText(`${label}...`).width > boardW - 8) {
-      label = label.slice(0, -1);
-    }
-    if (label.length < houseName.length) label = `${label.trimEnd()}...`;
-  }
-  plate(ctx, x + 8, y + 26, boardW, 16, warm ? '#fbeedb' : '#f4f6e0', trim);
-  text(ctx, label, x + w / 2, y + 37, PALETTE.paper[1], size);
-
-  // Who lives here, on a stake by the path.
-  const tagY = slot < 3 ? y + h + 16 : y - 22;
-  const tag = item.isOwn ? t('TU CASA') : defaultText(item.name).slice(0, 15);
-  ctx.font = '700 9px Inter, ui-sans-serif, system-ui, sans-serif';
-  const tw = Math.min(120, Math.ceil(ctx.measureText(tag).width) + 16);
-  plate(ctx, item.parcel.doorX - tw / 2, tagY, tw, 15, item.isOwn ? ember4 : PALETTE.paper[3], trim);
-  text(ctx, tag, item.parcel.doorX, tagY + 11, PALETTE.paper[0], 9);
+  drawWorldLabel(ctx,defaultText(item.house.name.trim()),x+w/2,y+26,w+24);
+  const tagY=slot<3?y+h+16:y-22;
+  drawWorldLabel(ctx,item.isOwn?t('TU CASA'):defaultText(item.name),item.parcel.doorX,tagY,160);
 }
 
 // ---------------------------------------------------------------------------

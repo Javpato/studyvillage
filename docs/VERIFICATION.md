@@ -1,12 +1,14 @@
 # Amendment implementation candidate — 8 November 2026
 
-Work in progress on the existing `main` branch; this is not a verified release. Candidate source SHA and workflow URLs will be recorded after the candidate is committed/pushed, before extended browser checks.
+Candidate [`ff66672`](https://github.com/Javpato/studyvillage/commit/ff66672) was committed and pushed to `main`. A substantial follow-up now hardens pet authority, owner-wide IDs, backup/seed validation, room indexing, disconnects and complete labels; it is being committed before the extended checks. This is a test candidate, not a packaged release.
 
-Implemented so far: concurrent completed-stroke acceptance and scoped rollback; wardrobe selection cleanup; larger configurable dialogue; automatic focus/rest model; pet furniture, sprites, owner simulation, petting/food/abilities and bot identities; validated repository roots and explicit open/remove links. Original Mac report: browser, input device and OS version unknown. Owner uses Linux and does not reproduce disappearing strokes. No original Mac setup has been retested.
+Baseline `npm run check` passed on Linux and macOS in [workflow 42508928772](https://github.com/Javpato/studyvillage/actions/runs/42508928772). Its Chromium run passed 14 cases on each platform; one pet-navigation helper failure stopped the suite and skipped WebKit. That helper is corrected. [Pages workflow 42508900030](https://github.com/Javpato/studyvillage/actions/runs/42508900030) succeeded for the first candidate.
 
-Completed: application/server type checking before the latest onboarding edit; 43 existing focused tests; 13 new pet/repository tests including eight complete seeded Werewolves matches and a complete Forest Blocks match. A food-interval failure was corrected and the pet suite passed. Final source requires rerunning types and the full baseline.
+Local checks: type checking passed; 31 pet/workspace tests passed before the latest added cases; two real separate-client server pet tests passed (ownership/scene relay, combined limit, cross-game reservation and disconnect/reconnect). Browser flows passed 19/21; the two older language checks needed updated labels because both timer phases are now visible. Those selectors are corrected pending rerun.
 
-Remaining: full application/server baseline; browser regressions and visual review; platform workflow; multi-client pet/board validation; persistence/limits hardening; remaining usability checks; final documentation and cleanup. Existing prior release evidence below does not verify this candidate.
+Original Mac report: browser, input device and OS version unknown; Linux owner does not reproduce. CI macOS Chromium passed the quick-stroke regressions, but the original physical setup was not directly retested. No claim of that retest is made.
+
+Remaining: final full baseline; full Chromium suite; WebKit regressions; refreshed platform workflow; final visual review/documentation/cleanup. See `docs/AMENDMENT.md` for component changes and test coverage. Prior release evidence below does not verify this candidate.
 
 ---
 

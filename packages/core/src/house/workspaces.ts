@@ -34,7 +34,8 @@ export const workspaceCommandSchema = z.discriminatedUnion('action', [
   z.strictObject({ action:z.literal('commit'), base:z.number().int().nonnegative(), document:workspaceSchema }),
 ]);
 export type WorkspaceCommand = z.infer<typeof workspaceCommandSchema>;
-export const workspaceViewSchema = z.strictObject({ houseId:person.nullable(), space:houseSpaceSchema.nullable(), document:workspaceSchema.nullable(), requests:z.array(spaceRequestSchema).max(24), notice:z.string().max(240).nullable() });
+export const petRoomSchema=z.strictObject({space:houseSpaceSchema,furniture:z.array(furniture.pick({id:true,kind:true,x:true,y:true,rotation:true,pet:true})).max(32)});
+export const workspaceViewSchema = z.strictObject({ petRooms:z.array(petRoomSchema).max(5).optional(), houseId:person.nullable(), space:houseSpaceSchema.nullable(), document:workspaceSchema.nullable(), requests:z.array(spaceRequestSchema).max(24), notice:z.string().max(240).nullable() });
 export type WorkspaceView = z.infer<typeof workspaceViewSchema>;
 export const emptyWorkspace = (): WorkspaceView => ({ houseId:null, space:null, document:null, requests:[], notice:null });
 export const spaceKey = (space?: HouseSpace | null): string => space ? `${space.floorId}:${space.roomId ?? '-'}` : 'lobby';
@@ -78,12 +79,13 @@ export class WorkspaceCoordinator {
   constructor(private person:(id:string)=>WorkspacePerson|undefined, private house:(owner:string)=>PublicHouse|undefined, readonly storage:WorkspaceStorage, private moved:(id:string,space:HouseSpace|null)=>void) {}
   private document(owner:string,space:HouseSpace,seed?:WorkspaceDocument):WorkspaceDocument {
     let doc=this.storage.get(owner,space);
-    if(!doc){doc=parseWorkspaceForSpace(space,seed??(space.roomId===null?makeFloorWorkspace():makeWorkspace()));this.storage.put(owner,space,doc);}return parseWorkspaceForSpace(space,doc);
+    if(!doc){doc=parseWorkspaceForSpace(space,seed??(space.roomId===null?makeFloorWorkspace():makeWorkspace()));const house=this.house(owner);if(house)assertPetLimit(ownerPetGroups(house,candidate=>sameSpace(candidate,space)?doc!:this.storage.get(owner,candidate)));this.storage.put(owner,space,doc);}return parseWorkspaceForSpace(space,doc);
   }
   view(who:string):WorkspaceView {
     const member=this.person(who), space=member?.position.space??null, owner=member?.houseId;
     const valid=owner&&this.house(owner)&&spaceExists(this.house(owner)!,space);
-    return {houseId:owner??null,space:valid?space:null,document:valid&&space&&this.canRead(who,owner!,space)?this.document(owner!,space):null,requests:[...this.requests.values()].filter(r=>r.owner===who),notice:this.notices.get(who)??null};
+    const own=this.house(who),petRooms=own?floorsOf(own).flatMap(f=>f.rooms.flatMap(r=>{const room={floorId:f.id,roomId:r.id},doc=this.storage.get(who,room);return doc?.furniture.some(item=>petSpecies(item.kind))?[{space:room,furniture:doc.furniture.map(({id,kind,x,y,rotation,pet})=>({id,kind,x,y,rotation,pet}))}]:[];})):[];
+    return {petRooms,houseId:owner??null,space:valid?space:null,document:valid&&space&&this.canRead(who,owner!,space)?this.document(owner!,space):null,requests:[...this.requests.values()].filter(r=>r.owner===who),notice:this.notices.get(who)??null};
   }
   pending(who:string):SpaceRequest|null {const pending=[...this.requests.values()].find(request=>request.visitor===who);return pending?structuredClone(pending):null;}
   cancel(who:string,requestId:string):boolean {const request=this.requests.get(requestId);if(!request||request.visitor!==who)return false;this.requests.delete(requestId);this.notices.delete(who);return true;}

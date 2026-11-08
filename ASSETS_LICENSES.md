@@ -11,3 +11,7 @@ The Pencil interaction work references the same commit's `packages/excalidraw/co
 No final project or asset license is selected. The repository is published publicly at the owner's request; public visibility does not grant an open-source license. `package.json` remains private/UNLICENSED to prevent accidental publication to npm. Software and asset licensing remain separate decisions for the owner.
 
 The intended official catalog policy is free downloads with explicit provenance and compatible licensing. Community packs, a catalog and executable plugins are not implemented in this slice.
+
+## Companion pets
+
+Cat, dog, parrot, hamster and rabbit sheets, their houses, and the food bowl are original StudyVillage pixel drawings made with Pillow primitives in `scripts/create-pet-sprites.py`. No third-party artwork or image service was used. The same pending project/asset license decision applies.

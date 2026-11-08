@@ -17,6 +17,7 @@ export interface RoomEngine<Action, View> {
 
 export interface RoomContext {
   authority?:boolean;
+  present?:readonly string[];
   selfId: string;
   /** Host fingerprint while joined to a village, otherwise null (offline). */
   hostId: string | null;

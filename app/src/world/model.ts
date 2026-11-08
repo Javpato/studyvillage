@@ -66,6 +66,7 @@ export function stepPosition(
   bounds: Rect = { x: 0, y: 0, w: LIMITS.worldWidth, h: LIMITS.worldHeight },
   speed = 110,
 ): Position {
+  const radius = 9;
   const xDir = Math.sign(vector.x);
   const yDir = Math.sign(vector.y);
   const moving = xDir !== 0 || yDir !== 0;
@@ -75,7 +76,6 @@ export function stepPosition(
     : (yDir < 0 ? 'up' : 'down');
   const dt = Math.max(0, Math.min(Number.isFinite(dtSeconds) ? dtSeconds : 0, 0.05));
   const length = Math.hypot(vector.x, vector.y) || 1;
-  const radius = 9;
   const inBounds = (x: number, y: number) => x >= bounds.x + radius && x <= bounds.x + bounds.w - radius
     && y >= bounds.y + radius && y <= bounds.y + bounds.h - radius;
   const free = (x: number, y: number) => inBounds(x, y) && !obstacles.some((rect) => circleHitsRect(x, y, radius, rect));
@@ -114,9 +114,9 @@ export function findPath(
   to: { x: number; y: number },
   obstacles: readonly Rect[],
   bounds: Rect = { x: 0, y: 0, w: LIMITS.worldWidth, h: LIMITS.worldHeight },
+  radius = 9,
 ): { x: number; y: number }[] | null {
   const cell = 8;
-  const radius = 9;
   const cols = Math.floor(bounds.w / cell);
   const rows = Math.floor(bounds.h / cell);
   const center = (i: number) => ({ x: bounds.x + (i % cols) * cell + cell / 2, y: bounds.y + Math.floor(i / cols) * cell + cell / 2 });

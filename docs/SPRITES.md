@@ -22,6 +22,12 @@ Source-art tools: `scripts/export-base-sprites.mjs`, `scripts/export-world-sprit
 
 ### Vanity and camera artwork
 
-`vanity.png` is an original 64×64 furniture sprite; its reproducible pixel source is `scripts/create-vanity-sprite.py`. `icon-camera.png` is a 24×24 replaceable HUD icon. Both are registered in `app/public/sprites/manifest.json`. The full catalogue currently contains 119 entries.
+`vanity.png` is an original 64×64 furniture sprite; its reproducible pixel source is `scripts/create-vanity-sprite.py`. `icon-camera.png` is a 24×24 replaceable HUD icon. Both are registered in `app/public/sprites/manifest.json`. See the manifest for the current catalogue.
 
 The in-game vanity accepts a static 64×64 PNG or a 192×256 sheet with three animation columns and four direction rows. Static output is repeated into twelve cells only when applied to the avatar/network. Static export remains64×64.
+
+### Companion pets
+
+The five original sheets and six furniture PNGs are generated intentionally by `scripts/create-pet-sprites.py` (Pillow). Normal builds never run that generator. Pet entries in `app/public/sprites/manifest.json` specify `file`, sheet dimensions, `frameWidth`, `frameHeight`, `animations`, `directions`, `fps`, `scale`, `anchor`, and `collisionRadius`. The runtime reads that same manifest; it does not bundle a second copy of these settings. `collisionRadius` is measured in logical world pixels.
+
+The default sheets have seven 32×32 columns and four directional rows. Gameplay asks for semantic `idle`, `walk`, `eat`, `pet`, `rest`, and `ability` animations. Missing optional animation mappings fall back to `idle`; keep `idle` and all four direction mappings present. Frame lists, speed, anchor, scale and footprint can change without editing behavior. House entries `pet-cat`, `pet-dog`, `pet-parrot`, `pet-hamster`, `pet-rabbit` and `pet-bowl` use the normal replaceable furniture catalogue. Hearts and the short-lived fetch toy are simple canvas feedback.
