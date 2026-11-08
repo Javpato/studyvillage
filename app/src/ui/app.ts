@@ -2071,16 +2071,17 @@ class StudyUI {
     const view = this.view!;
     setText(this.friendCodeValue, view.friendCode);
     const people=view.network.phase==='JOINED'?[...new Map([...view.network.members.filter(m=>m.connected).map(m=>m.identity),...(view.network.voiceDirectory??[])].map(p=>[p.fingerprint,p])).values()].filter(p=>p.fingerprint!==view.identity.fingerprint):[];
-    const signature = JSON.stringify([view.contacts,people,view.network.friends]);
+    const signature = JSON.stringify([view.contacts,people,view.network.friends,!!view.network.server]);
     if (this.contactsList.dataset.signature === signature) return;
     this.contactsList.dataset.signature = signature;
     this.contactsList.replaceChildren();this.sessionContacts.replaceChildren();
+    if(view.network.server&&!view.network.friends)this.sessionContacts.append(node('p','sv-subtle',msg('Actualiza el servidor para usar solicitudes de amistad.')));
     for(const request of view.network.friends?.incoming??[]){const row=node('div','sv-contact-row');row.append(node('span','',msg('{name} te envía una solicitud de amistad',{name:request.from.displayName})));for(const [label,accept]of [['Aceptar',true],['Rechazar',false]] as const){const b=button(msg(label),'sv-button');b.onclick=()=>this.actions.friendCommand({action:'respond',id:request.id,accept});row.append(b);}this.sessionContacts.append(row);}
     for(const request of view.network.friends?.outgoing??[]){const row=node('div','sv-contact-row'),cancel=button(msg('Cancelar'),'sv-button');cancel.onclick=()=>this.actions.friendCommand({action:'cancel',id:request.id});row.append(node('span','',msg('Solicitud enviada a {name}',{name:request.to.displayName})),cancel);this.sessionContacts.append(row);}
     if(people.length)this.sessionContacts.append(node('h3','sv-section-title',msg('Personas en esta sesión')));
     for(const person of people){
       const row=node('div','sv-contact-row'),saved=view.contacts.some(c=>c.identity.fingerprint===person.fingerprint);
-      const add=button(saved?msg('En contactos'):msg('Enviar solicitud de amistad'),'sv-button sv-button-small');add.disabled=saved||!!view.network.friends?.outgoing.some(r=>r.to.fingerprint===person.fingerprint);
+      const add=button(saved?msg('En contactos'):msg('Enviar solicitud de amistad'),'sv-button sv-button-small');add.disabled=saved||!!view.network.server&&!view.network.friends||!!view.network.friends?.outgoing.some(r=>r.to.fingerprint===person.fingerprint);
       setDisplayAttribute(add,'aria-label',saved?msg('En contactos'):msg('Añadir a {name} a contactos',{name:person.displayName}));
       add.onclick=()=>this.run(()=>this.actions.addSessionContact(person.fingerprint));
       append(row,node('strong','',person.displayName),add);this.sessionContacts.append(row);
@@ -2154,7 +2155,7 @@ class StudyUI {
     this.micMeterFill.style.width = media.talking ? '82%' : media.micEnabled && !media.muted ? '28%' : '0%';
 
     const desired = new Map<string, { stream: MediaStream; kind: 'audio' | 'screen'; name: string; local: boolean }>();
-    if (media.localScreen && showingCurrentRoom) desired.set('local-screen', { stream: media.localScreen, kind: 'screen', name: t(media.localScreen.getAudioTracks().length?'Tu pantalla · con audio':'Tu pantalla · sin audio'), local: true });
+    if (media.localScreen && showingCurrentRoom) desired.set('local-screen', { stream: media.localScreen, kind: 'screen', name: t(media.localScreen.getAudioTracks().some(track=>track.readyState==='live')?'Tu pantalla · con audio':'Tu pantalla · sin audio'), local: true });
     for (const remote of showingCurrentRoom ? media.remote : []) {
       const name = defaultText(view.network.voiceDirectory?.find(person=>person.fingerprint===remote.identityId)?.displayName || view.network.members.find((member) => member.identity.fingerprint === remote.identityId)?.identity.displayName || '') || remote.identityId.slice(0, 10);
       desired.set(`${remote.kind}:${remote.identityId}`, { stream: remote.stream, kind: remote.kind, name, local: false });
@@ -3506,13 +3507,7 @@ class StudyUI {
   private tick = (now: number): void => {
     if (document.hidden || (this.lastFrame && now - this.lastFrame < 1000 / 61)) {
       if (document.hidden) this.lastFrame = now;
-      this.gamepad=new GamepadController((key,down)=>{const event=new KeyboardEvent(down?'keydown':'keyup',{key});if(down)this.onKeyDown(event);else this.onKeyUp(event);},()=>{
-      const modal=!!document.querySelector('dialog[open]');
-      if(modal||!this.phone.hidden||this.garden.active||this.decorating)return 'menu';
-      if(this.activityOpen)return this.expansion.gamepadPlaying()?'game':'menu';return 'world';
-    },key=>this.expansion.gamepadInput(key),()=>this.expansion.gamepadMenu());
-    this.settingsSection('Mando').append(this.gamepad.root);
-    this.raf = requestAnimationFrame(this.tick); return;
+      this.raf = requestAnimationFrame(this.tick); return;
     }
     const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.05) : 0;
     this.lastFrame = now;
@@ -3760,12 +3755,6 @@ class StudyUI {
       }
     }
     this.updatePortraitCamera();
-    this.gamepad=new GamepadController((key,down)=>{const event=new KeyboardEvent(down?'keydown':'keyup',{key});if(down)this.onKeyDown(event);else this.onKeyUp(event);},()=>{
-      const modal=!!document.querySelector('dialog[open]');
-      if(modal||!this.phone.hidden||this.garden.active||this.decorating)return 'menu';
-      if(this.activityOpen)return this.expansion.gamepadPlaying()?'game':'menu';return 'world';
-    },key=>this.expansion.gamepadInput(key),()=>this.expansion.gamepadMenu());
-    this.settingsSection('Mando').append(this.gamepad.root);
     this.raf = requestAnimationFrame(this.tick);
   };
 

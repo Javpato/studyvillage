@@ -1,4 +1,4 @@
-import {emptyFriends,friendViewSchema,type FriendCommand} from '../../../core/src/social/friends';
+import {friendViewSchema,type FriendCommand,type FriendView} from '../../../core/src/social/friends';
 import {LocalWorkspaces} from '../storage/workspaces';
 import {unwrapMailboxResult,type MailboxCommand,type MailboxView} from '../../../core/src/house/mailbox';
 import { floorsOf, emptyWorkspace, spaceKey, sameSpace, type WorkspaceCommand, type WorkspaceView } from '../../../core/src/house/workspaces';
@@ -115,7 +115,7 @@ export class ServerVillageClient implements VillageActions {
   private appListeners = new Set<(message: AppMessage) => void>();
   private workspaceStorage:LocalWorkspaces;
   private workspaceState:WorkspaceView=emptyWorkspace();
-  private friendState=emptyFriends();
+  private friendState:FriendView|undefined;
   private voiceState: VoiceView = emptyVoice();
   private voiceDirectory = new Map<string, VoicePeerPresence>();
   private mediaSession = '';
@@ -505,7 +505,7 @@ export class ServerVillageClient implements VillageActions {
       .finally(()=>{if(this.accessAttempt?.requestId===requestId)this.accessAttempt=null;this.notify();});
   }
   voiceCommand(command: VoiceCommand): void { this.fire({ op: 'voice', command }); }
-  friendCommand(command:FriendCommand):void {void this.request({op:'friend',command}).catch(error=>{this.error=error.message;this.notify();});}
+  friendCommand(command:FriendCommand):void {if(!this.friendState){this.error=t('Actualiza el servidor para usar solicitudes de amistad.');this.notify();return;}void this.request({op:'friend',command}).catch(error=>{this.error=error.message;this.notify();});}
   async mailboxCommand(command:MailboxCommand):Promise<MailboxView>{return unwrapMailboxResult(await this.request({op:'mailbox',command}));}
   setCameraActivity(activity: CameraActivity | null): void { if (activity === this.cameraActivity) return; this.cameraActivity = activity; this.syncCamera(); this.sendApp('camera', null, JSON.stringify({ game: activity, request: true })); this.notify(); }
   setGameCameraPolicy(policy:GameCameraPolicy|null):void{this.camera.setPolicy(policy);}

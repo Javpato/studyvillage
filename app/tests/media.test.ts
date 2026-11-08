@@ -141,3 +141,9 @@ it('requests optional display audio and stops both tracks when sharing ends',asy
  const manager=new MediaManager(()=>{},{getUserMedia:async()=>audio.stream,getDisplayMedia:async options=>{requested=options;return stream;}});
  manager.setContext(context());await manager.startScreen(true);expect(requested?.audio).toBe(true);expect(manager.view.localScreen?.getAudioTracks()).toHaveLength(1);manager.stopScreen();expect(video.track.stopped).toBe(true);expect(audio.track.stopped).toBe(true);
 });
+
+it('keeps remote screen video when its optional audio track ends',()=>{
+ const manager=new MediaManager(()=>{});manager.setContext(context());const call=new FakeCall('peer-b',{...metadata(),kind:'screen'});manager.receive(call);
+ const video=fakeStream('video'),audio=fakeStream('audio'),stream={getTracks:()=>[video.track,audio.track],getVideoTracks:()=>[video.track],getAudioTracks:()=>[audio.track]} as unknown as MediaStream;
+ for(const listener of call.streams)listener(stream);audio.track.ended();expect(call.closed).toBe(false);expect(manager.view.remote).toHaveLength(1);video.track.ended();expect(call.closed).toBe(true);manager.dispose();
+});

@@ -47,3 +47,6 @@ body .sv-phone{height:calc(var(--sv-visual-height,100dvh) - 16px);padding:8px;al
 body .sv-phone-screen{max-height:100%;height:min(680px,100%);box-sizing:border-box;}
 body .sv-phone-page{min-height:0;overflow:auto;}
 @media(max-width:600px){body .sv-phone-screen{height:100%;}}
+/* Floating video windows stay below notices and native dialogs. */
+.sv-notice.sv-hud-toast{z-index:10000!important;}
+@media(pointer:coarse){.sv-garden-tray .sv-garden-catalog small{display:none;}}

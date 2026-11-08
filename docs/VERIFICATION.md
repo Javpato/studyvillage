@@ -274,3 +274,21 @@ Remaining at this checkpoint: Chromium and WebKit interaction journeys, visual i
 - Browser findings corrected: capture begins on the tile so taps still open folders and a fast move outside the phone remains a drag; cancelled gestures suppress their trailing click; Escape also works after focus changes. Compact garden cards leave room for the yard. Mobile held/next pieces use readable labels. Grouping waits 400 ms with its target remaining under the pointer.
 - Visual inspection: mobile/tablet/desktop game layouts, compact 320px garden, touch drag feedback, and rotated custom board artwork. Physical microphone/camera devices and WAN/NAT behavior were not exercised; native installers are unchanged. Current working builds remain app/dist and server/dist.
 - Candidate e18c30e was published successfully by https://github.com/Javpato/studyvillage/actions/runs/42421943665 . Final refinements are ready for the next source commit; its Pages workflow still needs confirmation. User handbook changes remain local and unstaged.
+
+## 2026-11-08 — social, controller and responsive candidate
+
+Candidate: next commit on existing `main` (social requests, optional screen audio, viewer-local floating windows, controller settings/navigation, Forest Blocks layout, garden sizing and mobile containment). This is a test candidate, not a verified release.
+
+Completed before extended verification: application/server TypeScript; 18 focused tests covering friendship privacy/restart state, media/audio lifecycle, window bounds and HUD storage. Browser review initially blocked by Chrome sandbox startup; retrying with approved execution outside the sandbox.
+
+Remaining: server integration restart test; full unit suites; Chromium responsive/notice/game/controller journeys; build and translations; physical iPad keyboard/Safari, real controller and actual OS audio capture. Existing unrelated documentation changes are preserved, not included in the implementation commit.
+
+Workflow list: https://github.com/Javpato/studyvillage/actions (exact candidate/run links will be recorded after push).
+
+Candidate pushed: `d5ece97` — https://github.com/Javpato/studyvillage/commit/d5ece97 . Focused tests: 18 passed. Initial full unit run: 477 passed, 5 installer tests blocked by sandbox `spawnSync git EPERM`; retry approved outside sandbox. Initial visual review: phone world contained; iPad garden occupies about 76% of viewport height. Full browser journeys and build still running.
+
+Verification follow-up: fixed duplicate controller initialization found by browser coverage; fixed the integration test to await recipient delivery (rather than assuming cross-socket ordering). All 482 application unit tests passed, all 34 server tests passed, and 15 focused tests passed after the final audio-track lifecycle correction (including one new regression). Browser coverage: 14/14 social/layout tests, 11 existing Forest Blocks/activity tests, and 6 existing garden/notice/mobile media checks passed. Garden sizes remained stable over 30 frames at effective 200%, 205% and 250% desktop viewport/DPR; this is not a physical browser-menu zoom certification. iPad keyboard tested with a simulated VisualViewport resize, not physical Safari.
+
+Build, server build, types and ES/EN/FR catalogue checks passed. Compatibility: retain server protocol 7; friendship is additive and becomes available after the private friends state arrives. Older servers retain other functionality and display an update message for friend requests. No destructive database migration; friend state uses the existing SQLite metadata store.
+
+Initial candidate workflow https://github.com/Javpato/studyvillage/actions/runs/42478313244 failed on the test delivery-order assumption corrected above. Next candidate includes these corrections. Remaining: packaged Pages checks/CI, final visual inspection, cleanup; physical controller, iPad Safari keyboard, browser-menu zoom and actual OS screen-audio capture remain hardware checks.

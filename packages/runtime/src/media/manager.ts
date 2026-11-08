@@ -104,6 +104,7 @@ export class MediaManager {
           try { (track as MediaStreamTrack & { contentHint: string }).contentHint = 'detail'; } catch { /* Optional hint */ }
         }
       }
+      for(const track of stream.getAudioTracks())track.addEventListener('ended',()=>this.changed(),{once:true});
       this.screen = stream; this.phase = 'CAPTURING_LOCAL'; this.changed();
       for (const track of stream.getVideoTracks()) track.addEventListener('ended', () => {
         if (this.screen === stream) { this.stopScreen(); this.phase = 'SOURCE_ENDED'; this.changed(); }
@@ -152,7 +153,7 @@ export class MediaManager {
       if (this.incoming.get(key) !== item || !current || current.room !== metadata.room || !current.peers.some(p => p.identityId === metadata.identityId && p.endpoint === call.endpoint && p.receiveToken === metadata.token)) { this.stopTracks(stream); this.closeCall(this.incoming, key); return; }
       item.stream = stream;
       for (const track of stream.getAudioTracks()) track.enabled = !this.deafened;
-      for (const track of stream.getTracks()) track.addEventListener('ended', () => { if (this.incoming.get(key) === item) { this.closeCall(this.incoming, key); this.changed(); } }, { once: true });
+      for (const track of item.kind==='screen'?stream.getVideoTracks():stream.getTracks()) track.addEventListener('ended', () => { if (this.incoming.get(key) === item) { this.closeCall(this.incoming, key); this.changed(); } }, { once: true });
       this.received?.(metadata.identityId, metadata.kind);
       this.changed();
     }));
