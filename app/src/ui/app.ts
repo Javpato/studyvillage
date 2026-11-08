@@ -2983,7 +2983,7 @@ class StudyUI {
     } else {
       this.touchActionBtn.classList.remove('is-active-prompt');
       setText(this.touchActionIcon, '⚡');
-      setText(this.touchActionLabel, 'E · Usar');
+      setText(this.touchActionLabel, msg('E · Usar'));
     }
   }
 

@@ -1,3 +1,11 @@
+# Final touch-language and fallback checkpoint
+
+[`90978b7`](https://github.com/Javpato/studyvillage/commit/90978b7) is published by [Pages run 42525375513](https://github.com/Javpato/studyvillage/actions/runs/42525375513). The strict offline assertion passed after the fixture’s normal reload. [Platform run 42525391792](https://github.com/Javpato/studyvillage/actions/runs/42525391792) is still tracked separately from publication.
+
+Latest available checks: 28/28 local Chromium journeys; six complete styled controller journeys across Chromium/WebKit; five native bridge tests; native Linux payload smoke; production offline/legacy upgrade in both engines. Production WebKit exposed an untranslated touch action reset (`E · Usar`) and a fault-injection test whose HTTP route was bypassed by the valid offline cache. The label is now a registered localized message; only the fault-injection case blocks service workers so it actually receives the broken manifest. Normal-asset and offline-upgrade cases keep workers enabled. Final targeted reruns and a final platform matrix remain.
+
+---
+
 # Final verification corrections
 
 Both CI platforms passed 27/28 Chromium cases on `0673856`; the failing immediate-movement check exposed native dialog `close` arriving after new movement input. Pet interaction cleanup is now synchronous and idempotent, with the native close event sharing the same cleanup path. Local Chromium passed all 28 cases; production WebKit is running. Current desktop payload passed Linux sandbox/storage/export/reload checks.
