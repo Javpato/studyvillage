@@ -1,3 +1,4 @@
+import {keyboardGameAction} from '../input/actions';
 import {PetReservations,type PetBot} from '../../../packages/core/src/pets/protocol';
 import {petPortrait} from '../pets/art';
 import {ActivityStopControl} from './activity-stop-control';
@@ -48,9 +49,11 @@ export class TetrisPanel {
  private stopRepeat=()=>{if(this.repeat)clearInterval(this.repeat);this.repeat=null;};
  private blur=()=>{this.stopRepeat();if(this.local&&this.mode==='solo'&&!this.pausedAt&&['playing','countdown'].includes(this.view?.phase??''))this.pause();};
  private visibility=()=>{if(document.hidden)this.blur();};
- private key=(e:KeyboardEvent)=>{if((e.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]'))return;const keys:Record<string,string>={ArrowLeft:'left',ArrowRight:'right',ArrowDown:'down',ArrowUp:'cw',x:'cw',z:'ccw',Shift:'drop',' ':'drop',e:'hold',c:'hold','1':'shield','2':'moss','3':'roots'},key=keys[e.key]??keys[e.key.toLowerCase()];if(key){e.preventDefault();e.stopImmediatePropagation();if(e.repeat&&['hold','drop','shield','moss','roots'].includes(key))return;this.input(key);}};
+ private key=(e:KeyboardEvent)=>{if(document.querySelector('dialog[open]'))return;if((e.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]'))return;const key=keyboardGameAction(e.key);if(key){e.preventDefault();e.stopImmediatePropagation();if(e.repeat&&['hold','drop','shield','moss','roots'].includes(key))return;this.input(key);}};
  private draw(canvas:HTMLCanvasElement,p:TetrisPlayer,ghost=false){const c=canvas.getContext('2d')!,size=canvas.width/10;c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='#192e29';c.fillRect(0,0,canvas.width,canvas.height);const block=(x:number,y:number,v:number,alpha=1)=>{if(y<0)return;c.globalAlpha=alpha;c.fillStyle=palette[v];c.fillRect(x*size+1,y*size+1,size-2,size-2);c.fillStyle='#fff5ce55';c.fillRect(x*size+3,y*size+3,size-6,3);c.fillStyle='#192e2944';c.fillRect(x*size+size-5,y*size+6,2,size-9);if(v===8){c.strokeStyle='#dce4d3';c.beginPath();c.moveTo(x*size+5,y*size+size-5);c.lineTo(x*size+size-5,y*size+5);c.stroke();}c.globalAlpha=1;};p.board.forEach((r,y)=>r.forEach((v,x)=>{if(v)block(x,y,v);else{c.strokeStyle='#bdd5bb0e';c.strokeRect(x*size,y*size,size,size);}}));if(p.alive){if(ghost){const piece={...p.piece};while(fits(p.board,{...piece,y:piece.y+1}))piece.y++;for(const [x,y]of cells(piece))block(x,y,piece.kind+1,.22);}for(const [x,y]of cells(p.piece))block(x,y,p.piece.kind+1);}}
  isBattle(){return this.mode==='battle';}
+ canStartPet(){return !this.local||!this.view||['lobby','finished'].includes(this.view.phase);}
+ startWithPet(pet:PetBot){if(!this.canStartPet())return;this.select('bots');this.send({type:'bot',operation:'add',pet});}
  gamepadPlaying(){return this.mounted&&this.view?.phase==='playing'&&!this.pausedAt;}
  gamepadMenu(open:boolean){if(this.mode==='solo'&&Boolean(this.pausedAt)!==open)this.pause();if(open)this.pauseButton.focus();}
  private paintLobby(v:TetrisView,p:TetrisPlayer|undefined){

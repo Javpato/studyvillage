@@ -1,3 +1,13 @@
+# Pets, phone and controller candidate — 8 November 2026
+
+Implementation checkpoint on the existing `main` branch; not yet a verified release. Reproduced invisible pets using current application code with the previous release sprite manifest: furniture was persisted and management listed the pet, while the world rendered neither sprite. Current published image bytes were present and correct. This establishes the mixed-version failure mechanism, not the contents of the reporter’s browser cache.
+
+Candidate changes: versioned sprite resources and coherent worker caches; validated pet artwork with visible fallback; pet targeting with E and compact separate interaction/house panels; folder appearance persistence/editor; abstract controller bindings, contextual guide and input-device hints; missing English/French Ollama and timer/block labels. Gartic deliberately retains mixed input for writing/drawing, per the owner’s choice.
+
+Completed before push: application/server type checks, 32 focused model tests and 2,712 translation keys with an additional source-key scan. Remaining: browser journeys (placement, fallback, E, folder persistence, controller action/guide), required full checks, packaged/offline upgrade verification, English/French interface audit, available native package check, final visual review and cleanup. Platform CI includes the new browser suite. Existing installers are not updated by this source checkpoint.
+
+---
+
 # Amendment implementation and verification — 8 November 2026
 
 Final implementation: [`5f9d074`](https://github.com/Javpato/studyvillage/commit/5f9d074), pushed to `main` and published to the web by [Pages workflow 42512601173](https://github.com/Javpato/studyvillage/actions/runs/42512601173). [Platform workflow 42512623778](https://github.com/Javpato/studyvillage/actions/runs/42512623778) passed **Chromium and WebKit on Ubuntu 24.04 and macOS 15**: 16 targeted cases per engine/OS, 64 executions. The subsequent documentation commit records these results without changing runtime source.

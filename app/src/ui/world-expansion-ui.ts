@@ -471,6 +471,8 @@ export class WorldExpansionUIController {
     this.openModal('object_inspector');
   }
 
+  petGames(){const games:{id:string;name:string}[]=[];if(this.tetrisPanel.canStartPet())games.push({id:'tetris',name:'Bloques del Bosque'});const wolves=this.werewolvesRoom.current();if(wolves?.phase==='lobby'&&this.werewolvesRoom.canLead()&&wolves.players.length<18)games.push({id:'werewolves',name:'Loup-Garou'});return games;}
+  playWithPet(id:string,pet:PetBot){if(!this.petGames().some(g=>g.id===id))return;this.openModal(id==='werewolves'?'werewolves':'tetris');if(id==='tetris')this.tetrisPanel.startWithPet(pet);else this.werewolvesRoom.act({kind:'add_bot',pet});}
   private gamepadInMenu=false;
   gamepadPlaying(){return this.activeModalKind==='tetris'&&this.tetrisPanel.gamepadPlaying()&&!this.gamepadInMenu;}
   gamepadInput(key:string){this.tetrisPanel.input(key);}

@@ -8,7 +8,7 @@ export const PHONE_APPS = {
 export type PhoneAppId = keyof typeof PHONE_APPS;
 const appId=z.enum(Object.keys(PHONE_APPS) as [PhoneAppId,...PhoneAppId[]]);
 const app=z.strictObject({type:z.literal('app'),id:appId});
-const folder=z.strictObject({type:z.literal('folder'),id:z.string().min(1).max(80),name:z.string().trim().min(1).max(48),builtin:z.boolean().optional(),apps:z.array(appId).max(16)});
+const folder=z.strictObject({type:z.literal('folder'),id:z.string().min(1).max(80),name:z.string().trim().min(1).max(48),builtin:z.boolean().optional(),appearance:z.object({icon:z.string().max(80),color:z.string().regex(/^#[0-9a-fA-F]{6}$/)}).optional().catch(undefined),apps:z.array(appId).max(16)});
 export const phoneLayoutSchema=z.strictObject({version:z.literal(1),entries:z.array(z.discriminatedUnion('type',[app,folder])).max(48)}).superRefine((layout,ctx)=>{
  const apps=layout.entries.flatMap(e=>e.type==='app'?[e.id]:e.apps);
  const folders=layout.entries.filter(e=>e.type==='folder').map(e=>e.id);

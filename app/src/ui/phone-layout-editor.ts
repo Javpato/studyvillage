@@ -1,9 +1,12 @@
+import {editFolderAppearance} from './folder-appearance';
+import {activeInput,buttonGlyph,onInputChange} from '../input/actions';
 import {PHONE_APPS,dropPhoneItem,movePhoneApp,removePhoneApp,normalizePhoneLayout,type PhoneAppId,type PhoneLayout,type PhoneItemRef,type PhoneDrop} from '../../../packages/core/src/phone/layout';
 import {loadPhoneLayout,savePhoneLayout} from '../../../packages/runtime/src/storage/phone-layout';
 import {msg,setDisplayText,setDisplayAttribute} from '../i18n';
 /** Pointer editing lives on the phone; browser dragging is deliberately not used on touch. */
 export class PhoneLayoutEditor {
  readonly root=document.createElement('div'); editing=false;
+ private hint=document.createElement('p');private offInput:()=>void;
  private draft=loadPhoneLayout();private library=false;private error='';private timer:ReturnType<typeof setTimeout>|null=null;
  private gesture:{id:number,x:number,y:number,item:PhoneItemRef,moved:boolean,tile:HTMLElement,touch:boolean}|null=null;private suppress=false;
  private dragPreview:HTMLElement|null=null;private dragSource:HTMLElement|null=null;
@@ -16,6 +19,8 @@ export class PhoneLayoutEditor {
  private blur=()=>this.cancel();
  constructor(private screen:HTMLElement,private saved:(layout:PhoneLayout)=>void,private folder:()=>string|null){
   document.addEventListener('pointerdown',this.clearCancelledClick,true);document.addEventListener('click',this.swallowCancelledClick,true);
+  this.hint.className='sv-phone-edit-hint';this.screen.append(this.hint);this.offInput=onInputChange(()=>this.help());this.help();
+  this.screen.addEventListener('sv-phone-edit',()=>this.enter());
   this.root.className='sv-phone-edit-tools';this.screen.addEventListener('contextmenu',e=>{if(this.tile(e.target)){e.preventDefault();if(!e.pointerType||e.pointerType==='mouse')this.enter();}});
   screen.addEventListener('pointerdown',e=>this.down(e));screen.addEventListener('pointermove',e=>this.move(e));screen.addEventListener('pointerup',e=>this.up(e));screen.addEventListener('pointercancel',()=>this.cancel());
   screen.addEventListener('lostpointercapture',e=>{if(e.target===screen&&this.gesture&&!screen.hasPointerCapture(e.pointerId))this.cancel();});window.addEventListener('blur',this.blur);
@@ -142,7 +147,8 @@ export class PhoneLayoutEditor {
  private button(label:string,run:()=>void){const b=document.createElement('button');b.type='button';b.className='sv-button';setDisplayText(b,msg(label));b.onclick=run;return b;}
  decorate(){this.screen.classList.toggle('is-editing',this.editing);for(const tile of this.screen.querySelectorAll<HTMLElement>('[data-phone-app]')){tile.querySelector('[data-remove]')?.remove();const id=tile.dataset.phoneApp;if(this.editing&&id!=='settings'){const x=document.createElement('span');x.dataset.remove='';x.className='sv-phone-remove';x.textContent='×';setDisplayAttribute(x,'aria-label',msg('Quitar aplicación'));tile.append(x);}}
  const title=this.screen.querySelector<HTMLElement>('.sv-phone-title');if(title){const editable=this.editing&&!!this.folder();title.classList.toggle('sv-folder-rename',editable);title.tabIndex=editable?0:-1;title.onkeydown=e=>{if(editable&&(e.key==='Enter'||e.key===' ')){e.preventDefault();title.click();}};title.onclick=event=>{if(event.target instanceof HTMLInputElement)return;if(!this.editing||!this.folder())return;const folder=this.draft.entries.find(e=>e.type==='folder'&&e.id===this.folder());if(folder?.type!=='folder')return;const input=document.createElement('input');input.maxLength=48;input.value=folder.name;setDisplayAttribute(input,'aria-label',msg('Nombre de la carpeta'));title.replaceChildren(input);input.focus();input.select();const done=()=>{if(input.value.trim()){folder.name=input.value.trim();folder.builtin=false;this.change(this.draft);}};input.onblur=done;input.onkeydown=e=>{e.stopPropagation();if(e.key==='Escape'){input.onblur=null;this.saved(this.draft);this.decorate();return;}if(e.key==='Enter')input.blur();};};}}
- private render(){this.root.hidden=!this.editing;this.root.replaceChildren();if(!this.editing)return;this.root.append(this.button('Listo',()=>this.finish()),this.button('Biblioteca de apps',()=>{this.library=!this.library;this.render();}));if(this.error){const error=document.createElement('p');error.setAttribute('role','alert');setDisplayText(error,msg(this.error));this.root.append(error,this.button('Reintentar',()=>this.change(this.draft)));}
+ private help(){setDisplayText(this.hint,this.editing?msg('Pulsa Listo para salir de edición'):activeInput()==='touch'?msg('Mantén pulsado un elemento 3 segundos para editar'):activeInput()==='gamepad'?msg('{button} · Editar teléfono',{button:buttonGlyph(2)}):msg('Clic derecho sobre un elemento para editar · F2'));}
+ private render(){this.help();this.root.hidden=!this.editing;this.root.replaceChildren();if(!this.editing)return;this.root.append(this.button('Listo',()=>this.finish()),this.button('Biblioteca de apps',()=>{this.library=!this.library;this.render();}));const folder=this.draft.entries.find(e=>e.type==='folder'&&e.id===this.folder());if(folder?.type==='folder')this.root.append(this.button('Personalizar carpeta',()=>editFolderAppearance(folder,appearance=>{folder.appearance=appearance;this.change(this.draft);})));if(this.error){const error=document.createElement('p');error.setAttribute('role','alert');setDisplayText(error,msg(this.error));this.root.append(error,this.button('Reintentar',()=>this.change(this.draft)));}
  if(this.library){const box=document.createElement('div');box.className='sv-phone-library';const installed=new Set(this.draft.entries.flatMap(e=>e.type==='app'?[e.id]:e.apps));for(const id of Object.keys(PHONE_APPS)as PhoneAppId[]){if(id==='identity'||id==='connection')continue;const b=this.button(PHONE_APPS[id],()=>this.change(movePhoneApp(this.draft,id,null)));b.disabled=installed.has(id);b.setAttribute('aria-pressed',String(installed.has(id)));box.append(b);}this.root.append(box);}}
- dispose(){this.cancel();window.removeEventListener('blur',this.blur);document.removeEventListener('pointerdown',this.clearCancelledClick,true);document.removeEventListener('click',this.swallowCancelledClick,true);}
+ dispose(){this.offInput();this.hint.remove();this.cancel();window.removeEventListener('blur',this.blur);document.removeEventListener('pointerdown',this.clearCancelledClick,true);document.removeEventListener('click',this.swallowCancelledClick,true);}
 }

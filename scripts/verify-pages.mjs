@@ -1,3 +1,4 @@
+import {spriteRevision} from './sprite-revision.mjs';
 import {openPhoneApp} from './phone-ui.mjs';
 /** Exercise the actual static package at the GitHub Pages subpath, without Vite fallbacks. */
 import assert from 'node:assert/strict';
@@ -21,7 +22,8 @@ for(const name of ['index.html','sw.js','manifest.webmanifest'])assert(files.has
 const worker=files.get('sw.js').toString(),cache=worker.match(/const CACHE='([^']+)'/)?.[1];
 const precache=JSON.parse(worker.match(/const FILES=(\[.*?\]);/)?.[1]||'null');
 assert(cache&&Array.isArray(precache),'Missing service-worker cache manifest');
-assert.deepEqual([...precache].sort(),[...files.keys()].filter(name=>name!=='sw.js').map(name=>'./'+name).sort(),'Precache does not match the packaged files');
+const revision=spriteRevision(new URL('file://'+root+'/sprites/'));const expectedFiles=[...files.keys()].filter(name=>name!=='sw.js');
+assert.deepEqual([...precache].sort(),expectedFiles.map(name=>'./'+name).concat(expectedFiles.filter(name=>name.startsWith('sprites/')).map(name=>'./'+name+'?v='+revision)).sort(),'Precache does not match the packaged files');
 const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const missing=[];
 const server=createServer((req,res)=>{
@@ -77,7 +79,7 @@ async function verify(name,engine){
   await page.close();page=await context.newPage();page.setDefaultTimeout(20000);
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(address);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
-  const installed=await page.evaluate(async key=>(await (await caches.open(key)).keys()).map(request=>new URL(request.url).pathname),cache);
+  const installed=await page.evaluate(async key=>(await (await caches.open(key)).keys()).map(request=>new URL(request.url).pathname+new URL(request.url).search),cache);
   assert.deepEqual(installed.sort(),precache.map(name=>mount+name.slice(2)).sort(),'Incomplete offline package');
   await openNotebook(page);await options(page,'Página');
   const note='Pages deployment check — lápiz';

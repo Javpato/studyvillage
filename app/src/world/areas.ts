@@ -660,6 +660,7 @@ export function drawCommunityPlaza(
   selectedObjectId: string | null,
   nearbyPortalId: string | null,
   dt = 0,
+  companions:{baseline:number;paint():void}[]=[],
 ): void {
   ctx.imageSmoothingEnabled = false;
   const calm = reducedMotion();
@@ -676,7 +677,7 @@ export function drawCommunityPlaza(
     drawPortalSign(ctx, portal, portal.id === nearbyPortalId);
   }
 
-  const sprites: Sprite[] = [];
+  const sprites: Sprite[] = [...companions];
   for (const light of STREET_LIGHTS.community) sprites.push({ baseline: light.y, paint: () => drawStreetLight(ctx, light, time) });
   const trees = [
     { x: 64, y: 92 },
@@ -730,6 +731,7 @@ export function drawStudyLibrary(
   selectedObjectId: string | null,
   nearbyPortalId: string | null,
   dt = 0,
+  companions:{baseline:number;paint():void}[]=[],
 ): void {
   ctx.imageSmoothingEnabled = false;
   const calm = reducedMotion();
@@ -746,7 +748,7 @@ export function drawStudyLibrary(
     drawPortalSign(ctx, portal, portal.id === nearbyPortalId);
   }
 
-  const sprites: Sprite[] = [];
+  const sprites: Sprite[] = [...companions];
   for (const light of STREET_LIGHTS.study) sprites.push({ baseline: light.y, paint: () => drawStreetLight(ctx, light, time) });
   for (const obj of registry.listByArea('study')) {
     sprites.push({

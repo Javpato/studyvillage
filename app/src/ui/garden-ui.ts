@@ -43,7 +43,7 @@ export class GardenPanel {
   this.floating.className='sv-garden-drag-preview';this.floating.hidden=true;this.floating.alt='';this.floating.draggable=false;document.body.append(this.floating);
  }
  private parcel(){const view=this.view();return view?occupiedParcels(view).find(parcel=>parcel.isOwn)?.parcel:null;}
- open(){if(!this.parcel())return;this.items=structuredClone((this.view()!.ownHouse.garden??[]).map(item=>resolveGardenItem(this.parcel()!,item)));this.undo=[];this.selected=null;this.pending=null;this.ghost=null;this.feedback.textContent='';this.active=true;this.root.hidden=false;document.documentElement.classList.add('sv-decorating');this.selectButtons();this.viewport.hidden=false;this.zoom=1;this.paint();}
+ open(selected:string|null=null){if(!this.parcel())return;this.items=structuredClone((this.view()!.ownHouse.garden??[]).map(item=>resolveGardenItem(this.parcel()!,item)));this.undo=[];this.selected=selected;this.pending=null;this.ghost=null;this.feedback.textContent='';this.active=true;this.root.hidden=false;document.documentElement.classList.add('sv-decorating');this.selectButtons();this.viewport.hidden=false;this.zoom=1;this.paint();}
  close(){if(this.saving)return;this.cancelGestures();this.active=false;cancelAnimationFrame(this.frame);this.viewport.hidden=true;this.root.hidden=true;document.documentElement.classList.remove('sv-decorating');}
  preview(parcels:OccupiedParcel[]):OccupiedParcel[]{return this.active?parcels.map(parcel=>parcel.isOwn?{...parcel,house:{...parcel.house,garden:this.items.map(({plot,...item})=>item)}}:parcel):parcels;}
  private remember(){this.undo.push(structuredClone(this.items));if(this.undo.length>30)this.undo.shift();}

@@ -1,3 +1,5 @@
+import {folderAppearance} from './folder-appearance';
+import {interactionGlyph} from '../input/actions';
 import {PARCELS} from '../world/model';
 import {PetWorld} from '../pets/world';
 import {petSpecies,newPetConfig,petCount,ownerPetGroups,assertPetLimit} from '../../../packages/core/src/pets/model';
@@ -446,7 +448,7 @@ class StudyUI {
         actions.workspaceCommand({action:'commit',base:doc.revision,document:{...doc,theme:house.theme,furniture:house.furniture.map(f=>({...f,color:f.color??'#9f7847'}))}});
       }else actions.updateOwnHouse(house);
     } };
-    this.pets=new PetWorld({speak:(text,x,y)=>this.speech.say(text,x,y,this.speechScene()),view:()=>this.view,scene:()=>this.petScene(),position:()=>this.localPosition,stop:()=>this.stopMoving(),obstacles:()=>this.pane==='house'?houseObstacles(this.currentHouse()??this.view!.ownHouse):this.currentArea==='residential'?worldObstacles(occupiedParcels(this.view!)):[...this.expansion.objectRegistry.obstaclesForArea(this.currentArea),...lampObstacles(this.currentArea)],save:(home,config)=>{
+    this.pets=new PetWorld({manage:home=>{this.selectedFurnitureId=home.furnitureId;if(home.scene==='area:residential')this.garden.open(home.furnitureId);else this.beginDecoration();},games:()=>this.expansion?.petGames()??[],play:(id,pet)=>this.expansion.playWithPet(id,pet),speak:(text,x,y)=>this.speech.say(text,x,y,this.speechScene()),view:()=>this.view,scene:()=>this.petScene(),position:()=>this.localPosition,stop:()=>{this.stopMoving();this.selectedFurnitureId=null;},obstacles:()=>this.pane==='house'?houseObstacles(this.currentHouse()??this.view!.ownHouse):this.currentArea==='residential'?worldObstacles(occupiedParcels(this.view!)):[...this.expansion.objectRegistry.obstaclesForArea(this.currentArea),...lampObstacles(this.currentArea)],save:(home,config)=>{
       const view=this.view;if(!view)return;
       if(home.scene==='area:residential')actions.updateOwnHouse({...view.ownHouse,garden:view.ownHouse.garden?.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
       else {const key=home.scene.split(':').slice(2);if(key[0]==='lobby')actions.updateOwnHouse({...view.ownHouse,furniture:view.ownHouse.furniture.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
@@ -912,7 +914,7 @@ class StudyUI {
     for(const entry of this.phoneLayout.entries){
       if(entry.type==='app'){this.phoneGrid.append(this.phoneTiles.get(entry.id)!);continue;}
       const item=button('','sv-app-tile');item.dataset.testid=`phone-folder-${entry.id}`;item.dataset.phoneFolder=entry.id;
-      const face=node('span','sv-app-icon');face.style.setProperty('--tile','#b38a55');face.append(monoIcon(entry.builtin&&entry.id==='settings'?'gear':'house',26));
+      const appearance=folderAppearance(entry),face=node('span','sv-app-icon sv-folder-icon');face.style.setProperty('--tile','#f4eedf');face.style.color=appearance.color;face.append(monoIcon(appearance.icon,26));
       append(item,face,node('span','sv-app-label',entry.builtin?msg(entry.name):entry.name));
       item.onclick=()=>{this.phoneFolder=entry.id;this.openPhone('folder');};this.phoneGrid.append(item);
     }
@@ -2642,7 +2644,7 @@ class StudyUI {
     this.wardrobe.close(true);this.selectedFurnitureId = item.id;
     this.refreshHouseEditor();
     // Room furniture works like the lobby's; activityScope() gives it that room's own projects, flashcards, quizzes and notes.
-    if(petSpecies(item.kind)){this.closePhone();this.pets.open(item.pet?.id??item.id);return;}
+    if(petSpecies(item.kind)){this.closePhone();this.pets.openHouse(item.pet?.id??item.id);return;}
     switch (item.kind) {
       case 'mailbox': this.openMailbox(this.houseOwnerId||view.identity.fingerprint,this.currentHouse()?.name||'');break;
       case 'vanity': this.stopMoving();this.closePhone();this.vanity.open(view.identity);break;
@@ -2910,6 +2912,7 @@ class StudyUI {
   private triggerInteraction(): void {
     if (!this.view) return;
     if (this.decorating) return;
+    if(this.pets.interact())return;
     try { navigator.vibrate?.(15); } catch {}
     if (this.pane === 'world') {
       if(this.currentArea==='residential'&&this.view){const used=new Set(occupiedParcels(this.view).map(p=>p.parcel.slot));if(PARCELS.some(p=>!used.has(p.slot)&&Math.hypot(this.localPosition.x-p.doorX,this.localPosition.y-p.doorY)<60)){this.explainPlot();return;}}
@@ -3650,7 +3653,7 @@ class StudyUI {
             : null;
           if (this.pane === 'world') {
             if (this.currentArea === 'residential') {
-              drawWorld(ctx, occupied, people, dt);
+              drawWorld(ctx, occupied, people, dt,null,false,this.pets.entries(ctx,now));
               this.garden.draw(ctx);
               // Server mode: signs at the edges that lead to neighbouring neighbourhoods.
               const server = view.network.server;
@@ -3666,7 +3669,7 @@ class StudyUI {
                 nearWorldObj?.id || null,
                 null,
                 nearPortal?.id || null,
-                dt,
+                dt,this.pets.entries(ctx,now),
               );
             } else {
               drawStudyLibrary(
@@ -3676,7 +3679,7 @@ class StudyUI {
                 nearWorldObj?.id || null,
                 null,
                 nearPortal?.id || null,
-                dt,
+                dt,this.pets.entries(ctx,now),
               );
             }
             this.expansion.environment.drawAtmosphere(
@@ -3696,14 +3699,14 @@ class StudyUI {
                 if (bSprite) perItemSprites.set(f.id, bSprite);
               }
             }
-            drawHouseInterior(ctx, activeHouse, people, this.selectedFurnitureId, dt, this.decorating ? null : nearFurniture?.id || null, perItemSprites,spacePortals(activeHouse,this.localPosition.space),!!this.localPosition.space);
+            drawHouseInterior(ctx, activeHouse, people, this.selectedFurnitureId, dt, this.decorating ? null : nearFurniture?.id || null, perItemSprites,spacePortals(activeHouse,this.localPosition.space),!!this.localPosition.space,this.pets.entries(ctx,now));
             if (this.decorating) {
               if (this.decorationGrid) { ctx.save(); ctx.fillStyle = '#ffffff55'; for (let x = HOUSE_BOUNDS.x; x < 740; x += 8) for (let y = HOUSE_BOUNDS.y; y < 406; y += 8) ctx.fillRect(x, y, 1, 1); ctx.restore(); }
               const candidate = !this.doorDrag&&this.previewHouse?.furniture.find(f => f.id === (this.drag?.id || this.previewHouse?.furniture.at(-1)?.id));
               if (candidate) { const r = furnitureRect(candidate); ctx.save(); ctx.fillStyle = this.decorationInvalid ? '#d8444450' : '#59b87140'; ctx.fillRect(r.x, r.y, r.w, r.h); ctx.strokeStyle = this.decorationInvalid ? '#b52828' : '#387e45'; ctx.strokeRect(r.x, r.y, r.w, r.h); ctx.restore(); }
             }
           }
-          this.pets.draw(ctx,now);this.headCameras.draw(ctx,people);
+          this.pets.draw(ctx,now,!this.decorating&&!this.garden.active&&!this.activityOpen&&!!this.phone.hidden);this.headCameras.draw(ctx,people);
           this.speech.draw(ctx,this.speechScene(),()=>{const r=this.stageCanvas.getBoundingClientRect(),w=this.stageWrap.getBoundingClientRect();return{left:Math.max(0,(w.left-r.left)*768/r.width),right:Math.min(768,(w.right-r.left)*768/r.width),top:Math.max(0,(w.top-r.top)*432/r.height),screenLeft:Math.max(0,w.left),screenTop:Math.max(0,w.top),screenRight:Math.min(innerWidth,w.right),screenBottom:Math.min(innerHeight,w.bottom),canvasLeft:r.left,canvasTop:r.top,scale:r.width/768};});
           if (this.moveTarget) {
             ctx.save();
@@ -3716,7 +3719,8 @@ class StudyUI {
             ctx.stroke();
             ctx.restore();
           }
-          const prompt = this.pane === 'world'
+          const petTarget=!this.decorating&&!this.garden.active?this.pets.target():null;
+          const prompt = petTarget ? t('{button} · Interactuar',{button:interactionGlyph()}) : this.pane === 'world'
             ? nearPortal
               ? t(nearPortal.prompt)
               : this.nearestGardenMailbox()
@@ -3733,7 +3737,7 @@ class StudyUI {
               : nearFurniture
                 ? t(FURNITURE_PROMPT_LABELS[nearFurniture.kind])
                 : null;
-          if (prompt) drawPrompt(ctx, this.localPosition.x, this.localPosition.y - 66, prompt);
+          if (prompt&&!petTarget) drawPrompt(ctx, this.localPosition.x, this.localPosition.y - 66, prompt);
           this.updateTouchActionPrompt(prompt);
           ctx.restore();
         }

@@ -1,6 +1,6 @@
 import {sprite,spriteDefinition} from '../assets/sprite-catalog';
 import type {PetEntity} from '../../../packages/core/src/pets/model';
-type PetArt={frameWidth:number;frameHeight:number;animations:Record<string,number[]>;directions:Record<string,number>;fps:number;scale:number;anchor:{x:number;y:number};collisionRadius:number};
+import type {PetArt} from '../assets/pet-assets';
 function definition(species:PetEntity['species']):PetArt|undefined{return spriteDefinition(`pet-${species}-sheet`) as PetArt|undefined;}
 export function petRadius(species:PetEntity['species']):number{return definition(species)?.collisionRadius??9;}
 /** Animation metadata is owner-editable alongside PNG paths in the shared manifest. */

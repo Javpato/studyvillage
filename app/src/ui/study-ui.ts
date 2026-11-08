@@ -57,7 +57,7 @@ export class StudyPanel {
  }
  private render():void{
   if(!this.mounted)return;
-  this.root.replaceChildren();const head=el('header');if(this.mode!=='home')head.append(button(msg(this.mode==='notebook'&&this.noteReturn?'Volver al mazo':'← Volver'),()=>this.back()));
+  this.root.replaceChildren();const head=el('header');if(this.mode!=='home'){const back=button(msg(this.mode==='notebook'&&this.noteReturn?'Volver al mazo':'← Volver'),()=>this.back());back.dataset.controlBack='';head.append(back);}
   const titles:Record<Mode,DisplayText>={home:msg('Tu rincón de estudio'),notebooks:msg('Mis cuadernos'),notebook:msg('Cuaderno'),cards:msg('Flashcards'),decks:msg('Mis mazos'),edit:msg('Editar mazo'),review:msg('Repasar'),quizzes:msg('Quiz'),'quiz-library':msg('Mis quizzes'),'quiz-edit':msg('Editar quiz'),'quiz-mode':msg('Cómo quieres jugar'),group:msg('Concurso en la aldea'),play:msg('Quiz')};
   head.append(el('h2',titles[this.mode]),button(msg('Cerrar'),this.ctx.close));this.root.append(head,this.alert);
   const body=el('div','','sv-study-body');this.root.append(body);

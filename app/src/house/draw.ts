@@ -245,6 +245,7 @@ function paintFurniture(
   time: number,
   perItemSprite?: HTMLImageElement | null,
   privateSpace = false,
+  companions:{baseline:number;paint():void}[]=[],
 ): void {
   const { x, y, w, h } = furnitureRect(item);
   const wall = item.kind === 'frame' || item.kind === 'board';
@@ -498,6 +499,7 @@ export function drawHouseInterior(
   perItemSprites?: ReadonlyMap<string, HTMLImageElement | null>,
   entrances: readonly SpacePortal[] = [],
   privateSpace = false,
+  companions:{baseline:number;paint():void}[]=[],
 ): void {
   ctx.imageSmoothingEnabled = false;
   // Held at a single frame when the viewer asked for reduced motion.
@@ -520,7 +522,7 @@ export function drawHouseInterior(
 
   drawWorldLabel(ctx,defaultText(house.name),384,8,300);
 
-  const sprites: Sprite[] = [];
+  const sprites: Sprite[] = [...companions];
   for(const portal of entrances)sprites.push({baseline:portal.y,paint:()=>drawSpacePortal(ctx,portal)});
   for (const item of house.furniture) {
     const rect = furnitureRect(item);

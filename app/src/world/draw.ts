@@ -406,6 +406,7 @@ export function drawWorld(
   dt = 0,
   nearbyPortalId: string | null = null,
   editing=false,
+  companions:{baseline:number;paint():void}[]=[],
 ): void {
   ctx.imageSmoothingEnabled = false;
   const calm = reducedMotion();
@@ -421,7 +422,7 @@ export function drawWorld(
     drawPortalSign(ctx, portal, portal.id === nearbyPortalId);
   }
 
-  const sprites: Sprite[] = [];
+  const sprites: Sprite[] = [...companions];
 
   for (const tree of WORLD_TREES) {
     const n = hash01(`${tree.x}:${tree.y}`);
