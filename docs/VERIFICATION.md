@@ -1,5 +1,7 @@
 # Pets, folders, controls and language corrections — verification checkpoint
 
+Current candidate: [`0673856`](https://github.com/Javpato/studyvillage/commit/0673856), pushed to `main`. [Pages run](https://github.com/Javpato/studyvillage/actions/runs/42524747307) and [Linux/macOS run](https://github.com/Javpato/studyvillage/actions/runs/42524778039) are tracked here. Pages again stopped at the new-client controller assertion on CI while both local engines passed. Additional controller/registration diagnostics are being collected; the candidate is not yet a published web release.
+
 Initial candidate [`3798c38`](https://github.com/Javpato/studyvillage/commit/3798c38) was pushed before long checks. The follow-up candidate recorded by this commit includes the findings from those checks: closed-details focus, folder editor refresh, optional quiz labels and French player-count wording.
 
 Completed: full baseline on the initial candidate (514 app / 37 server tests, types, translations, web/PWA/server builds); production offline checks and a legacy-worker upgrade fixture in Chromium/WebKit; Chromium world rendering for five species and invalid-art fallbacks, reload/capacity/outdoor move/remove, E interaction, folder save/cancel/reset, Ollama EN/FR, twelve visible screens per language, actual Forest Blocks drop/pause, complete Quiz and Gartic mixed-input journeys. Werewolves controller night/day/result/replay actions passed; its fixture exit used hidden instead of the real unmount lifecycle and is corrected for the final rerun.

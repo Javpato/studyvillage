@@ -80,7 +80,7 @@ async function verify(name,engine){
   // discard the idle worker between closing the final page and opening another).
   const installedPage=page;page=await context.newPage();page.setDefaultTimeout(20000);
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(address);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);await installedPage.close();
+  const navigation=await page.goto(address);try{await page.waitForFunction(()=>!!navigator.serviceWorker.controller);}catch(error){console.error('Offline controller diagnostic',name,{version:browser.version(),url:page.url(),fromWorker:navigation?.fromServiceWorker(),state:await page.evaluate(async()=>({controlled:!!navigator.serviceWorker.controller,registrations:(await navigator.serviceWorker.getRegistrations()).map(r=>({scope:r.scope,active:r.active?.state,script:r.active?.scriptURL,waiting:r.waiting?.state,installing:r.installing?.state})),caches:await caches.keys(),secure:isSecureContext}))});throw error;}await installedPage.close();
   const installed=await page.evaluate(async key=>(await (await caches.open(key)).keys()).map(request=>new URL(request.url).pathname+new URL(request.url).search),cache);
   assert.deepEqual(installed.sort(),precache.map(name=>mount+name.slice(2)).sort(),'Incomplete offline package');
   await openNotebook(page);await options(page,'Página');
