@@ -3,7 +3,7 @@ import {notebookOptions} from './notebook-ui';
 import {test,expect} from '@playwright/test';
 import type {Download,Page} from '@playwright/test';
 async function bytes(download:Download):Promise<Buffer>{const stream=await download.createReadStream(),chunks:Buffer[]=[];for await(const chunk of stream!)chunks.push(Buffer.from(chunk));return Buffer.concat(chunks);}
-async function identitySettings(page:Page){await page.getByTestId('phone-button').click();await page.getByTestId('phone-identity').click();}
+async function identitySettings(page:Page){await openPhoneApp(page,'identity');}
 async function dialogueSettings(page:Page){await page.getByRole('tab',{name:'Controles',exact:true}).click();const details=page.locator('.sv-npc-settings');if(!await details.evaluate(e=>e.hasAttribute('open')))await details.locator('summary').click();return details;}
 test('exports and imports encrypted identity without changing its fingerprint',async({page,browser})=>{
  await page.goto('/');await identitySettings(page);await page.getByLabel('Contraseña (12+ caracteres)').fill('test identity password');await page.getByRole('button',{name:'Cifrar y guardar',exact:true}).click();await expect(page.getByText('Identidad guardada cifrada. Necesitarás esta contraseña al reiniciar.',{exact:true}).first()).toBeVisible();
