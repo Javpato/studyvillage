@@ -2662,5 +2662,6 @@
   "Disponible": "Available",
   "La parcela es gratuita. En un servidor se asigna al entrar como residente con una identidad guardada. Las identidades temporales son visitantes. En una aldea temporal tu casa recibe una parcela durante la sesión.": "Plots are free. A server assigns one when you join as a resident with a saved identity. Temporary identities are visitors. In a temporary village, your house gets a plot for that session.",
   "Cómo obtener una parcela": "How to get a plot",
-  "Esta mascota ya tiene una casa.": "This pet already has a house."
+  "Esta mascota ya tiene una casa.": "This pet already has a house.",
+  "Acércate a tu mascota para acariciarla o usar su habilidad.": "Move closer to your pet to pet it or use its ability."
 }

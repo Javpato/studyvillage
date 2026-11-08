@@ -1,14 +1,16 @@
 # Amendment implementation candidate — 8 November 2026
 
-Candidate [`ff66672`](https://github.com/Javpato/studyvillage/commit/ff66672) was committed and pushed to `main`. A substantial follow-up now hardens pet authority, owner-wide IDs, backup/seed validation, room indexing, disconnects and complete labels; it is being committed before the extended checks. This is a test candidate, not a packaged release.
+Candidate [`ff66672`](https://github.com/Javpato/studyvillage/commit/ff66672) was committed and pushed to `main`. Follow-up [`e724111`](https://github.com/Javpato/studyvillage/commit/e724111) is pushed. It hardens pet authority, owner-wide IDs, backup/seed validation, room indexing, disconnects and complete labels. [Platform workflow 42509961674](https://github.com/Javpato/studyvillage/actions/runs/42509961674) and [Pages workflow 42509950005](https://github.com/Javpato/studyvillage/actions/runs/42509950005) completed successfully. This is a test candidate, not a packaged release.
 
 Baseline `npm run check` passed on Linux and macOS in [workflow 42508928772](https://github.com/Javpato/studyvillage/actions/runs/42508928772). Its Chromium run passed 14 cases on each platform; one pet-navigation helper failure stopped the suite and skipped WebKit. That helper is corrected. [Pages workflow 42508900030](https://github.com/Javpato/studyvillage/actions/runs/42508900030) succeeded for the first candidate.
 
-Local checks: type checking passed; 31 pet/workspace tests passed before the latest added cases; two real separate-client server pet tests passed (ownership/scene relay, combined limit, cross-game reservation and disconnect/reconnect). Browser flows passed 19/21; the two older language checks needed updated labels because both timer phases are now visible. Those selectors are corrected pending rerun.
+Local checks: type checking passed; 33 pet/workspace tests passed; two real separate-client server pet tests passed (ownership/scene relay, combined limit, cross-game reservation and disconnect/reconnect). Browser flows passed 19/21; the two older language checks needed updated labels because both timer phases are now visible. Those selectors are corrected pending rerun.
 
 Original Mac report: browser, input device and OS version unknown; Linux owner does not reproduce. CI macOS Chromium passed the quick-stroke regressions, but the original physical setup was not directly retested. No claim of that retest is made.
 
-Remaining: final full baseline; full Chromium suite; WebKit regressions; refreshed platform workflow; final visual review/documentation/cleanup. See `docs/AMENDMENT.md` for component changes and test coverage. Prior release evidence below does not verify this candidate.
+Completed for e724111: 505 application tests, 36 server tests, 2,664 translations, types and web/server builds. Platform workflow 42509961674 passed all 15 targeted scenarios in both Chromium and WebKit on both Linux and macOS. Desktop timer/pets and phone pet layouts were visually inspected. Repeated wardrobe close/movement test passed. Three separate-client pet tests now pass, including paired-device authority routing.
+
+Remaining: final baseline after paired-device command/UI polish; full Chromium suite and targeted reruns for old backup selectors and tests interrupted during live source updates; final WebKit check; updated candidate push and cleanup. See `docs/AMENDMENT.md` for component changes and test coverage. Prior release evidence below does not verify this candidate.
 
 ---
 

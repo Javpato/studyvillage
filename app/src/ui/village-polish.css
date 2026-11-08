@@ -41,3 +41,5 @@ button:focus-visible,summary:focus-visible { outline:3px solid #c99758;outline-o
 
 .sv-pet-panel {max-width:min(620px,calc(100vw - 24px));max-height:85dvh;overflow:auto;border:2px solid #9b805d;border-radius:16px;background:#fff8e8;color:#30493b;padding:20px;font:16px/1.5 system-ui;}
 .sv-pet-panel section{display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-top:1px solid #d9c6a5;padding:16px 0;}.sv-pet-panel h3{width:100%;margin:0}.sv-pet-panel input{max-width:100%;padding:8px}.sv-pet-panel img{image-rendering:pixelated}.sv-pet-panel button[aria-pressed=true]{background:#d9e6c8;border-color:#4d6e47}
+
+.sv-pet-panel canvas{image-rendering:pixelated}.sv-pet-panel small{display:block;width:100%}

@@ -1,12 +1,12 @@
 import {PetController,petSpecies,newPetConfig,type PetHome,type PetEntity,type PetConfig,type Point} from '../../../packages/core/src/pets/model';
-import {petSnapshotSchema,type PetBot} from '../../../packages/core/src/pets/protocol';
+import {petSnapshotSchema,petCommandSchema,type PetBot} from '../../../packages/core/src/pets/protocol';
 import type {AppActions,AppView,PublicHouse,Furniture} from '../../../packages/core/src/protocol/types';
 import {LocalWorkspaces} from '../../../packages/runtime/src/storage/workspaces';
 import {spaceKey,type HouseSpace} from '../../../packages/core/src/house/workspaces';
 import {gardenBounds,gardenItemRect,resolveGardenItem,gardenDoorway} from '../../../packages/core/src/world/garden';
 import {occupiedParcels,worldObstacles,findPath,circleHitsRect,type Rect} from '../world/model';
 import {HOUSE_BOUNDS,houseObstacles} from '../house/model';
-import {drawPet,petRadius} from './art';
+import {drawPet,petRadius,petPortrait} from './art';
 import {msg,t,setDisplayText,setDisplayAttribute} from '../i18n';
 import {NpcSpeech} from '../ui/npc-speech';
 export interface PetWorldContext {view():AppView|null;scene():string;position():Point;obstacles():Rect[];save(home:PetHome,config:PetConfig):void;stop():void;}
@@ -17,9 +17,11 @@ export class PetWorld {
  constructor(private ctx:PetWorldContext,private actions:Pick<AppActions,'onApp'|'sendApp'>){
   this.controller=new PetController({safe:(scene,p,h)=>this.safe(scene,p,h),path:(scene,a,b,h)=>{const habitat=this.habitat(scene,h);return habitat?findPath(a,b,habitat.obstacles,habitat.bounds,h?petRadius(h.species):9):null;},wander:(h,r)=>{const b=this.habitat(h.scene,h)?.bounds;return b?this.safe(h.scene,{x:b.x+r()*b.w,y:b.y+r()*b.h},h):null;},bowls:h=>this.habitats.get(h.scene)?.bowls??[]});
   this.panel.className='sv-pet-panel';setDisplayAttribute(this.panel,'aria-label',msg('Mascotas'));document.body.append(this.panel);this.panel.addEventListener('close',()=>ctx.stop());
-  this.off=actions.onApp(message=>{if(message.channel!=='pets')return;const view=ctx.view();if(!view||!view.network.members.some(m=>m.connected&&m.identity.fingerprint===message.from))return;try{const packet=petSnapshotSchema.parse(JSON.parse(message.data));const old=this.remote.get(message.from);if(old&&packet.seq<=old.seq)return;
+  this.off=actions.onApp(message=>{if(message.channel!=='pets')return;const view=ctx.view();if(!view||!view.network.members.some(m=>m.connected&&m.identity.fingerprint===message.from))return;try{const raw=JSON.parse(message.data),command=petCommandSchema.safeParse(raw);if(command.success){if(message.from===view.identity.fingerprint&&this.authority)this.command(command.data.command,command.data.id,command.data.target);return;}const packet=petSnapshotSchema.parse(raw);const old=this.remote.get(message.from);if(old&&packet.seq<=old.seq)return;
    const pets=packet.pets.filter(p=>p.owner===message.from&&this.validRemote(p,view));this.remote.set(message.from,{seq:packet.seq,pets,at:Date.now()});}catch{/* Ignore malformed or unauthenticated pet state. */}});
  }
+ private ownEntities(){return this.authority?this.controller.entities():this.remote.get(this.ctx.view()?.identity.fingerprint??'')?.pets??[];}
+ private command(command:'pet'|'ability',id:string,target?:Point){const view=this.ctx.view(),entity=this.ownEntities().find(p=>p.id===id);if(!view||!entity||entity.scene!==this.ctx.scene()||Math.hypot(entity.x-this.ctx.position().x,entity.y-this.ctx.position().y)>=120)return;if(!this.authority){this.actions.sendApp('pets',view.identity.fingerprint,JSON.stringify({version:1,command,id,target}));return;}if(command==='pet')this.controller.pet(id,Date.now());else this.controller.ability(id,Date.now(),target);}
  private validRemote(p:PetEntity,view:AppView){const owner=view.network.members.find(m=>m.identity.fingerprint===p.owner);if(!owner)return false;const ownerScene=owner.houseId?`house:${owner.houseId}:${spaceKey(owner.position.space)}`:`area:${owner.position.areaId??'residential'}`;return p.scene===ownerScene&&p.scene===this.ctx.scene();}
  private habitat(scene:string,home?:PetHome){const h=this.habitats.get(scene);if(home&&scene===home.scene)return h;return scene===this.ctx.scene()?{bounds:scene.startsWith('house:')?HOUSE_BOUNDS:{x:0,y:0,w:768,h:432},obstacles:this.ctx.obstacles(),bowls:[]}:h;}
  private safe(scene:string,p:Point,home?:PetHome):Point|null{
@@ -44,18 +46,18 @@ export class PetWorld {
  bots():PetBot[]{this.sync();return this.homes.filter(h=>!this.reserved.has(h.id)).map(h=>({id:h.id,owner:h.owner,species:h.species,name:h.config.name||t(({cat:'Gato',dog:'Perro',parrot:'Loro',hamster:'Hámster',rabbit:'Conejo'})[h.species])}));}
  match(key:string,ids:string[]){this.matches.set(key,ids);this.reserve([...this.matches.values()].flat());}
  reserve(ids:string[]){const next=new Set(ids);for(const id of this.reserved)if(!next.has(id))this.controller.reserve(id,false);for(const id of next)if(!this.reserved.has(id))this.controller.reserve(id,true);this.reserved=next;}
- hit(point:Point):boolean{const p=this.controller.entities().filter(p=>p.scene===this.ctx.scene()&&p.state!=='game').find(p=>Math.hypot(p.x-point.x,p.y-12-point.y)<22);if(!p)return false;this.open(p.id);return true;}
+ hit(point:Point):boolean{const p=this.ownEntities().filter(p=>p.scene===this.ctx.scene()&&p.state!=='game').find(p=>Math.hypot(p.x-point.x,p.y-12-point.y)<22);if(!p)return false;this.open(p.id);return true;}
  open(id?:string){this.sync();this.selected=id??null;this.ctx.stop();this.render();if(!this.panel.open)this.panel.showModal();}
  private render(){this.panel.replaceChildren();const header=document.createElement('h2');setDisplayText(header,msg('Mascotas · {count}/5 casas',{count:this.homes.length}));this.panel.append(header);const button=(key:string,run:()=>void)=>{const b=document.createElement('button');b.className='sv-button';b.type='button';setDisplayText(b,msg(key));b.onclick=run;return b;};this.panel.append(button('Cerrar',()=>this.panel.close()));
   const hint=document.createElement('p');setDisplayText(hint,msg('Coloca una casa de mascota desde Decorar o Mi jardín. Cada casa recibe su animal; no hay desbloqueos.'));this.panel.append(hint);
-  for(const home of this.homes.filter(h=>!this.selected||h.id===this.selected)){const section=document.createElement('section'),title=document.createElement('h3');title.textContent=home.config.name||t(({cat:'Gato',dog:'Perro',parrot:'Loro',hamster:'Hámster',rabbit:'Conejo'})[home.species]);section.append(title);const img=document.createElement('img');img.src=new URL(`sprites/pet-${home.species}.png`,document.baseURI).href;img.width=64;img.alt='';section.append(img);
-   const name=document.createElement('input');name.maxLength=32;name.value=home.config.name??'';setDisplayAttribute(name,'aria-label',msg('Nombre de la mascota'));name.onchange=()=>this.ctx.save(home,{...home.config,name:name.value.trim()});section.append(name);
+  for(const home of this.homes.filter(h=>!this.selected||h.id===this.selected)){const section=document.createElement('section'),title=document.createElement('h3');title.textContent=home.config.name||t(({cat:'Gato',dog:'Perro',parrot:'Loro',hamster:'Hámster',rabbit:'Conejo'})[home.species]);section.append(title);section.append(petPortrait(home));
+   const name=document.createElement('input');name.maxLength=32;setDisplayAttribute(name,'placeholder',msg('Nombre de la mascota'));name.value=home.config.name??'';setDisplayAttribute(name,'aria-label',msg('Nombre de la mascota'));name.onchange=()=>this.ctx.save(home,{...home.config,name:name.value.trim()});section.append(name);
    const command=(mode:'roam'|'follow')=>{this.ctx.save(home,{...home.config,mode});home.config.mode=mode;this.controller.reconcile(this.homes);this.render();};
    const roam=button('Quedarse aquí / Pasear',()=>{command('roam');this.controller.sendHome(home.id);}),follow=button('Sígueme',()=>command('follow'));roam.setAttribute('aria-pressed',String(home.config.mode==='roam'));follow.setAttribute('aria-pressed',String(home.config.mode==='follow'));section.append(roam,follow,button('Volver a casa',()=>{command('roam');this.controller.sendHome(home.id);}));
-   const pet=button('Acariciar',()=>{this.controller.pet(home.id,Date.now());this.panel.close();});section.append(pet);
+   const pet=button('Acariciar',()=>{this.command('pet',home.id);this.panel.close();});section.append(pet);
    if(home.species==='parrot'){const phrase=document.createElement('input');phrase.maxLength=160;phrase.value=home.config.phrase??'';setDisplayAttribute(phrase,'aria-label',msg('Frase del loro'));phrase.onchange=()=>{home.config.phrase=phrase.value;this.ctx.save(home,{...home.config});};section.append(phrase);}
-   const ability=button(({cat:'Ronronear',dog:'Buscar juguete',parrot:'Repetir frase',hamster:'Rodar en bola',rabbit:'Saltar aquí'})[home.species],()=>{const target=this.ctx.position();this.controller.ability(home.id,Date.now(),home.species==='rabbit'?target:undefined);this.panel.close();});section.append(ability);
-   const nearby=this.controller.entities().some(p=>p.id===home.id&&p.scene===this.ctx.scene()&&Math.hypot(p.x-this.ctx.position().x,p.y-this.ctx.position().y)<120);pet.disabled=ability.disabled=!nearby||this.reserved.has(home.id);follow.disabled=roam.disabled=this.reserved.has(home.id);this.panel.append(section);
+   const ability=button(({cat:'Ronronear',dog:'Buscar juguete',parrot:'Repetir frase',hamster:'Rodar en bola',rabbit:'Saltar aquí'})[home.species],()=>{const target=this.ctx.position();this.command('ability',home.id,home.species==='rabbit'?target:undefined);this.panel.close();});section.append(ability);
+   const nearby=this.ownEntities().some(p=>p.id===home.id&&p.scene===this.ctx.scene()&&Math.hypot(p.x-this.ctx.position().x,p.y-this.ctx.position().y)<120);pet.disabled=ability.disabled=!nearby||this.reserved.has(home.id);if(!nearby){const note=document.createElement('small');setDisplayText(note,msg('Acércate a tu mascota para acariciarla o usar su habilidad.'));section.append(note);}follow.disabled=roam.disabled=this.reserved.has(home.id);this.panel.append(section);
   }
  }
  dispose(){this.off();this.speech.dispose();this.panel.remove();}

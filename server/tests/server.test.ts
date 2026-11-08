@@ -627,3 +627,10 @@ it('shares pet reservations across both games and releases them when the owner d
  const updated=guest.next(m=>m.t==='app'&&m.channel==='werewolves'&&!JSON.parse(m.data).v?.players.some((p:any)=>p.pet));await admin.close();await updated;
  const again=new TestClient(admin.identity);await again.connect(r.port);await act(again,'tetris',{type:'join',name:'Admin'});await act(again,'tetris',{type:'bot',operation:'add',pet});expect(view(again,'tetris').players.filter((p:any)=>p.pet)).toHaveLength(1);await again.close();await guest.close();
 });
+
+it('routes petting from a paired device only to its owner authority',async()=>{
+ const r=await boot(),{admin,invite}=await adminAndInvite(r),paired=new TestClient(admin.identity),stranger=await TestClient.create('Stranger');await paired.connect(r.port,{deviceId:'pet-tablet',deviceName:'Tablet'});await stranger.connect(r.port,{invite:invite.code});
+ const received=admin.next(m=>m.t==='app'&&m.channel==='pets'),data=JSON.stringify({version:1,command:'pet',id:'cat'});
+ expect(await paired.request({op:'app.send',channel:'pets',to:admin.id,data})).toMatchObject({ok:true});expect(await received).toMatchObject({t:'app',from:admin.id,data});
+ expect(await stranger.request({op:'app.send',channel:'pets',to:admin.id,data})).toMatchObject({ok:false});expect(await paired.request({op:'app.send',channel:'pets',to:null,data})).toMatchObject({ok:false});await paired.close();await admin.close();await stranger.close();
+});

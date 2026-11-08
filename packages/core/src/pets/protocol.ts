@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {PET_SPECIES} from './model';
+export const petCommandSchema=z.strictObject({version:z.literal(1),command:z.enum(['pet','ability']),id:z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),target:z.strictObject({x:z.number().finite().min(0).max(768),y:z.number().finite().min(0).max(432)}).optional()});
 export const petBotSchema=z.strictObject({id:z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),owner:z.string().regex(/^[a-f0-9]{64}$/),species:z.enum(PET_SPECIES),name:z.string().min(1).max(32)});
 export type PetBot=z.infer<typeof petBotSchema>;
 export const petSnapshotSchema=z.strictObject({version:z.literal(1),seq:z.number().int().nonnegative(),pets:z.array(z.strictObject({id:z.string().max(80),owner:z.string().regex(/^[a-f0-9]{64}$/),species:z.enum(PET_SPECIES),scene:z.string().max(180),state:z.enum(['idle','roaming','following','food','eating','petted','home','game','ability','rest']),x:z.number().finite().min(0).max(768),y:z.number().finite().min(0).max(432),direction:z.enum(['up','down','left','right']),moving:z.boolean(),phrase:z.string().max(160).optional(),toy:z.strictObject({x:z.number().finite().min(0).max(768),y:z.number().finite().min(0).max(432)}).optional(),reactionUntil:z.number().finite().nonnegative()})).max(5)});

@@ -1,4 +1,4 @@
-import {PetReservations,petSnapshotSchema} from '../../packages/core/src/pets/protocol';
+import {PetReservations,petSnapshotSchema,petCommandSchema} from '../../packages/core/src/pets/protocol';
 import {assertPetLimit,ownerPetGroups,ownsPet} from '../../packages/core/src/pets/model';
 import {Friends} from '../../packages/core/src/social/friends';
 import { InkAuthority } from '../../packages/documents/src/authority';
@@ -463,7 +463,7 @@ export class World {
 
   private relayApp(c: Connection, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'pets' | 'sprites', to: string | null, data: string): null {
     const me = c.identity!.fingerprint;
-    if(channel==='pets'){const packet=petSnapshotSchema.safeParse(JSON.parse(data));if(!packet.success||packet.data.pets.some(p=>{const house=(this.store.house(me)?.document as SignedHouse|undefined)?.house;const scene=c.houseId?`house:${c.houseId}:${spaceKey(c.position.space)}`:`area:${areaOf(c.position)}`;return p.owner!==me||p.scene!==scene||!house||!ownsPet(house,space=>this.store.workspace(me,space),p);})||this.byFingerprint(me)!==c||to===SERVER_AUTHORITY)throw new Reject('forbidden');for(const target of this.present(c.neighborhood).filter(o=>o!==c&&c.houseId===o.houseId&&(c.houseId?sameSpace(c.position.space,o.position.space):areaOf(c.position)===areaOf(o.position))))this.send(target,{t:'app',channel,from:me,data});return null;}
+    if(channel==='pets'){const command=petCommandSchema.safeParse(JSON.parse(data));if(command.success){const primary=this.byFingerprint(me);if(to!==me||!primary)throw new Reject('forbidden');this.send(primary,{t:'app',channel,from:me,data});return null;}const packet=petSnapshotSchema.safeParse(JSON.parse(data));if(!packet.success||packet.data.pets.some(p=>{const house=(this.store.house(me)?.document as SignedHouse|undefined)?.house;const scene=c.houseId?`house:${c.houseId}:${spaceKey(c.position.space)}`:`area:${areaOf(c.position)}`;return p.owner!==me||p.scene!==scene||!house||!ownsPet(house,space=>this.store.workspace(me,space),p);})||this.byFingerprint(me)!==c||to===SERVER_AUTHORITY)throw new Reject('forbidden');for(const target of this.present(c.neighborhood).filter(o=>o!==c&&c.houseId===o.houseId&&(c.houseId?sameSpace(c.position.space,o.position.space):areaOf(c.position)===areaOf(o.position))))this.send(target,{t:'app',channel,from:me,data});return null;}
     if(channel==='camera'&&this.byFingerprint(me)!==c)throw new Reject('forbidden');
     if(channel==='ink'){if(to!==SERVER_AUTHORITY)throw new Reject('forbidden');void this.ink.receive(c.id,me,String(c.neighborhood),data);return null;}
     if(channel === 'ai') {

@@ -1,4 +1,4 @@
-import {petSnapshotSchema} from '../../../core/src/pets/protocol';
+import {petSnapshotSchema,petCommandSchema} from '../../../core/src/pets/protocol';
 import {assertPetLimit,ownerPetGroups,ownsPet} from '../../../core/src/pets/model';
 import {Friends,emptyFriends,type FriendCommand} from '../../../core/src/social/friends';
 import {LocalWorkspaces} from '../storage/workspaces';
@@ -184,10 +184,10 @@ export class VillageClient implements VillageActions {
   }
   /** Shared activities. The host routes; everyone else only ever talks to the host. */
   sendApp(channel: AppChannel, to: string | null, data: string): boolean {
-    if (this.phase !== 'JOINED' || data.length < 2 || data.length > LIMITS.appData || ((channel==='camera'||channel==='pets')&&!this.mediaActive())) return false;
+    if (this.phase !== 'JOINED' || data.length < 2 || data.length > LIMITS.appData || (channel==='camera'&&!this.mediaActive())) return false;
     if(to===this.id&&this.hostId!==this.id&&(this.members.get(this.id)?.devices?.length??1)<2)return false;
     if (!this.isHost) return this.sendHost({ type: 'app.send', channel, to, data });
-    if(channel==='pets'){if(!this.validPets(this.id,data))return false;for(const link of this.links)if(link.approved&&link.identity&&this.samePetScene(this.id,link.identity.fingerprint))this.send(link,{type:'app.relay',channel,from:this.id,data});return true;}
+    if(channel==='pets'){if(petCommandSchema.safeParse(JSON.parse(data)).success){if(to!==this.id)return false;if(this.mediaActive())this.deliverApp({channel,from:this.id,data});else for(const link of this.linksFor(this.id))if(link.raw.endpoint===this.members.get(this.id)?.mediaEndpoint)this.send(link,{type:'app.relay',channel,from:this.id,data});return true;}if(!this.mediaActive()||!this.validPets(this.id,data))return false;for(const link of this.links)if(link.approved&&link.identity&&this.samePetScene(this.id,link.identity.fingerprint))this.send(link,{type:'app.relay',channel,from:this.id,data});return true;}
     if (to !== null) { const links=this.linksFor(to);return links.reduce((ok,link)=>this.send(link,{type:'app.relay',channel,from:this.id,data})||ok,false); }
     this.broadcast({ type: 'app.relay', channel, from: this.id, data });
     return true;
@@ -573,6 +573,7 @@ export class VillageClient implements VillageActions {
     }
     if (payload.type === 'app.send') {
       if (!this.isHost) throw new Error('Only the coordinator routes activities');
+      if(payload.channel==='pets'&&petCommandSchema.safeParse(JSON.parse(payload.data)).success){if(payload.to!==sender)return;const relay:Payload={type:'app.relay',channel:'pets',from:sender,data:payload.data};if(sender===this.id&&this.mediaActive())this.deliverApp({channel:'pets',from:sender,data:payload.data});else for(const target of this.linksFor(sender))if(target.raw.endpoint===(this.members.get(sender)?.mediaEndpoint??this.members.get(sender)?.endpoint))this.send(target,relay);return;}
       if((payload.channel==='camera'||payload.channel==='pets')&&link.raw.endpoint!==(this.members.get(sender)?.mediaEndpoint??this.members.get(sender)?.endpoint))return;
       const relay: Payload = { type: 'app.relay', channel: payload.channel, from: sender, data: payload.data };
       if(payload.channel==='pets'){if(!this.validPets(sender,payload.data))return;for(const other of this.links)if(other!==link&&other.approved&&other.identity&&this.samePetScene(sender,other.identity.fingerprint))this.send(other,relay);if(this.samePetScene(sender,this.id))this.deliverApp({channel:'pets',from:sender,data:payload.data});return;}

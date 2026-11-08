@@ -26,3 +26,14 @@ test('discarding the wardrobe keeps the previous look', async ({ page }) => {
   const look = await page.evaluate(() => JSON.parse(localStorage.getItem('studyvillage-custom-assets-v1') ?? '{}').avatar);
   expect(look?.headwear ?? 'none').not.toBe('crown');
 });
+
+test('repeated wardrobe exits restore movement and room changes leave no editor open',async({page})=>{
+ await page.addInitScript(()=>{const draw=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(...args:any[]){const source=args[0];if(this.canvas.matches('.sv-stage-pane canvas')&&source?.width===192&&source?.height===256&&args[7]===64)(window as any).avatarX=args[5];Reflect.apply(draw,this,args);};});
+ await page.goto('/');await openPhoneApp(page,'house');const canvas=page.locator('.sv-stage-pane canvas'),dialog=page.getByRole('dialog',{name:'Mi armario'});
+ for(const exit of ['Escape','Descartar','Guardar look']){
+  const box=(await canvas.boundingBox())!;await canvas.dblclick({position:{x:box.width*644/768,y:box.height*182/432}});await expect(dialog).toBeVisible({timeout:15000});
+  if(exit==='Escape')await page.keyboard.press('Escape');else await dialog.getByRole('button',{name:exit,exact:true}).click();await expect(dialog).toBeHidden();
+  const before=await page.evaluate(()=>(window as any).avatarX);await page.keyboard.down('a');await expect.poll(()=>page.evaluate(()=>(window as any).avatarX)).toBeLessThan(before-15);await page.keyboard.up('a');expect(await page.locator('dialog.sv-wardrobe').count()).toBe(1);
+ }
+ await openPhoneApp(page,'village');await openPhoneApp(page,'house');await expect(dialog).toBeHidden();
+});
