@@ -51,7 +51,7 @@ describe('media lifecycle with explicitly FAKE devices and streams', () => {
     manager.dispose();
     expect(screen.track.stopped).toBe(true);
   });
-  it('applies mute/PTT, sends only to current authenticated peers, and stops before a room transition', async () => {
+  it('applies mute/PTT, sends only to current authenticated peers, and closes old calls while preserving capture during proximity movement', async () => {
     const microphone = fakeStream('audio'), screen = fakeStream('video'), transport = fakeEndpoint();
     const manager = new MediaManager(() => {}, { getUserMedia: async () => microphone.stream, getDisplayMedia: async () => screen.stream });
     manager.attach(transport.endpoint); manager.setContext(context());
@@ -64,8 +64,8 @@ describe('media lifecycle with explicitly FAKE devices and streams', () => {
     manager.setMuted(false); manager.setPushToTalk(true); expect(microphone.track.enabled).toBe(false);
     manager.setTalking(true); expect(microphone.track.enabled).toBe(true);
     manager.setContext({ ...context(), room: `house:${'c'.repeat(64)}`, peers: [] });
-    expect(microphone.track.stopped).toBe(true); expect(screen.track.stopped).toBe(true);
-    expect(transport.sent.every(call => call.closed)).toBe(true); expect(manager.view.screenPhase).toBe('OFF'); expect(manager.view.micEnabled).toBe(false);
+    expect(microphone.track.stopped).toBe(false); expect(screen.track.stopped).toBe(true);
+    expect(transport.sent.every(call => call.closed)).toBe(true); expect(manager.view.screenPhase).toBe('OFF'); expect(manager.view.micEnabled).toBe(true);
     manager.dispose();
   });
   it('rejects strangers, wrong house/epoch/token, and stops remote audio on deafen and removal', () => {
@@ -107,15 +107,16 @@ describe('media lifecycle with explicitly FAKE devices and streams', () => {
     expect(audio.track.stopped).toBe(true);
     manager.dispose();
   });
-  it('still revokes capture on ordinary room changes, such as walking out of a house', async () => {
+  it('keeps capture through proximity movement and revokes it on session leave', async () => {
     const audio = fakeStream('audio');
     const manager = new MediaManager(() => {}, { getUserMedia: async () => audio.stream });
     manager.attach(fakeEndpoint().endpoint);
     manager.setContext(context());
     await manager.toggleMicrophone();
     manager.setContext({ ...context(), room: 'village', roomName: 'La aldea' });
-    expect(manager.view.micEnabled).toBe(false);
-    expect(audio.track.stopped).toBe(true);
+    expect(manager.view.micEnabled).toBe(true);
+    expect(audio.track.stopped).toBe(false);
+    manager.setContext(null);expect(audio.track.stopped).toBe(true);
     manager.dispose();
   });
   it('reports unsupported/cancelled capture honestly and responds to source-ended', async () => {

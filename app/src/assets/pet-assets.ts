@@ -16,3 +16,6 @@ export async function fallbackPetImage(id:string):Promise<HTMLImageElement>{
  else {c.fillStyle='#655046';c.beginPath();c.moveTo(5,27);c.lineTo(32,5);c.lineTo(59,27);c.fill();c.fillStyle=color;c.fillRect(11,27,42,31);c.fillStyle='#493c38';c.fillRect(24,36,17,22);c.fillStyle='#f8ead1';c.font='bold 12px sans-serif';c.fillText(String(index+1),29,26);}
  const image=new Image();image.src=canvas.toDataURL('image/png');await image.decode();return image;
 }
+
+/** Custom sheets keep the same world footprint at twice the authoring resolution. */
+export const CUSTOM_PET_ART:PetArt={...FALLBACK_PET_ART,frameWidth:64,frameHeight:64,scale:.625,anchor:{x:32,y:54},animations:{idle:[0],walk:[1,2],eat:[3],pet:[4],rest:[5],ability:[6],jump:[6]},jumpHeight:32};

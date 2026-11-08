@@ -1,0 +1,13 @@
+import {describe,it,expect} from 'vitest';
+import {PetController,assertPetLimit,type PetHome} from '../../packages/core/src/pets/model';
+import {petAppearanceSchema,petAbility,type PetAppearance} from '../../packages/core/src/pets/definitions';
+const appearance:PetAppearance={id:'00000000-0000-4000-8000-000000000001',name:'Pip',template:'cat',ability:'jump',house:'pet-dog',phrase:'',revision:1,hash:'a'.repeat(64)};
+const home:PetHome={id:appearance.id,owner:'b'.repeat(64),furnitureId:'dog-house',species:'cat',scene:'room',x:40,y:40,config:{id:appearance.id,mode:'roam',custom:appearance}};
+const make=()=>new PetController({safe:(_s,p)=>p,path:(_s,_a,b)=>[b],wander:()=>({x:80,y:80}),bowls:()=>[]});
+describe('custom animals',()=>{
+ it('chooses ability independently of species and house',()=>{expect(petAppearanceSchema.parse(appearance)).toEqual(appearance);expect(petAbility({species:'cat',custom:appearance})).toBe('jump');const c=make();c.reconcile([home]);expect(c.ability(home.id,100,{x:80,y:40})).toBe(true);c.tick(.1,200,{scene:'room',position:{x:80,y:40}});expect(c.entities()[0].jumpProgress).toBeGreaterThan(0);expect(c.entities()[0].custom).toEqual(appearance);});
+ it('empty houses count against placement limit and do not spawn an animal',()=>{const c=make();c.reconcile([{...home,config:{...home.config,empty:true}}]);expect(c.entities()).toEqual([]);expect(()=>assertPetLimit([Array.from({length:6},(_,n)=>({id:String(n),kind:'pet-cat',pet:{id:String(n),mode:'roam' as const,empty:true}}))])).toThrow('5');});
+ it('one custom individual cannot inhabit two houses, while independent duplicates can',()=>{const f={kind:'pet-dog',pet:home.config};expect(()=>assertPetLimit([[{...f,id:'one'},{...f,id:'two'}]])).toThrow();expect(()=>assertPetLimit([[{...f,id:'one'},{...f,id:'two',pet:{...home.config,id:'00000000-0000-4000-8000-000000000002'}}]])).not.toThrow();});
+ it('changing custom art updates one entity; removal and restoration never duplicate it',()=>{const c=make();c.reconcile([home]);c.reconcile([{...home,config:{...home.config,custom:{...appearance,revision:2,hash:'c'.repeat(64)}}}]);expect(c.entities()).toHaveLength(1);expect(c.entities()[0].custom?.revision).toBe(2);c.reconcile([]);expect(c.entities()).toHaveLength(0);c.reconcile([home]);c.reconcile([home]);expect(c.entities()).toHaveLength(1);});
+ it('rejects unknown abilities, oversized names and arbitrary URLs in artwork definitions',()=>{expect(petAppearanceSchema.safeParse({...appearance,ability:'fly'}).success).toBe(false);expect(petAppearanceSchema.safeParse({...appearance,name:'x'.repeat(33)}).success).toBe(false);expect(petAppearanceSchema.safeParse({...appearance,hash:'https://evil.test/art.png'}).success).toBe(false);});
+});

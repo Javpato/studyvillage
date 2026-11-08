@@ -843,5 +843,20 @@
     "file": "pet-bowl.png",
     "width": 64,
     "height": 64
+  },
+  "pet-atelier": {
+    "file": "pet-atelier.png",
+    "width": 64,
+    "height": 64
+  },
+  "pet-effect-ball": {
+    "file": "pet-effect-ball.png",
+    "width": 64,
+    "height": 64
+  },
+  "pet-effect-purr": {
+    "file": "pet-effect-purr.png",
+    "width": 64,
+    "height": 64
   }
 }

@@ -461,7 +461,7 @@ export class World {
     return changed;
   }
 
-  private relayApp(c: Connection, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'pets' | 'sprites', to: string | null, data: string): null {
+  private relayApp(c: Connection, channel: 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'pets' | 'pet-art' | 'sprites', to: string | null, data: string): null {
     const me = c.identity!.fingerprint;
     if(channel==='pets'){const command=petCommandSchema.safeParse(JSON.parse(data));if(command.success){const primary=this.byFingerprint(me);if(to!==me||!primary)throw new Reject('forbidden');this.send(primary,{t:'app',channel,from:me,data});return null;}const packet=petSnapshotSchema.safeParse(JSON.parse(data));if(!packet.success||packet.data.pets.some(p=>{const house=(this.store.house(me)?.document as SignedHouse|undefined)?.house;const scene=c.houseId?`house:${c.houseId}:${spaceKey(c.position.space)}`:`area:${areaOf(c.position)}`;return p.owner!==me||p.scene!==scene||!house||!ownsPet(house,space=>this.store.workspace(me,space),p);})||this.byFingerprint(me)!==c||to===SERVER_AUTHORITY)throw new Reject('forbidden');for(const target of this.present(c.neighborhood).filter(o=>o!==c&&c.houseId===o.houseId&&(c.houseId?sameSpace(c.position.space,o.position.space):areaOf(c.position)===areaOf(o.position))))this.send(target,{t:'app',channel,from:me,data});return null;}
     if(channel==='camera'&&this.byFingerprint(me)!==c)throw new Reject('forbidden');
@@ -471,7 +471,7 @@ export class World {
       void this.aiRequest(c, data); return null;
     }
     if (to === SERVER_AUTHORITY) {
-      if (channel === 'camera'||channel==='sprites') throw new Reject('invalid');
+      if (channel === 'camera'||channel==='sprites'||channel==='pet-art') throw new Reject('invalid');
       // A room of a house keeps its own copy of each activity, named by the wire's scope.
       let scope = '';
       try { const s = (JSON.parse(data) as { s?: unknown }).s; if (s !== undefined) scope = String(s); } catch { /* receive() ignores bad JSON */ }

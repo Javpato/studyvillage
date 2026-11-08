@@ -18,10 +18,10 @@ const DOOR_REACH = INTERACTION_REACH;
 export function atHouseDoor(position: Position): boolean {
   return Math.hypot(position.x-HOUSE_DOOR.x,position.y-HOUSE_DOOR.y)<=DOOR_REACH;
 }
-export const FURNITURE_KINDS: readonly FurnitureKind[] = ['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity', 'pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl'];
+export const FURNITURE_KINDS: readonly FurnitureKind[] = ['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity', 'pet-atelier', 'pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl'];
 export const FURNITURE_LABELS: Record<FurnitureKind, string> = {
 'pet-cat':'Casa del gato','pet-dog':'Caseta del perro','pet-parrot':'Pajarera del loro','pet-hamster':'Casa del hámster','pet-rabbit':'Madriguera del conejo','pet-bowl':'Comedero de mascotas',
-  vanity: 'Tocador de sprites', oak: 'Roble', palm: 'Palmera', cherry: 'Cerezo', flowerbed: 'Jardinera', lantern: 'Farol', fountain: 'Fuente', picnic: 'Mesa de picnic', hammock: 'Hamaca', mailbox: 'Buzón', birdbath: 'Bebedero de aves', mushrooms: 'Setas', stonepath: 'Camino de piedra', inkdesk: 'Escritorio de tinta', guide: 'Guía de la casa', sketchboard: 'Pizarra de exposición', jukebox:'Jukebox de estudio', clock: 'Reloj de concentración',
+  'pet-atelier':'Taller de mascotas', vanity: 'Tocador de sprites', oak: 'Roble', palm: 'Palmera', cherry: 'Cerezo', flowerbed: 'Jardinera', lantern: 'Farol', fountain: 'Fuente', picnic: 'Mesa de picnic', hammock: 'Hamaca', mailbox: 'Buzón', birdbath: 'Bebedero de aves', mushrooms: 'Setas', stonepath: 'Camino de piedra', inkdesk: 'Escritorio de tinta', guide: 'Guía de la casa', sketchboard: 'Pizarra de exposición', jukebox:'Jukebox de estudio', clock: 'Reloj de concentración',
   desk: 'Escritorio', bookshelf: 'Librería', board: 'Pizarra', plant: 'Planta',
   table: 'Mesa', frame: 'Cuadro', cabinet: 'Armario', flashcards: 'Tarjetas de repaso',
 };
@@ -30,7 +30,7 @@ export const FURNITURE_LABELS: Record<FurnitureKind, string> = {
 export const FURNITURE_ACTION_LABELS = {
 'pet-cat':'Cuidar mascota','pet-dog':'Cuidar mascota','pet-parrot':'Cuidar mascota','pet-hamster':'Cuidar mascota','pet-rabbit':'Cuidar mascota',
   mailbox: 'Abrir buzón',
-  vanity: 'Tocador de sprites', inkdesk: 'Escritorio de tinta', guide: 'Guía de la casa',
+  'pet-atelier':'Taller de mascotas', vanity: 'Tocador de sprites', inkdesk: 'Escritorio de tinta', guide: 'Guía de la casa',
   sketchboard: 'Pizarra de exposición', jukebox: 'Jukebox de estudio', clock: 'Reloj de concentración',
   desk: 'Proyectos en VS Code', bookshelf: 'Tarjetas de repaso', board: 'Abrir pizarra colaborativa',
   table: 'Mesa de estudio y voz', cabinet: 'Cambiar de ropa', flashcards: 'Repasar tarjetas',
@@ -44,7 +44,7 @@ export function isInteractiveFurniture(kind: FurnitureKind): kind is Interactive
 export const FURNITURE_PROMPT_LABELS: Record<InteractiveFurnitureKind, string> = {
 'pet-cat':'E · Cuidar mascota','pet-dog':'E · Cuidar mascota','pet-parrot':'E · Cuidar mascota','pet-hamster':'E · Cuidar mascota','pet-rabbit':'E · Cuidar mascota',
   mailbox: 'E · Buzón',
-  vanity: 'E · Crear personaje', inkdesk: 'E · Escritorio de tinta', guide: 'E · Guía de la casa',
+  'pet-atelier':'E · Crear animal', vanity: 'E · Crear personaje', inkdesk: 'E · Escritorio de tinta', guide: 'E · Guía de la casa',
   sketchboard: 'E · Pizarra de exposición', jukebox: 'E · Música', clock: 'E · Reloj de concentración',
   desk: 'E · Proyectos', bookshelf: 'E · Tarjetas', board: 'E · Abrir Pizarra',
   table: 'E · Mesa de voz', cabinet: 'E · Abrir armario', flashcards: 'E · Tarjetas',
@@ -53,7 +53,7 @@ export const FURNITURE_PROMPT_LABELS: Record<InteractiveFurnitureKind, string> =
 export function furnitureRect(item: Furniture): Rect {
   const size: Record<FurnitureKind, [number, number]> = {
 'pet-cat':[48, 48],'pet-dog':[48, 48],'pet-parrot':[48, 48],'pet-hamster':[48, 48],'pet-rabbit':[48, 48],'pet-bowl':[24, 24],
-    vanity: [48, 48], oak: [48, 48], palm: [48, 48], cherry: [48, 48], flowerbed: [48, 48], lantern: [48, 48], fountain: [48, 48], picnic: [48, 48], hammock: [48, 48], mailbox: [48, 48], birdbath: [48, 48], mushrooms: [48, 48], stonepath: [48, 48], inkdesk: [48, 48], guide: [48, 48], sketchboard: [48, 48], jukebox:[48,48], clock: [48, 48],
+    'pet-atelier':[48,48], vanity: [48, 48], oak: [48, 48], palm: [48, 48], cherry: [48, 48], flowerbed: [48, 48], lantern: [48, 48], fountain: [48, 48], picnic: [48, 48], hammock: [48, 48], mailbox: [48, 48], birdbath: [48, 48], mushrooms: [48, 48], stonepath: [48, 48], inkdesk: [48, 48], guide: [48, 48], sketchboard: [48, 48], jukebox:[48,48], clock: [48, 48],
     desk: [69, 39], bookshelf: [45, 60], board: [66, 28], plant: [27, 27],
     table: [58, 42], frame: [34, 22], cabinet: [48, 45], flashcards: [52, 36],
   };
@@ -155,5 +155,5 @@ export function closestFurniture(position: Position, house: PublicHouse, maxDist
 export const FURNITURE_DESCRIPTIONS:Record<FurnitureKind,string>={
 'pet-cat':'Coloca esta casa para recibir su mascota. Máximo 5 casas en total.','pet-dog':'Coloca esta casa para recibir su mascota. Máximo 5 casas en total.','pet-parrot':'Coloca esta casa para recibir su mascota. Máximo 5 casas en total.','pet-hamster':'Coloca esta casa para recibir su mascota. Máximo 5 casas en total.','pet-rabbit':'Coloca esta casa para recibir su mascota. Máximo 5 casas en total.','pet-bowl':'Las mascotas que pasean por su zona vienen a comer de vez en cuando.',
  desk:'Organiza proyectos y abre tu editor de código.',bookshelf:'Guarda mazos y repasa tus tarjetas.',board:'Escribe y dibuja con otras personas.',plant:'Una planta pequeña para decorar el interior.',table:'Una mesa para estudiar y conversar por voz.',frame:'Un cuadro decorativo para la pared.',cabinet:'Prueba ropa y cambia tu personaje.',flashcards:'Practica preguntas y respuestas.',
- oak:'Árbol de copa ancha y hojas verdes.',palm:'Palmera alta de ambiente tropical.',cherry:'Árbol de flores rosas.',flowerbed:'Flores de colores para el jardín.',lantern:'Un farol para iluminar el camino.',fountain:'Una fuente de agua ornamental.',picnic:'Mesa exterior con bancos.',hammock:'Un rincón de descanso entre árboles.',mailbox:'Consulta los mensajes de tu buzón.',birdbath:'Una fuente pequeña para las aves.',mushrooms:'Un grupo de setas decorativas.',stonepath:'Piedras para marcar un sendero.',inkdesk:'Abre tus cuadernos y escribe a mano.',guide:'Un NPC con un diálogo que puedes editar.',sketchboard:'Expón una imagen o un dibujo.',clock:'Prepara sesiones de concentración.',jukebox:'Escucha música mientras estudias.',vanity:'Dibuja o importa el sprite de tu personaje.',
+ oak:'Árbol de copa ancha y hojas verdes.',palm:'Palmera alta de ambiente tropical.',cherry:'Árbol de flores rosas.',flowerbed:'Flores de colores para el jardín.',lantern:'Un farol para iluminar el camino.',fountain:'Una fuente de agua ornamental.',picnic:'Mesa exterior con bancos.',hammock:'Un rincón de descanso entre árboles.',mailbox:'Consulta los mensajes de tu buzón.',birdbath:'Una fuente pequeña para las aves.',mushrooms:'Un grupo de setas decorativas.',stonepath:'Piedras para marcar un sendero.',inkdesk:'Abre tus cuadernos y escribe a mano.',guide:'Un NPC con un diálogo que puedes editar.',sketchboard:'Expón una imagen o un dibujo.',clock:'Prepara sesiones de concentración.',jukebox:'Escucha música mientras estudias.',vanity:'Dibuja o importa el sprite de tu personaje.','pet-atelier':'Dibuja una mascota y elige su habilidad y su casa.',
 };

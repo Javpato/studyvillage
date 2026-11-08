@@ -1,0 +1,12 @@
+import {z} from 'zod';
+export const PET_SPECIES=['cat','dog','parrot','hamster','rabbit'] as const;
+export type PetSpecies=typeof PET_SPECIES[number];
+export const PET_HOUSES=['pet-cat','pet-dog','pet-parrot','pet-hamster','pet-rabbit'] as const;
+export const PET_ABILITIES=['purr','fetch','speak','ball','jump'] as const;
+export type PetAbility=typeof PET_ABILITIES[number];
+export const SPECIES_ABILITY:Record<PetSpecies,PetAbility>={cat:'purr',dog:'fetch',parrot:'speak',hamster:'ball',rabbit:'jump'};
+export const petAppearanceSchema=z.strictObject({id:z.string().uuid(),name:z.string().trim().min(1).max(32),template:z.enum(PET_SPECIES),ability:z.enum(PET_ABILITIES),house:z.enum(PET_HOUSES),phrase:z.string().max(160).default(''),revision:z.number().int().nonnegative(),hash:z.string().regex(/^[a-f0-9]{64}$/)});
+export type PetAppearance=z.infer<typeof petAppearanceSchema>;
+export const ownedPetSchema=z.strictObject({owner:z.string().regex(/^[a-f0-9]{64}$/),appearance:petAppearanceSchema,sheet:z.string().max(700000).regex(/^data:image\/png;base64,[A-Za-z0-9+/=]+$/)});
+export type OwnedPet=z.infer<typeof ownedPetSchema>;
+export const petAbility=(pet:{species:PetSpecies;custom?:PetAppearance})=>pet.custom?.ability??SPECIES_ABILITY[pet.species];

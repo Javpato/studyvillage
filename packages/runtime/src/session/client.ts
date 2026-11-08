@@ -615,7 +615,7 @@ export class VillageClient implements VillageActions {
     if (this.phase !== 'JOINED') { this.setError('Abre o únete a un vecindario para visitar una casa.'); return; }
     if(this.view.pendingAccess)return;
     this.error=null;
-    if (!this.voiceState.selected) this.media.suspend();
+    if (!this.voiceState.selected) this.media.moveAudience();
     if (this.cameraActivity !== 'village') this.camera.suspend();
     const requestId = randomId();this.accessAttempt={requestId,ownerId,kind:'house'};this.notify();
     if (this.isHost) this.requestVisit(this.id, ownerId, requestId); else this.sendHost({ type: 'house.visit', requestId, ownerId });
@@ -672,7 +672,7 @@ export class VillageClient implements VillageActions {
     this.publishAccessStates();this.notify();
   }
   leaveHouse(): void {
-    if (!this.voiceState.selected) this.media.suspend();
+    if (!this.voiceState.selected) this.media.moveAudience();
     if (this.cameraActivity !== 'village') this.camera.suspend();
     if (this.phase !== 'JOINED') return;
     if (this.isHost) { this.cancelVisits(this.id); const member = this.members.get(this.id); if (member) { member.houseId = null; member.position={...member.position,space:undefined}; } this.rosterChanged(); }

@@ -1,3 +1,15 @@
+# Custom animals and linked devices — work in progress, 9 November 2026
+
+This candidate introduces the custom animal collection/atelier and proximity-microphone lifecycle correction. It is **not a verified release of the complete linked-device plan**. Candidate commit and workflow links will be recorded after pushing.
+
+Implemented so far: reusable pixel drawing operations, 64×64 static / 448×256 animated pet artwork, independent existing ability and house selection, stable collection IDs, duplicate/edit/assign/unassign, empty houses, persistent collection and backup inclusion, bounded authenticated artwork transfer, indoor atelier furniture, ES/EN/FR labels. Proximity movement retains microphone capture while closing old audience calls; explicit channels/session exit still revoke it.
+
+Completed: 34 focused model/media tests passed using fake media devices. Application/server typecheck passed before adding the artwork channel; final types/catalog checks are running. No physical microphone, iPad, Apple Pencil, macOS or external-network verification has been performed for this candidate.
+
+Remaining: actual editor/placement/reload/multiplayer browser verification; full baseline; companion pairing, role assignment, scoped document/editor/timer ports and media routing; two-device tests and platform checks. Previous results below apply only to their named revisions, not this candidate.
+
+---
+
 # Pet expressions and default character — 8 November 2026
 
 Final implementation [`f8a92ac`](https://github.com/Javpato/studyvillage/commit/f8a92ac) is pushed to `main` and **published to the web** by [Pages 42529789960](https://github.com/Javpato/studyvillage/actions/runs/42529789960). The [final focused platform check 42529804048](https://github.com/Javpato/studyvillage/actions/runs/42529804048) passed the full baseline and **20 browser executions**: six Chromium and four WebKit cases on each of Ubuntu 24.04 and macOS 15. No native installers were rebuilt. Current web build: `studyvillage-8f897d2944026bc3`, 173 packaged local files plus its worker.

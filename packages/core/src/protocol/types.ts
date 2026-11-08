@@ -20,7 +20,7 @@ export const LIMITS = {
   appData: 56_000,
 } as const;
 
-export type AppChannel = 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'pets' | 'sprites' | 'mailbox';
+export type AppChannel = 'werewolves' | 'tetris' | 'gartic' | 'projects' | 'study' | 'camera' | 'ai' | 'ink' | 'pets' | 'pet-art' | 'sprites' | 'mailbox';
 export type CameraActivity = 'werewolves' | 'tetris' | 'gartic' | 'village';
 export interface GameCameraPolicy {canSend:boolean;canReceive:boolean;audience:string[]|null;receiveAudience?:string[];epoch?:string}
 export interface GameCameraView {
@@ -38,7 +38,7 @@ export interface EncryptedIdentity {
 }
 export interface Contact { schemaVersion: 1; identity: PublicIdentity; friendCode?: string; nickname?: string }
 export type HouseAccess = 'open' | 'ask' | 'locked';
-export type FurnitureKind = 'desk' | 'bookshelf' | 'board' | 'plant' | 'table' | 'frame' | 'cabinet' | 'flashcards' | 'oak' | 'palm' | 'cherry' | 'flowerbed' | 'lantern' | 'fountain' | 'picnic' | 'hammock' | 'mailbox' | 'birdbath' | 'mushrooms' | 'stonepath' | 'inkdesk' | 'guide' | 'sketchboard' | 'clock' | 'jukebox' | 'vanity' | 'pet-cat' | 'pet-dog' | 'pet-parrot' | 'pet-hamster' | 'pet-rabbit' | 'pet-bowl';
+export type FurnitureKind = 'desk' | 'bookshelf' | 'board' | 'plant' | 'table' | 'frame' | 'cabinet' | 'flashcards' | 'oak' | 'palm' | 'cherry' | 'flowerbed' | 'lantern' | 'fountain' | 'picnic' | 'hammock' | 'mailbox' | 'birdbath' | 'mushrooms' | 'stonepath' | 'inkdesk' | 'guide' | 'sketchboard' | 'clock' | 'jukebox' | 'vanity' | 'pet-atelier' | 'pet-cat' | 'pet-dog' | 'pet-parrot' | 'pet-hamster' | 'pet-rabbit' | 'pet-bowl';
 export interface Furniture { pet?:PetConfig; guideText?: string; showFrame?: boolean; sprite?: string; color?: string; rotation?: 0 | 90 | 180 | 270; id: string; kind: FurnitureKind; x: number; y: number; publicAlias: string }
 export interface PublicHouse { garden?:GardenItem[]; doorPositions?: Record<string,{x:number;y:number}>; allowlist?: IdentityId[]; floors?: HouseFloor[]; ownerId: IdentityId; revision: number; name: string; access: HouseAccess; theme: 'mint' | 'peach'; furniture: Furniture[] }
 export interface Position { space?: HouseSpace; areaId?: 'residential' | 'community' | 'study'; x: number; y: number; direction: 'up' | 'down' | 'left' | 'right'; moving: boolean }

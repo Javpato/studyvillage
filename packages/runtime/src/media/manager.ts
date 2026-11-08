@@ -9,7 +9,7 @@ export interface MediaDevicesAdapter {
 }
 export interface MediaPeer { identityId: string; endpoint: string; sendToken: string; receiveToken: string }
 /** `room` is 'village', 'house:<id>' or 'pair:<a>:<b>'; peers are everyone you exchange media with there. */
-export interface MediaContext { sessionId: string; epoch: number; identityId: string; room: string; roomName: string; peers: MediaPeer[] }
+export interface MediaContext { sessionId: string; epoch: number; identityId: string; room: string; roomName: string; peers: MediaPeer[]; audience?: 'proximity'|'channel' }
 interface ActiveCall { call: MediaCall; identityId: string; kind: 'audio' | 'screen'; stream?: MediaStream; unsubscribe: (() => void)[] }
 
 export class MediaManager {
@@ -44,8 +44,10 @@ export class MediaManager {
   setContext(context: MediaContext | null): void {
     const previous = this.context;
     const changedRoom = previous?.sessionId !== context?.sessionId || previous?.epoch !== context?.epoch || previous?.room !== context?.room;
-    // A selected channel is stable across movement. Switching audiences revokes capture.
-    if (changedRoom) this.stopAll();
+    const proximity=(c:MediaContext)=>c.audience==='proximity'||(!c.audience&&/^(village$|area:|house:)/.test(c.room));
+    const movement=previous&&context&&previous.sessionId===context.sessionId&&previous.epoch===context.epoch&&previous.identityId===context.identityId&&proximity(previous)&&proximity(context);
+    // Moving changes listeners, not the user's microphone choice. Old calls close first.
+    if(changedRoom){if(movement){this.closeAllCalls();this.stopScreen();}else this.stopAll();}
     this.context = context;
     for (const [key, item] of this.incoming) {
       if (!context?.peers.some(peer => peer.identityId === item.identityId && peer.endpoint === item.call.endpoint)) this.closeCall(this.incoming, key);
@@ -55,7 +57,9 @@ export class MediaManager {
     }
     this.reconcile(); this.changed();
   }
-  /** Synchronous revocation occurs before any room-change message is sent. */
+  /** Drop the old proximity audience before navigation, retaining the capture grant. */
+  moveAudience():void {this.closeAllCalls();this.stopScreen();if(this.context)this.context={...this.context,peers:[]};this.talking=false;this.applyMute();this.changed();}
+  /** Session/channel revocation remains distinct from movement. */
   suspend(): void { this.stopAll(); this.context = null; this.changed(); }
   private currentDevices(): MediaDevicesAdapter | undefined {
     return this.devices ?? (typeof navigator !== 'undefined' ? navigator.mediaDevices : undefined);

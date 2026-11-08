@@ -1,3 +1,5 @@
+import {ownedPetSchema,type OwnedPet} from '../../../core/src/pets/definitions';
+import {petCollection,replacePetCollection} from './pets';
 import {assertPetLimit} from '../../../core/src/pets/model';
 import {phoneLayoutSchema} from '../../../core/src/phone/layout';
 import { AppError } from '../../../core/src/errors';
@@ -16,8 +18,8 @@ import { validatePublicIdentity } from '../../../core/src/identity';
 const MAX_BACKUP=128*1024*1024;
 const baseKeys=['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1','whiteboards-v1','workspaces-v1','custom-assets-v1','avatar-sheet-v1','language','village-name','servers-v1','ollama-v2','review-v2','flashcard-progress-v1','role-sets','eraser-v1','hud-layout-v1','controls-v2','portrait-zoom-v1','environment-v1','interactive-objects-v1','network-v1','focus-clock-v1','npc-dialogue-v1','apple-pencil-mode-v1','phone-layout-v1'];
 const acceptedKey=(key:string)=>/^studyvillage-mailbox-v1:(?:own|[a-f0-9]{64})$/.test(key)||baseKeys.some(base=>key===`studyvillage-${base}`||(['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1'].includes(base)&&key.startsWith(`studyvillage-${base}:room:`)));
-const backupSchema=z.strictObject({format:z.literal('studyvillage-backup'),version:z.literal(1),createdAt:z.number().finite().nonnegative(),local:z.unknown(),values:z.record(z.string().max(512),z.string().max(8*1024*1024)),notebooks:z.unknown(),references:z.record(z.string().max(512),z.string().max(8*1024*1024)).optional()});
-export interface AppBackup {format:'studyvillage-backup';version:1;createdAt:number;local:LocalData;values:Record<string,string>;notebooks:NotebookSnapshot;references?:Record<string,string>}
+const backupSchema=z.strictObject({format:z.literal('studyvillage-backup'),version:z.literal(1),createdAt:z.number().finite().nonnegative(),local:z.unknown(),values:z.record(z.string().max(512),z.string().max(8*1024*1024)),notebooks:z.unknown(),pets:z.array(ownedPetSchema).max(1000).optional(),references:z.record(z.string().max(512),z.string().max(8*1024*1024)).optional()});
+export interface AppBackup {format:'studyvillage-backup';version:1;createdAt:number;local:LocalData;values:Record<string,string>;notebooks:NotebookSnapshot;pets?:OwnedPet[];references?:Record<string,string>}
 export interface BackupPreview {profile:string;identity:string|null;keys:number;notebooks:number;pages:number;attachments:number;conflicts:number}
 function boundedJson(value:unknown,depth=0,budget={left:400000}):void {
  if(depth>32||--budget.left<0)throw new AppError('invalid','Copia fuera de límites.');
@@ -49,7 +51,7 @@ function validateEntry(key:string,raw:string):void {
 function localValues():Record<string,string>{const values:Record<string,string>={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i)!;if(acceptedKey(key))values[key]=localStorage.getItem(key)!;}return values;}
 async function hash(bytes:Uint8Array):Promise<string>{return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes.slice().buffer))].map(n=>n.toString(16).padStart(2,'0')).join('');}
 function decode(value:string):Uint8Array{const binary=atob(value);return Uint8Array.from(binary,c=>c.charCodeAt(0));}
-export async function createBackup(local:LocalData):Promise<AppBackup>{const repo=new NotebookRepository();try{return {format:'studyvillage-backup',version:1,createdAt:Date.now(),local:parseLocalData(local),values:localValues(),notebooks:await repo.snapshot()};}finally{await repo.close();}}
+export async function createBackup(local:LocalData):Promise<AppBackup>{const repo=new NotebookRepository();try{return {format:'studyvillage-backup',version:1,createdAt:Date.now(),local:parseLocalData(local),values:localValues(),notebooks:await repo.snapshot(),pets:await petCollection()};}finally{await repo.close();}}
 export async function parseBackup(text:string):Promise<AppBackup>{
  if(new TextEncoder().encode(text).length>MAX_BACKUP)throw new AppError('invalid','La copia supera 128 MiB.');
  const parsed=backupSchema.parse(JSON.parse(text)),local=parseLocalData(parsed.local);serializeLocalData(local);
@@ -58,6 +60,7 @@ export async function parseBackup(text:string):Promise<AppBackup>{
  if(Object.keys(parsed.values).length>2000)throw new AppError('invalid','Copia fuera de límites.');for(const [key,value]of Object.entries(parsed.values))validateEntry(key,value);
  if(parsed.references&&Object.keys(parsed.references).length>2000)throw new AppError('invalid','Copia fuera de límites.');
  const rooms=JSON.parse(parsed.values['studyvillage-workspaces-v1']??'{}') as Record<string,{furniture:{kind:string;id:string;pet?:import('../../../core/src/pets/model').PetConfig}[]}>;assertPetLimit([local.house?.furniture??[],local.house?.garden??[],...Object.entries(rooms).filter(([key])=>key.startsWith('own/')).map(([,doc])=>doc.furniture)]);
+ for(const pet of parsed.pets??[])if(await hash(new TextEncoder().encode(pet.sheet))!==pet.appearance.hash)throw new AppError('invalid','La copia contiene un adjunto dañado.');
  const notebooks=NotebookRepository.parseSnapshot(parsed.notebooks);
  for(const attachment of notebooks.attachments)if(await hash(decode(attachment.base64))!==attachment.sha256)throw new AppError('invalid','La copia contiene un adjunto dañado.');
  return {...parsed,local,notebooks};
@@ -75,7 +78,7 @@ export function previewBackup(backup:AppBackup,current?:AppBackup):BackupPreview
 async function recoveryDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const req=indexedDB.open('studyvillage-backup-recovery',1);req.onupgradeneeded=()=>req.result.createObjectStore('recovery');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
 async function journal(action:'put'|'get'|'delete',key:string,value?:unknown):Promise<unknown>{const db=await recoveryDb();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('recovery',action==='get'?'readonly':'readwrite'),store=tx.objectStore('recovery');const req=action==='get'?store.get(key):action==='put'?store.put(value,key):store.delete(key);let result:unknown;req.onsuccess=()=>result=req.result;tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(tx.error);});}finally{db.close();}}
 async function applySnapshot(backup:AppBackup,store:LocalStore):Promise<void>{
- const repo=new NotebookRepository();try{await repo.importSnapshot(backup.notebooks);for(const key of Object.keys(localValues()))if(!(key in backup.values))localStorage.removeItem(key);for(const [key,value]of Object.entries(backup.values))localStorage.setItem(key,value);await store.save(backup.local);}finally{await repo.close();}
+ const repo=new NotebookRepository();try{await repo.importSnapshot(backup.notebooks);await replacePetCollection(backup.pets??[]);for(const key of Object.keys(localValues()))if(!(key in backup.values))localStorage.removeItem(key);for(const [key,value]of Object.entries(backup.values))localStorage.setItem(key,value);await store.save(backup.local);}finally{await repo.close();}
 }
 /** Journal before any overwrite. An interrupted import is rolled back at the next application launch. */
 export async function restoreBackup(backup:AppBackup,current:LocalData,store:LocalStore):Promise<void>{
