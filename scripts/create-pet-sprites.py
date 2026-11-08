@@ -13,7 +13,10 @@ for species,color in colors.items():
    im=Image.new('RGBA',(32,32));d=ImageDraw.Draw(im);dy=1 if frame==2 else 0
    if not (species=='rabbit' and frame==6):d.ellipse((6,25,26,29),fill='#263d3438')
    if species=='parrot':
-    d.ellipse((11,10+dy,22,26+dy),fill=color);d.ellipse((10,5+dy,22,18+dy),fill='#7ac778');d.polygon([(20,12+dy),(28,16+dy),(20,18+dy)],fill='#e6b44f');d.polygon([(12,23),(10,31),(17,26)],fill='#4488ab');d.ellipse((9,14+dy,17,24+dy),fill='#3d8158')
+    d.ellipse((11,10+dy,22,26+dy),fill=color);d.ellipse((7,5+dy,25,20+dy),fill='#7ac778');d.polygon([(12,23),(10,31),(17,26)],fill='#4488ab');d.ellipse((9,14+dy,17,24+dy),fill='#3d8158')
+    if direction!=3:
+     beak=[(10,15+dy),(3,18+dy),(10,19+dy)] if direction==1 else [(23,15+dy),(30,18+dy),(23,19+dy)] if direction==2 else [(17,16+dy),(22,18+dy),(17,20+dy)]
+     d.polygon(beak,fill='#e6b44f')
    else:
     d.ellipse((7,14+dy,26,27+dy),fill=color);d.ellipse((7,8+dy,24,22+dy),fill=color)
     if species=='cat':
@@ -26,9 +29,11 @@ for species,color in colors.items():
      d.ellipse((8,0,13,15),fill=color);d.ellipse((18,0,23,15),fill=color);d.line((10,3,10,11),fill='#cc9b99',width=2);d.line((20,3,20,11),fill='#cc9b99',width=2);d.ellipse((24,21,30,27),fill='#f5efe5')
     d.rectangle((9,25,13,28+(frame==1)),fill=color);d.rectangle((21,25,25,28+(frame==2)),fill=color)
    if direction!=3:
-    for x in ([13,21] if direction==0 else [10,17] if direction==1 else [17,23]):
+    for x in ([13,21] if direction==0 else [10,16] if direction==1 else [16,21]):
      d.rectangle((x,12+dy,x+1,14+dy),fill='#263d34')
-    if species!='parrot':d.rectangle((16,17+dy,18,18+dy),fill='#744a48')
+    if species!='parrot':
+     nose=13 if direction==1 else 20 if direction==2 else 17
+     d.rectangle((nose-1,17+dy,nose+1,18+dy),fill='#744a48')
    if frame==3:d.rectangle((12,26,23,29),fill='#75a6b7')
    if frame==4:d.polygon([(15,2),(12,0),(10,2),(15,7),(20,2),(18,0)],fill='#d87983')
    if frame==5 and direction!=3:
