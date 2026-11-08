@@ -100,7 +100,7 @@ export class NpcSpeech {
       this.pages = [speech.text]; ctx.restore();
       speech.page = Math.min(speech.page, this.pages.length - 1); this.layoutKey = key;
       this.root.style.width = `${width}px`; this.root.style.setProperty('--speech-font', `${font}px`);
-      this.root.style.setProperty('--speech-lines', String({small:3,standard:6,large:8}[size])); this.beginPage();
+      this.root.style.setProperty('--speech-lines', String(speech.petId?1:{small:3,standard:6,large:8}[size])); this.beginPage();
     }
     this.root.style.setProperty('--speech-opacity', String(this.preferences.opacity));
     const anchorX = (v.canvasLeft ?? 0) + speech.x * scale, anchorY = (v.canvasTop ?? 0) + speech.y * scale;
