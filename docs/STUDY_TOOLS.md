@@ -24,7 +24,11 @@ Group projects use a core activity model and runtime coordination. Keep organize
 
 ## Focus clock
 
-The focus UI accepts hours, minutes and seconds, automatically repeats focus/rest intervals (25/5 minutes by default) and can expose a movable optional HUD. `focus-clock-model.ts` is separated from presentation so timing behavior can be tested. Deadlines recover the correct phase after delayed callbacks. Pause freezes the current phase, resume continues it, and Reset stops the session at a full focus interval. Both durations can be edited together; edits affect subsequent phases. Hiding the panel or HUD does not stop timing.
+The focus UI accepts hours, minutes and seconds, automatically repeats focus/rest intervals (25/5 minutes by default) and can expose a movable optional HUD. The pure engine lives in `packages/core/src/focus/clock.ts`, with a compatibility export from `focus-clock-model.ts`. Deadlines recover the correct phase after delayed callbacks. Pause freezes the current phase, resume continues it, and Reset stops the session at a full focus interval. Both durations can be edited together; edits affect subsequent phases. Hiding the panel or HUD does not stop timing.
+
+Saved **Programs** add named, reorderable steps and optional repetition. They stop at the final step by default. A running program keeps its own snapshot; edits apply at its next start. The same editor is available on an authorized companion. State v2 migrates existing Pomodoro sessions without resetting their deadlines or paused remainder.
+
+Alerts offer three built-in sounds, volume/silence and a custom file (up to 5 MB, normalized to ten seconds). Custom audio persists and is included in complete backups. Select the principal or companion device and activate audio there; closing the clock view does not stop alert delivery. Sleeping browsers cannot guarantee audible alarms. See [linked devices](CUSTOM-PETS-COMPANION.md) and [verification](VERIFICATION.md).
 
 HUD position, visibility and safe layout are managed separately from the clock's duration. On small screens the clock should remain reachable without obscuring essential controls. Use focus-clock and HUD layout tests when changing timer state, positioning or persistence.
 
