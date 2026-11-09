@@ -3,7 +3,7 @@ import {CompanionPanel} from '../companion/panel';
 import {NotebookAuthority} from '../companion/notebook-port';
 import type {CompanionTool} from '../../../packages/core/src/companion/protocol';
 import {ownedPetSchema} from '../../../packages/core/src/pets/definitions';
-import {saveOwnedPet} from '../../../packages/runtime/src/storage/pets';
+import {saveOwnedPet,petCollection as readOwnedPets} from '../../../packages/runtime/src/storage/pets';
 import {cachePetAsset} from '../assets/pet-custom';
 import {avatarSheetData,setAvatarSheet} from '../assets/avatar-sheet';
 import {appearanceSchema} from '../assets/appearance';
@@ -465,6 +465,7 @@ class StudyUI {
     } };
     this.pets=new PetWorld({collection:()=>{void this.petCollection.open();},assign:home=>{void this.petCollection.open(home);},manage:home=>{this.selectedFurnitureId=home.furnitureId;if(home.scene==='area:residential')this.garden.open(home.furnitureId);else this.beginDecoration();},games:()=>this.expansion?.petGames()??[],play:(id,pet)=>this.expansion.playWithPet(id,pet),speak:(pet,fresh)=>{if(fresh)this.speech.sayPet(pet.phrase!,pet.x,pet.y-24,this.speechScene(),`${pet.owner}:${pet.id}`,pet.speechUntil??pet.reactionUntil,pet.automaticSpeech??false);else this.speech.followPet(`${pet.owner}:${pet.id}`,pet.x,pet.y-24);},view:()=>this.view,scene:()=>this.petScene(),position:()=>this.localPosition,stop:()=>{this.stopMoving();this.selectedFurnitureId=null;},obstacles:()=>this.pane==='house'?houseObstacles(this.currentHouse()??this.view!.ownHouse):this.currentArea==='residential'?worldObstacles(occupiedParcels(this.view!)):[...this.expansion.objectRegistry.obstaclesForArea(this.currentArea),...lampObstacles(this.currentArea)],save:(home,config)=>{
       const view=this.view;if(!view)return;
+      if(config.custom&&(config.name&&config.name!==config.custom.name||config.phrase!==undefined&&config.phrase!==config.custom.phrase))void this.savePetDetails(config).catch(e=>this.notify(errorMessage(e)));
       if(home.scene==='area:residential')actions.updateOwnHouse({...view.ownHouse,garden:view.ownHouse.garden?.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
       else {const key=home.scene.split(':').slice(2);if(key[0]==='lobby')actions.updateOwnHouse({...view.ownHouse,furniture:view.ownHouse.furniture.map(f=>f.id===home.furnitureId?{...f,pet:config}:f)});
        else actions.workspaceCommand({action:'pet',space:{floorId:key[0],roomId:key[1]==='-'?null:key[1]},furniture:home.furnitureId,config});}
@@ -472,7 +473,7 @@ class StudyUI {
     this.petCollection=new PetCollectionPanel({owner:()=>this.view?.identity.fingerprint??'',homes:()=>this.pets.homesList(),reserved:id=>this.pets.isReserved(id),save:(home,config)=>this.savePetHome(home,config),place:pet=>this.placeCustomPet(pet)});
     this.notebooks.connect(actions,()=>this.view,()=>this.activityScope()||'village');
     this.companionNotebooks=new NotebookAuthority(book=>this.notebooks.adoptCompanionBook(book),()=>this.notebooks.flushCompanion());
-    this.companion=new CompanionPanel({view:()=>this.view,prepare:async role=>{this.stopMoving();await this.notebooks.flushCompanion();if(role==='companion'){if(this.vanity.root.open||this.petCollection.atelier.root.open)throw Error(t('Cierra el taller antes de enlazar este dispositivo.'));await actions.leave();this.closePhone();for(const dialog of this.root.querySelectorAll<HTMLDialogElement>('dialog[open]'))dialog.close();}},request:(tool,action,value)=>this.companionRequest(tool,action,value),changed:()=>{const secondary=this.companion?.secondary??false;this.root.inert=secondary;document.body.classList.toggle('sv-companion-mode',secondary);this.stopMoving();if(this.view)this.refreshMedia();},disconnected:()=>{this.root.inert=false;document.body.classList.remove('sv-companion-mode');this.stopMoving();}},actions);
+    this.companion=new CompanionPanel({view:()=>this.view,prepare:async role=>{this.stopMoving();await this.notebooks.flushCompanion();if(role==='companion'){if(this.vanity.root.open||this.petCollection.atelierOpen)throw Error(t('Cierra el taller antes de enlazar este dispositivo.'));await actions.leave();this.closePhone();for(const dialog of this.root.querySelectorAll<HTMLDialogElement>('dialog[open]'))dialog.close();}},request:(tool,action,value)=>this.companionRequest(tool,action,value),changed:()=>{const secondary=this.companion?.secondary??false;this.root.inert=secondary;document.body.classList.toggle('sv-companion-mode',secondary);this.stopMoving();if(this.view)this.refreshMedia();},disconnected:()=>{this.root.inert=false;document.body.classList.remove('sv-companion-mode');this.stopMoving();}},actions);
 
     this.mailbox=new MailboxUI(()=>this.view?.identity.fingerprint??'',command=>this.actions.mailboxCommand(command));
     this.garden=new GardenPanel(()=>this.view,house=>this.actions.saveHouseLayout(house),()=>this.stageCanvas,()=>this.pets.count());
@@ -608,7 +609,7 @@ class StudyUI {
     if(this.view&&this.view.identity.fingerprint!==view.identity.fingerprint)this.companion?.session.disconnect();
     this.view = view;if(this.petArtOwner!==view.identity.fingerprint){this.petArtOwner=view.identity.fingerprint;void loadPetCollection(this.petArtOwner).then(()=>{this.lastStageRenderSig='';});}
     this.notebooks.syncSession();
-    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelier.root.open?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
+    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelierOpen?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
     if (justJoined && !this.houseOwnerId) this.actions.move({ ...this.localPosition, areaId: this.currentArea });
     this.pendingStrokes = this.pendingStrokes.filter((stroke) => !view.network.strokes.some((received) => received.id === stroke.id));
     const ownMember = view.network.members.find((member) => member.identity.fingerprint === view.identity.fingerprint);
@@ -2349,6 +2350,7 @@ class StudyUI {
     throw Error(t('Esta acción ya no está disponible.'));
   }
   private companionBoard(){const board=this.wireBoardId();return {board,author:this.view!.identity.fingerprint,strokes:this.allStrokes(this.boardId()).map(s=>({...s,boardId:board})),canEdit:this.canDrawBoard(),moderate:this.moderatesBoard()};}
+  private async savePetDetails(config:PetConfig){const owner=this.view?.identity.fingerprint;if(!owner||!config.custom)return;const pet=(await readOwnedPets(owner)).find(p=>p.appearance.id===config.id);if(!pet)return;const name=config.name?.trim()||pet.appearance.name,phrase=config.phrase??pet.appearance.phrase;if(name===pet.appearance.name&&phrase===pet.appearance.phrase)return;await saveOwnedPet({...pet,appearance:{...pet.appearance,name,phrase,revision:pet.appearance.revision+1}});}
   private async savePetHome(home:PetHome,config:PetConfig){
     const view=this.view;if(!view||home.owner!==view.identity.fingerprint)throw Error('network');
     const patch=(f:Furniture)=>f.id===home.furnitureId?{...f,pet:config,...(config.custom?{kind:config.custom.house}:{})}:f;
@@ -3277,7 +3279,7 @@ class StudyUI {
 
   private onStagePointerDown = (event: PointerEvent): void => {
     const view = this.view;
-    if (!view || this.settingsDialog.open || this.activityOpen || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelier.root.open||this.petCollection.root.open)) return;
+    if (!view || this.settingsDialog.open || this.activityOpen || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelierOpen||this.petCollection.root.open)) return;
     if (!this.phone.hidden) { this.closePhone(); return; }
     const point = this.canvasPoint(event, this.stageCanvas);
     if(!this.decorating&&!this.garden.active&&this.pets.hit(point)){event.preventDefault();return;}
@@ -3535,7 +3537,7 @@ class StudyUI {
   private onKeyDown = (event: KeyboardEvent): void => {
     if(this.companion?.secondary)return;
     // A locked identity prevents connecting, but local controls work after choosing offline mode.
-    if (!this.view || this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelier.root.open||this.petCollection.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
+    if (!this.view || this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelierOpen||this.petCollection.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
     const key = event.key.toLowerCase();
     if(this.furnitureNameDialog.open)return;
     if(key==='escape'&&this.pane==='diagnostics'){this.leaveDiagnostics();event.preventDefault();return;}
@@ -3608,7 +3610,7 @@ class StudyUI {
     const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.05) : 0;
     this.lastFrame = now;
     advanceAnim(dt);this.pets.tick(dt,now);
-    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelier.root.open?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
+    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelierOpen?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
     const view = this.view;
     if (view && (this.pane === 'world' || this.pane === 'house')) {
       let vx = Number(this.keys.has('d') || this.keys.has('arrowright') || this.dpadKeys.has('arrowright'))
@@ -3616,7 +3618,7 @@ class StudyUI {
       let vy = Number(this.keys.has('s') || this.keys.has('arrowdown') || this.dpadKeys.has('arrowdown'))
         - Number(this.keys.has('w') || this.keys.has('arrowup') || this.dpadKeys.has('arrowup'));
 
-      if (this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.phone.hidden === false || this.settingsDialog.open || this.activityOpen || this.decorating || this.garden.active || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelier.root.open||this.petCollection.root.open) || this.spaces.root.open || this.roomWorkspace.root.open || this.mobileHud?.root.open) {
+      if (this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.phone.hidden === false || this.settingsDialog.open || this.activityOpen || this.decorating || this.garden.active || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelierOpen||this.petCollection.root.open) || this.spaces.root.open || this.roomWorkspace.root.open || this.mobileHud?.root.open) {
         vx = 0; vy = 0;
       }
       if (!this.moveTarget) this.movePath = [];
