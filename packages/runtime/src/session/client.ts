@@ -237,7 +237,7 @@ export class VillageClient implements VillageActions {
       step = 'invite';
       this.houses.set(this.id, ownDocument);
       this.invite = createInvite(this.id, endpoint.id, this.sessionId!, this.epoch, 1, this.clock.wallNow());
-      this.rosterRevision = 1; this.setPhase('JOINED'); this.startTick();
+      this.rosterRevision = 1; this.setPhase('JOINED'); this.syncMedia(); this.startTick();
     } catch (error) {
       if (generation === this.generation) this.finish('NETWORK_FAILED', describeOpenFailure(step, error));
     }

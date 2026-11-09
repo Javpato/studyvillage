@@ -106,6 +106,16 @@ async function admit(host: VillageClient, guest: VillageClient): Promise<void> {
 }
 
 describe('session integration using a FAKE in-memory transport, real WebCrypto (not two computers)', () => {
+  it('accepts a linked microphone immediately after hosting, before movement or a guest arrives',async()=>{
+    const network=new FakeNetwork(),clock=new ManualClock(),host=await client(network,clock,'Host');
+    const track=Object.assign(new EventTarget(),{enabled:true,stopped:false,stop(){this.stopped=true;}});
+    const stream={getTracks:()=>[track],getAudioTracks:()=>[track]} as unknown as MediaStream;
+    await host.instance.openVillage();
+    expect(()=>host.instance.setCompanionMicrophone(stream)).not.toThrow();
+    expect(host.instance.view.media.micEnabled).toBe(true);
+    const leaving=host.instance.leave();clock.advance(100);await leaving;
+    expect(track.stopped).toBe(true);expect(host.instance.view.media.micEnabled).toBe(false);
+  });
   it('preserves the floating capture while house and workspace travel updates only the authenticated scene audience',async()=>{
     const network=new FakeNetwork(),clock=new ManualClock();network.recordMedia=true;
     const guest=await client(network,clock,'Camera guest'),identity=await generateIdentity('Camera host','#55aa88');
