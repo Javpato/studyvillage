@@ -1,3 +1,4 @@
+import { FURNITURE_KINDS } from '../../../packages/core/src/house/furniture';
 import type { FurnitureKind } from '../../../packages/core/src/protocol/types';
 
 import { DEFAULT_APPEARANCE, normalizeAppearance, type AvatarAppearance, type HairStyle, type AvatarAccessory } from './appearance';
@@ -177,10 +178,9 @@ export function validateAssetPack(raw: unknown): AssetPackManifest {
 
   const avatar = normalizeAppearance(obj.avatar);
 
-  const validKinds: FurnitureKind[] = ['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity', 'pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl'];
   const furnitureColors: Partial<Record<FurnitureKind, string>> = {};
   if (obj.furnitureColors && typeof obj.furnitureColors === 'object') {
-    for (const kind of validKinds) {
+    for (const kind of FURNITURE_KINDS) {
       const c = (obj.furnitureColors as Record<string, unknown>)[kind];
       if (isHexColor(c)) furnitureColors[kind] = c;
     }
@@ -188,7 +188,7 @@ export function validateAssetPack(raw: unknown): AssetPackManifest {
 
   const furnitureSprites: Partial<Record<FurnitureKind, string>> = {};
   if (obj.furnitureSprites && typeof obj.furnitureSprites === 'object') {
-    for (const kind of validKinds) {
+    for (const kind of FURNITURE_KINDS) {
       const s = (obj.furnitureSprites as Record<string, unknown>)[kind];
       if (s !== undefined) {
         if (!isSafeDataImage(s)) {

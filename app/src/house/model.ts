@@ -18,7 +18,7 @@ const DOOR_REACH = INTERACTION_REACH;
 export function atHouseDoor(position: Position): boolean {
   return Math.hypot(position.x-HOUSE_DOOR.x,position.y-HOUSE_DOOR.y)<=DOOR_REACH;
 }
-export const FURNITURE_KINDS: readonly FurnitureKind[] = ['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity', 'pet-atelier', 'pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl'];
+export { FURNITURE_KINDS } from '../../../packages/core/src/house/furniture';
 export const FURNITURE_LABELS: Record<FurnitureKind, string> = {
 'pet-cat':'Casa del gato','pet-dog':'Caseta del perro','pet-parrot':'Pajarera del loro','pet-hamster':'Casa del hámster','pet-rabbit':'Madriguera del conejo','pet-bowl':'Comedero de mascotas',
   'pet-atelier':'Taller de mascotas', vanity: 'Tocador de sprites', oak: 'Roble', palm: 'Palmera', cherry: 'Cerezo', flowerbed: 'Jardinera', lantern: 'Farol', fountain: 'Fuente', picnic: 'Mesa de picnic', hammock: 'Hamaca', mailbox: 'Buzón', birdbath: 'Bebedero de aves', mushrooms: 'Setas', stonepath: 'Camino de piedra', inkdesk: 'Escritorio de tinta', guide: 'Guía de la casa', sketchboard: 'Pizarra de exposición', jukebox:'Jukebox de estudio', clock: 'Reloj de concentración',

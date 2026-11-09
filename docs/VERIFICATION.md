@@ -1,3 +1,13 @@
+# Animal atelier placement correction — 9 November 2026
+
+Reported: placing the animal atelier displays the generic “complete the texts and answers” validation message. Reproduced before the fix by serializing/projection of a placeable `pet-atelier`: the local-store furniture enum omitted it, although the catalogue and wire/room schemas accepted it. This is a validation mismatch, not a missing text field. The asset-pack validator had the same stale list.
+
+Correction: one core furniture-kind registry now supplies placement, types, local persistence, public/room schemas and replaceable asset-pack validation. Existing saved-data validation and furniture eligibility rules remain in place. Regression tests roundtrip every placeable kind while preserving existing profile/notes, and place the atelier through the real decoration UI, reload it, retain the pre-existing furniture and open its editor.
+
+Completed before candidate push: reproduced the failing storage case; 17 focused storage/assets/architecture tests passed after the fix; app/server types passed. Both Chromium custom-animal and atelier-placement journeys passed. Remaining: candidate push, full baseline/build and focused platform browser tests, publication confirmation, temporary-output cleanup. No physical-device check is claimed.
+
+---
+
 # Custom animals and linked devices — delivery verification, 9 November 2026
 
 Candidate [`f664008`](https://github.com/Javpato/studyvillage/commit/f664008) is published by [Pages 42540176190](https://github.com/Javpato/studyvillage/actions/runs/42540176190). [Linux/macOS matrix 42540176394](https://github.com/Javpato/studyvillage/actions/runs/42540176394) passed: full baseline plus **152 browser executions** (35 Chromium, 33 WebKit, 2 live pairing and 6 controller cases per OS). The final media lifecycle correction is verified separately below.

@@ -16,6 +16,8 @@ Wardrobe appearance is composed into an existing twelve-frame 192×256 character
 
 ## Houses and public data
 
+`packages/core/src/house/furniture.ts` defines the shared furniture kinds used by placement, local persistence, public/room schemas and asset-pack validation. Add new indoor kinds there so catalogue entries cannot be rejected by a stale save validator. Outdoor eligibility remains defined by the garden model.
+
 Bootstrap supplies useful furniture for a new house, including a focus clock, jukebox, guide and notebook desk. Existing houses are not rebuilt from the default layout on every launch. `publicHouse` projects explicitly allowed fields into the published representation rather than serializing the complete local profile.
 
 House floors, rooms, door positions, garden placement and room workspaces have persistence and protocol consequences. Use validated model operations and update rendering, interaction and save/load tests together. Furniture deletion must not delete the independent personal notebook repository.

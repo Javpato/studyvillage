@@ -1,3 +1,4 @@
+import { FURNITURE_KINDS } from './furniture';
 import {petConfigSchema,assertPetLimit,ownerPetGroups,petSpecies} from '../pets/model';
 import { z } from 'zod';
 import type { Furniture, FurnitureKind, Position, PublicHouse, PublicIdentity } from '../protocol/types';
@@ -10,7 +11,7 @@ export const houseSpaceSchema = z.strictObject({ floorId: key, roomId: key.nulla
 export type HouseSpace = z.infer<typeof houseSpaceSchema>;
 export const floorsSchema = z.array(z.strictObject({ id: key, name: z.string().trim().min(1).max(48), rooms: z.array(z.strictObject({ id: key, name: z.string().trim().min(1).max(48), allowlist: accessListSchema.optional() })).max(10).refine(rooms => new Set(rooms.map(r => r.id)).size === rooms.length) })).min(1).max(3).refine(floors => new Set(floors.map(f => f.id)).size === floors.length);
 export type HouseFloor = z.infer<typeof floorsSchema>[number];
-const furniture = z.strictObject({ pet:petConfigSchema.optional(), guideText:z.string().max(320).optional(), showFrame:z.boolean().optional(), sprite:z.string().max(32000).regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/).optional(), color:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional(), id: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), kind: z.enum(['desk','bookshelf','board','plant','table','frame','cabinet','flashcards','oak','palm','cherry','flowerbed','lantern','fountain','picnic','hammock','mailbox','birdbath','mushrooms','stonepath','inkdesk','guide','sketchboard','clock','jukebox','vanity', 'pet-atelier','pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl']), x: z.number().min(0).max(736), y: z.number().min(0).max(400), publicAlias: z.string().max(48), rotation: z.union([z.literal(0),z.literal(90),z.literal(180),z.literal(270)]).optional() });
+const furniture = z.strictObject({ pet:petConfigSchema.optional(), guideText:z.string().max(320).optional(), showFrame:z.boolean().optional(), sprite:z.string().max(32000).regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/).optional(), color:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional(), id: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), kind: z.enum(FURNITURE_KINDS), x: z.number().min(0).max(736), y: z.number().min(0).max(400), publicAlias: z.string().max(48), rotation: z.union([z.literal(0),z.literal(90),z.literal(180),z.literal(270)]).optional() });
 export const workspaceSchema = z.strictObject({
   revision: z.number().int().nonnegative(), theme:z.enum(['mint','peach']).optional(), furniture: z.array(furniture).max(32).refine(items => new Set(items.map(f => f.id)).size === items.length),
   notes: z.array(z.strictObject({ id:key, title:z.string().max(80), text:z.string().max(8000) })).max(16),

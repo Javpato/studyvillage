@@ -1,3 +1,4 @@
+import { FURNITURE_KINDS } from '../house/furniture';
 import {petConfigSchema} from '../pets/model';
 import {friendCommandSchema,friendViewSchema} from '../social/friends';
 import { gardenSchema } from './garden';
@@ -33,7 +34,7 @@ export const houseSchema = z.strictObject({
     pet:petConfigSchema.optional(), guideText: z.string().max(320).optional(), showFrame: z.boolean().optional(),
     color: color.optional(),
     rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
-    id: idSchema, kind: z.enum(['desk', 'bookshelf', 'board', 'plant', 'table', 'frame', 'cabinet', 'flashcards', 'oak', 'palm', 'cherry', 'flowerbed', 'lantern', 'fountain', 'picnic', 'hammock', 'mailbox', 'birdbath', 'mushrooms', 'stonepath', 'inkdesk', 'guide', 'sketchboard', 'clock', 'jukebox', 'vanity', 'pet-atelier', 'pet-cat', 'pet-dog', 'pet-parrot', 'pet-hamster', 'pet-rabbit', 'pet-bowl']),
+    id: idSchema, kind: z.enum(FURNITURE_KINDS),
     x: z.number().min(0).max(736), y: z.number().min(0).max(400), publicAlias: z.string().max(60),
   })).max(LIMITS.furniture),
 }).refine(house => new Set(house.furniture.map(item => item.id)).size === house.furniture.length);

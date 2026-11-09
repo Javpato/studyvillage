@@ -1,3 +1,4 @@
+import { FURNITURE_KINDS } from '../src/house/model';
 import { describe, expect, it } from 'vitest';
 import { newLocalData, parseLocalData, publicHouse, SaveQueue, serializeLocalData } from '../../packages/runtime/src/storage/local-store';
 import type { LocalData, LocalStore } from '../../packages/runtime/src/storage/local-store';
@@ -21,6 +22,15 @@ describe('local storage boundary', () => {
     expect(parseLocalData(data)).toEqual(data);
     expect(() => parseLocalData({ ...data, profile: { ...data.profile, appearance: { ...data.profile.appearance, body: 'invalid' } } })).toThrow();
     expect(() => parseLocalData({ ...data, profile: { ...data.profile, appearance: { ...data.profile.appearance, hairColor: 'invalid' } } })).toThrow();
+  });
+  it('persists every placeable furniture kind, including the animal atelier, without losing other saved data', () => {
+    for (const kind of FURNITURE_KINDS) {
+      const data = newLocalData();
+      data.editor = 'Existing notes';
+      data.house = { ...house, furniture: [{ ...house.furniture[0], kind }] };
+      expect(publicHouse(data.house).furniture[0].kind).toBe(kind);
+      expect(parseLocalData(JSON.parse(serializeLocalData(data)))).toEqual(data);
+    }
   });
   it('roundtrips a versioned own-only document', () => {
     const data = newLocalData(); data.house = house;
