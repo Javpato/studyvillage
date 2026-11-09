@@ -7,6 +7,7 @@ Actualiza la web y los cuatro instaladores al mismo código, con mascotas person
 - Crea animales desde el **mueble Taller de mascotas**: dibuja o importa sus sprites, elige una habilidad existente y su casa. La app Mascotas conserva la gestión y edición de animales existentes; crear o duplicar requiere el taller. Se corrige el error de validación al colocar ese mueble.
 - Nueva app **Dispositivos**, en la carpeta Ajustes del teléfono, con tres instrucciones breves. Abre StudyVillage en ambos equipos, introduce el código y el creador elige el jugador principal y las herramientas del compañero. También está en la biblioteca de apps.
 - Cuaderno, pizarra, editores de personajes/animales, concentración y medios en el compañero. Para crear un animal desde él, abre primero el taller del jugador principal. El perfil del compañero se conserva.
+- Las ayudas de controles reservan su altura real para no tapar el estudio en pantallas pequeñas.
 - Edita el teléfono manteniendo un elemento pulsado **1 segundo**, o con clic derecho/F2. Iconos y colores de carpetas personalizables y ayudas según el dispositivo activo.
 - Mascotas visibles con recursos reemplazables, casas diferenciadas, comida, caricias, seguimiento y bots. Ojos corregidos, salto del conejo, bola persistente del hámster y diálogo automático más compacto del loro.
 - Pizarra y armario más fiables, diálogos NPC ajustables, ciclos automáticos de concentración/descanso, enlaces a repositorios y traducciones ES/EN/FR corregidas.

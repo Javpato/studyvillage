@@ -2,10 +2,16 @@ import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, type Page } from '@playwright/test';
 async function study(page:Page){await page.getByTestId('phone-button').click();await openPhoneApp(page,'study');return page.getByRole('region',{name:'Estudio',exact:true});}
 for(const [device,width,height]of [['phone',390,844],['tablet',820,1180],['desktop',1440,1000]]as const){
- test(`${device}: illustrated study fills the window, saves cards, notebooks and a solo quiz`,async({page})=>{
+ test(`${device}: illustrated study fills the available window above its controls, saves cards, notebooks and a solo quiz`,async({page})=>{
   await page.setViewportSize({width,height});await page.goto('/');const root=await study(page);
   await expect(root.locator('.sv-study-portal')).toHaveCount(3);await expect(root.locator('.sv-study-portal svg')).toHaveCount(3);
-  const size=await root.boundingBox();expect(size!.width).toBe(width);expect(size!.height).toBe(height);
+  const activity=page.locator('.sv-activity:not([hidden])'),frame=(await activity.boundingBox())!;
+  expect(frame).toMatchObject({x:0,y:0,width,height});
+  await expect.poll(()=>page.evaluate(()=>document.querySelector('.sv-study-workspace')!.getBoundingClientRect().bottom<=document.querySelector('.sv-control-strip')!.getBoundingClientRect().top)).toBe(true);
+  const reserved=await activity.evaluate(e=>parseFloat(getComputedStyle(e).paddingBottom)),size=(await root.boundingBox())!;
+  expect(size.width).toBe(width);expect(size.height).toBeCloseTo(height-reserved,2);
+  const controls=page.locator('.sv-control-strip');await expect(controls).toBeVisible();
+  const strip=(await controls.boundingBox())!;expect(size.y+size.height).toBeLessThanOrEqual(strip.y);expect(strip.y+strip.height).toBeLessThanOrEqual(height);
   await expect(root.getByText(/Ollama|IA local|Configurar IA/)).toHaveCount(0);
   await page.screenshot({path:test.info().outputPath(`study-home-${device}.png`),animations:'disabled'});
   await root.getByRole('button',{name:/^Flashcards/}).click();await root.getByRole('button',{name:/Repasar mis flashcards/}).click();await root.getByRole('button',{name:'Crear mi primer mazo'}).click();await root.getByLabel('Nombre del mazo').fill('Mi repaso');await root.getByRole('button',{name:'Crear',exact:true}).click();

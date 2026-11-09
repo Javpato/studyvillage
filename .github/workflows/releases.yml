@@ -50,7 +50,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:pages
       - name: Complete Chromium regression suite
-        run: xvfb-run -a npm run test:e2e
+        run: xvfb-run -a npm run test:e2e -- --workers=4
       - name: Live device pairing through the phone app
         run: SV_LIVE_PAIR=1 npm run test:e2e -- companion-live.spec.ts
       - name: Phone, workshop and starter house in WebKit
