@@ -51,6 +51,8 @@ Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra 
 
 La web y los instaladores dev.9 incluyen ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Acércate al animal y pulsa **E** para acariciarlo, llamarlo o enviarlo a casa. Consulta la [entrega inicial](docs/AMENDMENT.md) y las [correcciones de mascotas, teléfono, mando e idiomas](docs/PETS-CONTROLS.md). Consulta también [animales personalizados y dispositivos asociados](docs/CUSTOM-PETS-COMPANION.md).
 
+La web incorpora además **Programas** en el reloj: varias secuencias guardadas de etapas, repetición opcional, sonidos integrados o un archivo propio y alertas en el dispositivo elegido. El enlace ahora muestra cuándo el código está listo, dónde aprobar y cómo reintentar un fallo. Actualiza ambos navegadores antes de enlazar; los instaladores dev.9 conservan el protocolo anterior.
+
 ## Empezar a jugar
 
 Abre el enlace web o descarga un único archivo para tu sistema en Releases: **Windows x64 (.exe), Linux x64 (.AppImage), macOS Intel y Apple Silicon (un mismo .dmg universal), o Android (.apk)**. En Windows, ejecuta el instalador. En Linux, da permiso de ejecución al AppImage y ábrelo. En macOS, abre el DMG y arrastra StudyVillage a Aplicaciones. Las entregas de desarrollo de escritorio no tienen firma comercial ni notarización; Android usa firma de desarrollo.

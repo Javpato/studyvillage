@@ -3,7 +3,7 @@ import {CompanionSession,type PairCallbacks} from '../../packages/runtime/src/co
 import type {DataChannel,TransportEndpoint} from '../../packages/runtime/src/transport/types';
 import {newNotebook,newPage,type Notebook} from '../../packages/documents/src/model';
 import {notebookEdit,applyNotebookEdit} from '../../packages/documents/src/notebook-edits';
-import {InkPackets} from '../../packages/documents/src/packets';
+import {InkPackets,inkPackets} from '../../packages/documents/src/packets';
 class Channel implements DataChannel {
  static dropReplies=0;
  open=true;bufferedAmount=0;other!:Channel;listeners=new Set<(v:unknown)=>void>();closes=new Set<()=>void>();sent:string[]=[];
@@ -25,6 +25,8 @@ describe('private companion pairing using explicitly simulated channels',()=>{
 });
 
 describe('pairing readiness, timeout and cancellation',()=>{
+ it('rejects an older companion protocol with a clear update message',async()=>{const factory=network(),a=new CompanionSession(callbacks(),factory);await a.invite('A');const legacy=await factory('old-client'),channel=legacy.connect('sv-pair-'+a.state.code);await flush();for(const part of inkPackets('village',{type:'hello',name:'Old client',nonce:crypto.randomUUID()}))channel.send(part);await flush();expect(a.state.phase).toBe('disconnected');expect(a.state.error).toContain('Actualiza StudyVillage');a.dispose();legacy.destroy();});
+
  it('does not expose a usable code before signaling is ready',async()=>{let resolve!:(e:TransportEndpoint)=>void;const factory=network(),a=new CompanionSession(callbacks(),()=>new Promise(r=>resolve=r));const pending=a.invite('Computer');expect(a.state.phase).toBe('preparing');expect(a.state.code).toBe('');resolve(await factory());await pending;expect(a.state.phase).toBe('inviting');expect(a.state.code).toMatch(/^[a-f0-9]{16}$/);a.dispose();});
  it('cleans up a late endpoint and ignores errors from a canceled attempt',async()=>{const factory=network();let reject!:(e:Error)=>void;let calls=0;const a=new CompanionSession(callbacks(),id=>++calls===1?new Promise((_r,j)=>reject=j):factory(id));const old=a.invite('Old');await a.invite('New');reject(Error('Old failure'));await old;expect(a.state.phase).toBe('inviting');expect(a.state.error).toBe('');a.dispose();});
  it('fails a connection that never opens within 20 seconds and reports endpoint errors',async()=>{
