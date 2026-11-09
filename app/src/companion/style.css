@@ -3,3 +3,4 @@
 .sv-companion-status.sv-button{position:fixed;top:auto;bottom:12px;left:12px}.sv-companion-shell .sv-error:empty,.sv-companion-dialog .sv-error:empty{display:none}.sv-companion-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.sv-companion-grid button{min-height:142px;flex-direction:column;gap:14px;padding:22px 16px;font-size:16px;line-height:1.4;white-space:normal}.sv-companion-grid svg{color:#69875a;flex-shrink:0}.sv-companion-clock-icon{font:42px/32px system-ui;color:#69875a}@media(max-width:650px){.sv-companion-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sv-companion-grid button{min-height:125px;padding:15px;font-size:14px}.sv-companion-shell header h1{max-width:65%}}
 
 .sv-pair-steps{padding-left:22px;line-height:1.6;margin:12px 0 20px}.sv-pair-steps li+li{margin-top:6px}
+.sv-companion-dialog label:not(.sv-pair-tool){display:block;margin-top:16px;font-weight:600}
