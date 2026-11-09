@@ -1,21 +1,23 @@
-# StudyVillage 1.0.0-dev.9
+# StudyVillage 1.0.0-dev.10
 
-Actualiza la web y los cuatro instaladores al mismo código, con mascotas personalizadas, dispositivos asociados y las correcciones posteriores a dev.8.
+Actualiza Windows, Linux, macOS y Android al cliente actual de la web, con programas de concentración y un espacio de trabajo completo en el dispositivo compañero.
 
 ## Novedades
 
-- Crea animales desde el **mueble Taller de mascotas**: dibuja o importa sus sprites, elige una habilidad existente y su casa. La app Mascotas conserva la gestión y edición de animales existentes; crear o duplicar requiere el taller. Se corrige el error de validación al colocar ese mueble.
-- Nueva app **Dispositivos**, en la carpeta Ajustes del teléfono, con tres instrucciones breves. Abre StudyVillage en ambos equipos, introduce el código y el creador elige el jugador principal y las herramientas del compañero. También está en la biblioteca de apps.
-- Cuaderno, pizarra, editores de personajes/animales, concentración y medios en el compañero. Para crear un animal desde él, abre primero el taller del jugador principal. El perfil del compañero se conserva.
-- Las ayudas de controles reservan su altura real para no tapar el estudio en pantallas pequeñas.
-- Edita el teléfono manteniendo un elemento pulsado **1 segundo**, o con clic derecho/F2. Iconos y colores de carpetas personalizables y ayudas según el dispositivo activo.
-- Mascotas visibles con recursos reemplazables, casas diferenciadas, comida, caricias, seguimiento y bots. Ojos corregidos, salto del conejo, bola persistente del hámster y diálogo automático más compacto del loro.
-- Pizarra y armario más fiables, diálogos NPC ajustables, ciclos automáticos de concentración/descanso, enlaces a repositorios y traducciones ES/EN/FR corregidas.
-- El micrófono se conserva al desplazarse entre zonas de proximidad, y se inicializa al abrir una aldea. Salir de una sesión y cambiar de canal explícito siguen revocando la captura.
+- El compañero sigue la herramienta que abre el jugador principal: cuaderno, pizarra y editores. Al cerrar la herramienta vuelve a la espera; los borradores pendientes siguen disponibles para exportar.
+- La pizarra compartida utiliza los mismos controles de dibujo, selección, borradores, texto, modo Lápiz y gestos que la principal. Se corrige el acceso de escritura a las pizarras propias al reabrir una identidad guardada sin conexión.
+- Guarda varios **Programas** de concentración con etapas ordenadas, repetición opcional, pausa y reanudación. El reloj conserva su progreso al recargar y recupera el tiempo tras una suspensión.
+- Elige sonidos integrados, silencio o un audio propio de hasta diez segundos y decide si las alertas suenan en el principal, el compañero o ambos. Los sonidos funcionan también con el panel del reloj cerrado; el audio importado se incluye en las copias de seguridad.
+- Abrir o configurar el reloj en el compañero no abre ventanas en el principal. Al comenzar, el reloj aparece si no hay otra herramienta activa; el tiempo restante sigue visible mientras trabajas.
+- El enlace de dispositivos muestra cuándo está listo el código, dónde aprobar y cómo reintentar. Gestiona los tiempos de espera, rechaza protocolos antiguos y evita aplicar respuestas de herramientas ya cerradas.
+- El compañero conserva su propio idioma y volumen. El micrófono y la pantalla compartida continúan al cerrar su vista, con un estado visible y una acción para detenerlos.
+- Se conservan las mascotas personalizadas, el taller, la app Dispositivos y las mejoras del teléfono de dev.9.
 
 ## Actualizar
 
-La web instala la actualización al cerrar todas las ventanas anteriores de StudyVillage y volver a abrirla. Los instaladores nuevos incluyen el mismo cliente. Para solicitudes de amistad persistentes, actualiza también el servidor desde esta etiqueta y conserva su directorio de datos; actualizar el cliente no despliega el servidor automáticamente. No hay cambio destructivo de esquema ni reinicio de agendas, casas o cuadernos.
+La web instala la actualización al cerrar todas las ventanas anteriores de StudyVillage y volver a abrirla. Los cuatro instaladores nuevos incluyen el mismo cliente. Actualiza ambos dispositivos antes de enlazarlos: dev.10 usa el protocolo de compañero 3 y no es compatible con el enlace de dev.9. Para solicitudes de amistad persistentes, actualiza también el servidor desde esta etiqueta y conserva su directorio de datos; actualizar el cliente no despliega el servidor automáticamente. No hay cambio destructivo de esquema ni reinicio de agendas, casas o cuadernos.
+
+Activa el audio en los dispositivos elegidos. Un navegador o dispositivo suspendido no garantiza una alarma audible mientras duerme. La conexión sigue dependiendo de la señalización y de la conectividad directa o de retransmisión disponible.
 
 El audio compartido depende del navegador, sistema y fuente seleccionada. Bluetooth se empareja desde los ajustes del dispositivo. Las pruebas automatizadas incluyen dispositivos simulados; no certifican cada mando, teclado de iPad o configuración de captura de audio física.
 

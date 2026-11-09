@@ -1,3 +1,17 @@
+# dev.10 installer refresh — candidate, 9 November 2026
+
+Release preparation on existing `main`, based on published runtime `b618f95636a7db68d70845f06de13a6b4357cf83` and documentation commit `8bba2eec727f409bdde192a31e0df963971d47d8`. Target: `v1.0.0-dev.10`, with Windows x64 EXE, Linux x64 AppImage, universal macOS DMG and Android APK. Android version code increases from 10008 to 10009. Historical releases and tags retain their source provenance.
+
+Status: candidate preparation; **not yet a verified or published release**. Release notes describe the pairing protocol 3, shared workspace, offline board permission repair, timer programs and routed alerts. Release gates include both live pairing suites and the companion/focus/board WebKit journeys, in addition to the complete Chromium suite and existing native installer checks.
+
+Completed before extended checks: clean source tree; GitHub `main` matches local source; dev.10 tag does not exist; previous dev.9 has all six expected assets. Previous runtime Linux/macOS checks: [42611843139](https://github.com/Javpato/studyvillage/actions/runs/42611843139).
+
+Candidate commit and exact workflow links will be recorded immediately after push/dispatch. Workflow: [Build and publish Releases](https://github.com/Javpato/studyvillage/actions/workflows/releases.yml).
+
+Remaining: local version/build checks; push candidate; release validation and native checks on all five platform/architecture combinations; publication; downloaded asset checksums/provenance; update README download links only after publication; replace superseded local release packages and remove task test output. Physical iPad, Pencil, microphones/speakers and cross-network hardware remain outside automated certification.
+
+---
+
 # Companion workspace — published 9 November 2026
 
 Runtime [`b618f95636a7db68d70845f06de13a6b4357cf83`](https://github.com/Javpato/studyvillage/commit/b618f95636a7db68d70845f06de13a6b4357cf83) is pushed to `main` and **published to [StudyVillage](https://javpato.github.io/studyvillage/)** by [Pages 42611842975](https://github.com/Javpato/studyvillage/actions/runs/42611842975). Its public service worker matches the local production build byte for byte: **`studyvillage-861b8b1ef7de1d6f`**, 177 packaged files including the worker. [Final Linux/macOS matrix 42611843139](https://github.com/Javpato/studyvillage/actions/runs/42611843139) **passed on Ubuntu 24.04 and macOS 15**, including the full unit/build checks, four live pairing journeys and 24 Chromium + 24 production WebKit journeys per OS (104 browser executions total). Following test/documentation changes do not change runtime content. Existing dev.9 native installers remain unchanged; use the updated website on both devices.
