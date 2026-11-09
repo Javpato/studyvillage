@@ -32,13 +32,15 @@ jobs:
         run: npm run check
       - run: npx playwright install --with-deps chromium webkit
       - if: ${{ !inputs.controllers_only && !inputs.pets_only }}
-        run: npm run test:e2e -- pet-rendering.spec.ts pet-expressions.spec.ts pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
+        run: npm run test:e2e -- custom-pets.spec.ts pet-rendering.spec.ts pet-expressions.spec.ts pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
       - if: ${{ !inputs.controllers_only && !inputs.pets_only }}
-        run: npm run test:webkit -- pet-expressions.spec.ts pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
+        run: npm run test:webkit -- custom-pets.spec.ts pet-expressions.spec.ts pets-controls.spec.ts localization-surfaces.spec.ts amendments.spec.ts board-pencil.spec.ts wardrobe.spec.ts npc-speech.spec.ts
       - if: ${{ inputs.pets_only && !inputs.controllers_only }}
-        run: npm run test:e2e -- pet-rendering.spec.ts pet-expressions.spec.ts
+        run: npm run test:e2e -- custom-pets.spec.ts pet-rendering.spec.ts pet-expressions.spec.ts
       - if: ${{ inputs.pets_only && !inputs.controllers_only }}
-        run: npm run test:webkit -- pet-expressions.spec.ts
+        run: npm run test:webkit -- custom-pets.spec.ts pet-expressions.spec.ts
+      - if: ${{ !inputs.controllers_only && !inputs.pets_only }}
+        run: SV_LIVE_PAIR=1 npm run test:e2e -- companion-live.spec.ts
       - if: ${{ !inputs.pets_only }}
         run: npx playwright test --config app/playwright.controllers.config.ts
       - uses: actions/upload-artifact@v7

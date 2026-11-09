@@ -2789,5 +2789,13 @@
   "Este navegador no permite capturar su pantalla.": "This browser cannot capture its screen.",
   "Código de enlace no válido.": "Invalid pairing code.",
   "El enlace ha caducado.": "The pairing link has expired.",
-  "Espera a que termine el guardado.": "Wait for saving to finish."
+  "Espera a que termine el guardado.": "Wait for saving to finish.",
+  "Esta herramienta no está autorizada.": "This tool is not authorized.",
+  "La mascota ha cambiado. Vuelve a abrir el taller.": "The pet has changed. Reopen the atelier.",
+  "Mantén para hablar": "Hold to talk",
+  "Coloca la casa en el dispositivo principal.": "Place the house on the main device.",
+  "Exportar trabajo pendiente": "Export pending work",
+  "Micrófono activo": "Microphone active",
+  "Volver a enlazar": "Link again",
+  "Silenciado": "Muted"
 }

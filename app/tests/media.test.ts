@@ -148,3 +148,8 @@ it('keeps remote screen video when its optional audio track ends',()=>{
  const video=fakeStream('video'),audio=fakeStream('audio'),stream={getTracks:()=>[video.track,audio.track],getVideoTracks:()=>[video.track],getAudioTracks:()=>[audio.track]} as unknown as MediaStream;
  for(const listener of call.streams)listener(stream);audio.track.ended();expect(call.closed).toBe(false);expect(manager.view.remote).toHaveLength(1);video.track.ended();expect(call.closed).toBe(true);manager.dispose();
 });
+
+it('relays a companion microphone through normal mute and proximity rules, revoking it at a private boundary',()=>{
+ const source=fakeStream('audio'),manager=new MediaManager(()=>{}),transport=fakeEndpoint();manager.attach(transport.endpoint);manager.setContext(context());manager.setCompanionMicrophone(source.stream);expect(manager.view.micEnabled).toBe(true);expect(transport.sent).toHaveLength(1);manager.setMuted(true);expect(source.track.enabled).toBe(false);manager.moveAudience();expect(source.track.stopped).toBe(false);expect(transport.sent[0].closed).toBe(true);manager.setContext({...context(),room:'area:library',peers:[{...context().peers[0],endpoint:'new-peer'}]});expect(transport.sent.at(-1)?.endpoint).toBe('new-peer');expect(source.track.enabled).toBe(false);manager.setContext({...context(),room:'pair:private'});expect(source.track.stopped).toBe(true);expect(manager.view.micEnabled).toBe(false);manager.dispose();
+});
+it('rejects companion capture when no authorized media context exists',()=>{const manager=new MediaManager(()=>{});expect(()=>manager.setCompanionMicrophone(fakeStream('audio').stream)).toThrow();expect(()=>manager.setCompanionScreen(fakeStream('video').stream)).toThrow();manager.dispose();});

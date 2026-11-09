@@ -2792,5 +2792,13 @@
   "Este navegador no permite capturar su pantalla.": "Ce navigateur ne peut pas capturer son écran.",
   "Código de enlace no válido.": "Code d’association incorrect.",
   "El enlace ha caducado.": "Le lien d’association a expiré.",
-  "Espera a que termine el guardado.": "Attends la fin de l’enregistrement."
+  "Espera a que termine el guardado.": "Attends la fin de l’enregistrement.",
+  "Esta herramienta no está autorizada.": "Cet outil n’est pas autorisé.",
+  "La mascota ha cambiado. Vuelve a abrir el taller.": "L’animal a changé. Rouvre l’atelier.",
+  "Mantén para hablar": "Maintenir pour parler",
+  "Coloca la casa en el dispositivo principal.": "Place la maison sur l’appareil principal.",
+  "Exportar trabajo pendiente": "Exporter le travail en attente",
+  "Micrófono activo": "Microphone actif",
+  "Volver a enlazar": "Associer à nouveau",
+  "Silenciado": "Micro coupé"
 }

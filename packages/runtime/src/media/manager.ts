@@ -58,7 +58,7 @@ export class MediaManager {
     this.reconcile(); this.changed();
   }
   /** Drop the old proximity audience before navigation, retaining the capture grant. */
-  moveAudience():void {this.closeAllCalls();this.stopScreen();if(this.context)this.context={...this.context,peers:[]};this.talking=false;this.applyMute();this.changed();}
+  moveAudience():void {this.closeAllCalls();this.stopScreen();if(this.context)this.context={...this.context,peers:[]};this.applyMute();this.changed();}
   /** Session/channel revocation remains distinct from movement. */
   suspend(): void { this.stopAll(); this.context = null; this.changed(); }
   private currentDevices(): MediaDevicesAdapter | undefined {
