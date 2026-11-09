@@ -2862,5 +2862,14 @@
   "Indica un nombre y una duración válida para cada etapa.": "Indique un nom et une durée valide pour chaque étape.",
   "Siguiente: {name}": "Ensuite : {name}",
   "Programa terminado.": "Programme terminé.",
-  "Sin compañero conectado, las alertas suenan en el principal si su audio está activado.": "Sans compagnon connecté, les alertes sonnent sur l’appareil principal si son audio est activé."
+  "Sin compañero conectado, las alertas suenan en el principal si su audio está activado.": "Sans compagnon connecté, les alertes sonnent sur l’appareil principal si son audio est activé.",
+  "Ambos dispositivos": "Les deux appareils",
+  "Ajustes de este dispositivo": "Réglages de cet appareil",
+  "Estos ajustes solo cambian este dispositivo.": "Ces réglages concernent uniquement cet appareil.",
+  "Volumen de este dispositivo": "Volume sur cet appareil",
+  "No se pudo guardar la configuración.": "Impossible d’enregistrer les réglages.",
+  "Todo listo para acompañarte": "Prêt à vous accompagner",
+  "Abre una herramienta en el ordenador. Aparecerá aquí y se cerrará cuando termines.": "Ouvrez un outil sur l’ordinateur. Il apparaîtra ici et se fermera lorsque vous aurez terminé.",
+  "Transmisión activa": "Transmission en cours",
+  "Detener transmisión": "Arrêter la transmission"
 }

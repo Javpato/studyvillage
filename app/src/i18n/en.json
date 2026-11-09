@@ -2859,5 +2859,14 @@
   "Indica un nombre y una duración válida para cada etapa.": "Enter a name and valid duration for each step.",
   "Siguiente: {name}": "Next: {name}",
   "Programa terminado.": "Program finished.",
-  "Sin compañero conectado, las alertas suenan en el principal si su audio está activado.": "Without a connected companion, alerts play on the main device if its audio is enabled."
+  "Sin compañero conectado, las alertas suenan en el principal si su audio está activado.": "Without a connected companion, alerts play on the main device if its audio is enabled.",
+  "Ambos dispositivos": "Both devices",
+  "Ajustes de este dispositivo": "Settings for this device",
+  "Estos ajustes solo cambian este dispositivo.": "These settings only affect this device.",
+  "Volumen de este dispositivo": "Volume on this device",
+  "No se pudo guardar la configuración.": "Could not save the settings.",
+  "Todo listo para acompañarte": "Ready to work together",
+  "Abre una herramienta en el ordenador. Aparecerá aquí y se cerrará cuando termines.": "Open a tool on the computer. It will appear here and close when you finish.",
+  "Transmisión activa": "Sharing is active",
+  "Detener transmisión": "Stop sharing"
 }

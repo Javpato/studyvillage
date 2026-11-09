@@ -45,7 +45,7 @@ export class FocusClock {
  }
  private syncFields():void{for(const mode of ['focus','break'] as const)clockParts(this.model.state.durations[mode]).forEach((value,i)=>{this.fields[mode][i].value=value;this.fields[mode][i].setAttribute('aria-invalid','false');});}
  private toggle():void{if(!this.valid)return;if(!this.model.running)void this.audio.enable();if(this.model.running)this.model.pause();else this.model.start();this.save();this.paint();this.placeHud();}
- private tick(){if(this.model.tick()){this.save();if(this.linkRole!=='companion'&&(this.model.state.sound.target==='primary'||!this.remoteFocus))void this.audio.alert(this.model.state.alert,this.model.state.sound,loadFocusAudio());else this.audio.baseline(this.model.state.alert.id);}}
+ private tick(){if(this.model.tick()){this.save();if(this.linkRole!=='companion'&&(this.model.state.sound.target!=='companion'||!this.remoteFocus))void this.audio.alert(this.model.state.alert,this.model.state.sound,loadFocusAudio());else this.audio.baseline(this.model.state.alert.id);}}
  setLinked(role:'primary'|'companion'|null,focus:boolean){if(role==='companion'||role==='primary'&&focus&&this.model.state.sound.target==='companion')this.audio.silence();this.linkRole=role;this.remoteFocus=role==='primary'&&focus;this.paint();}
  async importSound(value:unknown){const asset=await saveFocusAudio(value);this.command('sound',{...this.model.state.sound,kind:'custom',customId:asset.id});return asset.id;}
  soundAsset(){return loadFocusAudio();}

@@ -2,7 +2,7 @@ import {z} from 'zod';
 export const focusStepSchema=z.strictObject({id:z.string().min(1).max(80),name:z.string().trim().min(1).max(80),seconds:z.number().int().min(1).max(86399)});
 export const focusProgramSchema=z.strictObject({id:z.string().min(1).max(80),name:z.string().trim().min(1).max(80),repeat:z.boolean(),steps:z.array(focusStepSchema).min(1).max(32).refine(s=>new Set(s.map(i=>i.id)).size===s.length)});
 export type FocusProgram=z.infer<typeof focusProgramSchema>;
-export const focusSoundSchema=z.strictObject({kind:z.enum(['bell','chime','drop','custom','silent']),volume:z.number().min(0).max(1),target:z.enum(['primary','companion']),customId:z.string().max(80).nullable()});
+export const focusSoundSchema=z.strictObject({kind:z.enum(['bell','chime','drop','custom','silent']),volume:z.number().min(0).max(1),target:z.enum(['primary','companion','both']),customId:z.string().max(80).nullable()});
 export type FocusSound=z.infer<typeof focusSoundSchema>;
 const extrasSchema=z.object({programs:z.array(focusProgramSchema).max(20).refine(p=>new Set(p.map(i=>i.id)).size===p.length),selectedProgramId:z.string().max(80).nullable(),run:focusProgramSchema.nullable(),stepIndex:z.number().int().min(0).max(31),sound:focusSoundSchema,alert:z.object({id:z.number().int().nonnegative(),at:z.number().finite().nonnegative()})});
 export const FOCUS_COMMANDS=['start','pause','reset','stop','duration','program-save','program-delete','program-select','sound'] as const;

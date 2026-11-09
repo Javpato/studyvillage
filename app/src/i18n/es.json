@@ -2859,5 +2859,14 @@
   "Indica un nombre y una duración válida para cada etapa.": "Indica un nombre y una duración válida para cada etapa.",
   "Siguiente: {name}": "Siguiente: {name}",
   "Programa terminado.": "Programa terminado.",
-  "Sin compañero conectado, las alertas suenan en el principal si su audio está activado.": "Sin compañero conectado, las alertas suenan en el principal si su audio está activado."
+  "Sin compañero conectado, las alertas suenan en el principal si su audio está activado.": "Sin compañero conectado, las alertas suenan en el principal si su audio está activado.",
+  "Ambos dispositivos": "Ambos dispositivos",
+  "Ajustes de este dispositivo": "Ajustes de este dispositivo",
+  "Estos ajustes solo cambian este dispositivo.": "Estos ajustes solo cambian este dispositivo.",
+  "Volumen de este dispositivo": "Volumen de este dispositivo",
+  "No se pudo guardar la configuración.": "No se pudo guardar la configuración.",
+  "Todo listo para acompañarte": "Todo listo para acompañarte",
+  "Abre una herramienta en el ordenador. Aparecerá aquí y se cerrará cuando termines.": "Abre una herramienta en el ordenador. Aparecerá aquí y se cerrará cuando termines.",
+  "Transmisión activa": "Transmisión activa",
+  "Detener transmisión": "Detener transmisión"
 }

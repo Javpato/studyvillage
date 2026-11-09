@@ -1,3 +1,13 @@
+# Companion workspace candidate — 9 November 2026
+
+Current work: primary-controlled tool opening/closing (pair protocol 3), reuse of the complete village board on the companion, local language/alert volume, both-device sound routing, and remote timer presentation. This is a **candidate, not yet a verified release**. The candidate is the next commit containing this checkpoint; record its hash and workflow links after pushing.
+
+Reproduction: the new `companion-board-permissions` browser test failed on the old implementation after saving an encrypted identity and reloading offline: the house board displayed read-only. `canDrawBoard` incorrectly required the identity to be unlocked even for offline study. The same test passes after restricting that requirement to connected world sessions. This reproduces a real cause; the user's exact saved profile has not been inspected.
+
+Completed checks: application TypeScript; 23 focused pairing/clock unit tests; ES/EN/FR coverage (2,870 messages); Chromium saved/locked identity drawing regression. Remaining: live two-browser workspace flow, full unit/build checks, production WebKit, both audio destinations, public Pages/cache verification, and regression documentation. Physical iPad/Apple Pencil has not been tested.
+
+---
+
 # Device pairing and timer programs — published 9 November 2026
 
 Final runtime [`410be3790f33300746e83c39055ea3d8245bb54f`](https://github.com/Javpato/studyvillage/commit/410be3790f33300746e83c39055ea3d8245bb54f) is pushed to `main` and **published to [StudyVillage](https://javpato.github.io/studyvillage/)** by [Pages 42600624856, attempt 2](https://github.com/Javpato/studyvillage/actions/runs/42600624856/attempts/2). [Final Linux/macOS matrix 42600623428](https://github.com/Javpato/studyvillage/actions/runs/42600623428) passed. The public worker matches the local production build byte for byte: **`studyvillage-2164f60441ea8a16`**, 177 files including the worker. The following documentation commit does not change runtime content. Existing dev.9 native installers remain on their tagged source and pairing protocol; use the updated website on both devices for these additions.

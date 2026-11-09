@@ -1,3 +1,4 @@
+import {CompanionBoard} from '../companion/board';
 import {z} from 'zod';
 import {CompanionPanel} from '../companion/panel';
 import {NotebookAuthority} from '../companion/notebook-port';
@@ -443,6 +444,7 @@ class StudyUI {
   private hudEditTile!: HTMLButtonElement;
   private vanity:VanityPanel;private petCollection!:PetCollectionPanel;private placingPet:OwnedPet|null=null;private petArtOwner='';
   private hudCamera!:HTMLButtonElement;
+  private remoteBoard:CompanionBoard|null=null;private remoteBoardReturn:Pane='world';
   private companion!:CompanionPanel;private companionNotebooks!:NotebookAuthority;
   private pets:PetWorld;
   private wardrobe: WardrobePanel;
@@ -474,7 +476,7 @@ class StudyUI {
     this.petCollection=new PetCollectionPanel({owner:()=>this.view?.identity.fingerprint??'',homes:()=>this.pets.homesList(),reserved:id=>this.pets.isReserved(id),save:(home,config)=>this.savePetHome(home,config),place:pet=>this.placeCustomPet(pet)});
     this.notebooks.connect(actions,()=>this.view,()=>this.activityScope()||'village');
     this.companionNotebooks=new NotebookAuthority(book=>this.notebooks.adoptCompanionBook(book),()=>this.notebooks.flushCompanion());
-    this.companion=new CompanionPanel({view:()=>this.view,prepare:async role=>{this.stopMoving();await this.notebooks.flushCompanion();if(role==='companion'){if(this.vanity.root.open||this.petCollection.atelierOpen)throw Error(t('Cierra el taller antes de enlazar este dispositivo.'));await actions.leave();this.closePhone();for(const dialog of this.root.querySelectorAll<HTMLDialogElement>('dialog[open]'))dialog.close();}},request:(tool,action,value)=>this.companionRequest(tool,action,value),changed:()=>{const secondary=this.companion?.secondary??false;const pair=this.companion?.session.state;this.focusClock.setLinked(pair?.phase==='linked'?pair.role:null,!!pair?.tools.includes('focus'));this.root.inert=secondary;document.body.classList.toggle('sv-companion-mode',secondary);this.stopMoving();if(this.view)this.refreshMedia();},disconnected:()=>{this.focusClock.setLinked(null,false);this.root.inert=false;document.body.classList.remove('sv-companion-mode');this.stopMoving();}},actions);
+    this.companion=new CompanionPanel({board:()=>this.companionBoardSurface(),view:()=>this.view,prepare:async role=>{this.stopMoving();await this.notebooks.flushCompanion();if(role==='companion'){if(this.vanity.root.open||this.petCollection.atelierOpen)throw Error(t('Cierra el taller antes de enlazar este dispositivo.'));await actions.leave();this.closePhone();for(const dialog of this.root.querySelectorAll<HTMLDialogElement>('dialog[open]'))dialog.close();}},request:(tool,action,value)=>this.companionRequest(tool,action,value),changed:()=>{const secondary=this.companion?.secondary??false;const pair=this.companion?.session.state;this.focusClock.setLinked(pair?.phase==='linked'?pair.role:null,!!pair?.tools.includes('focus'));this.root.inert=secondary;document.body.classList.toggle('sv-companion-mode',secondary);this.stopMoving();if(this.view)this.refreshMedia();},disconnected:()=>{this.focusClock.setLinked(null,false);this.root.inert=false;document.body.classList.remove('sv-companion-mode');this.stopMoving();}},actions);
 
     this.mailbox=new MailboxUI(()=>this.view?.identity.fingerprint??'',command=>this.actions.mailboxCommand(command));
     this.garden=new GardenPanel(()=>this.view,house=>this.actions.saveHouseLayout(house),()=>this.stageCanvas,()=>this.pets.count());
@@ -610,7 +612,7 @@ class StudyUI {
     if(this.view&&this.view.identity.fingerprint!==view.identity.fingerprint)this.companion?.session.disconnect();
     this.view = view;if(this.petArtOwner!==view.identity.fingerprint){this.petArtOwner=view.identity.fingerprint;void loadPetCollection(this.petArtOwner).then(()=>{this.lastStageRenderSig='';});}
     this.notebooks.syncSession();
-    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelierOpen?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
+    this.followCompanionView();
     if (justJoined && !this.houseOwnerId) this.actions.move({ ...this.localPosition, areaId: this.currentArea });
     this.pendingStrokes = this.pendingStrokes.filter((stroke) => !view.network.strokes.some((received) => received.id === stroke.id));
     const ownMember = view.network.members.find((member) => member.identity.fingerprint === view.identity.fingerprint);
@@ -1148,7 +1150,7 @@ class StudyUI {
     this.boardPane = node('section', 'sv-panel sv-board-pane');
     const boardBack=button(msg('← Volver'),'sv-button sv-board-back');
     setDisplayAttribute(boardBack,'aria-label',msg('Volver de la pizarra'));boardBack.dataset.testid='board-back';
-    boardBack.onclick=()=>this.headingAction.click();this.boardPane.append(boardBack);
+    boardBack.onclick=()=>{if(this.remoteBoard?.root.open)this.remoteBoard.root.close();else this.headingAction.click();};this.boardPane.append(boardBack);
     const toolbar = node('div', 'sv-toolbar sv-board-primary');
     toolbar.setAttribute('role', 'group');
     setDisplayAttribute(toolbar, 'aria-label', msg('Herramientas de pizarra'));
@@ -1225,6 +1227,7 @@ class StudyUI {
     setDisplayAttribute(this.boardNameInput, 'aria-label', msg('Nombre de esta pizarra'));
     this.boardNameInput.dataset.testid = 'board-rename-input';
     this.boardNameInput.addEventListener('change', () => {
+      if(this.remoteBoard?.state){this.run(()=>this.remoteBoard!.command('rename',this.boardNameInput.value).then(()=>{}));return;}
       const view = this.view;
       if (!view) return;
       const bId = this.boardId();
@@ -1258,6 +1261,7 @@ class StudyUI {
     setDisplayAttribute(this.boardAccessSelect, 'aria-label', msg('Permisos de esta pizarra'));
     this.boardAccessSelect.dataset.testid = 'board-access-select';
     this.boardAccessSelect.addEventListener('change', () => {
+      if(this.remoteBoard?.state){this.run(()=>this.remoteBoard!.command('access',this.boardAccessSelect.value).then(()=>{}));return;}
       const view = this.view;
       if (!view) return;
       const bId = this.boardId();
@@ -1385,7 +1389,7 @@ class StudyUI {
     this.boardCanvas.addEventListener('wheel', this.onBoardWheel, { passive: false });
     this.boardCanvas.addEventListener('auxclick', (event) => event.preventDefault());
     wrap.append(this.boardCanvas);
-    this.boardEditor = new BoardEditor({ wrap, canvas:this.boardCanvas, board:()=>this.boardId(), author:()=>this.view?.identity.fingerprint||'', strokes:()=>visibleStrokes(this.allStrokes(this.boardId()),this.boardId(),this.hiddenAuthors), all:()=>this.allStrokes(this.boardId()), canEdit:()=>this.canDrawBoard(),moderate:()=>this.moderatesBoard(), camera:()=>this.boardCamera(), world:e=>this.boardWorldPoint(e), changed:()=>{this.lastBoardRenderSig='';this.boardExtraFrames=3;this.scheduleBoardControls();},notify:message=>this.notify(message),commit:changes=>this.commitBoardChanges(changes) });
+    this.boardEditor = new BoardEditor({ wrap, canvas:this.boardCanvas, board:()=>this.boardId(), author:()=>this.boardAuthor(), strokes:()=>visibleStrokes(this.allStrokes(this.boardId()),this.boardId(),this.hiddenAuthors), all:()=>this.allStrokes(this.boardId()), canEdit:()=>this.canDrawBoard(),moderate:()=>this.moderatesBoard(), camera:()=>this.boardCamera(), world:e=>this.boardWorldPoint(e), changed:()=>{this.lastBoardRenderSig='';this.boardExtraFrames=3;this.scheduleBoardControls();},notify:message=>this.notify(message),commit:changes=>this.commitBoardChanges(changes) });
     this.boardCanvas.addEventListener('dblclick',event=>{if(this.boardTool==='text'||this.boardTool==='select'){event.preventDefault();this.boardEditor.editAt(this.boardWorldPoint(event));}});
 
     const bottom = node('div', 'sv-board-bottom');
@@ -2024,12 +2028,14 @@ class StudyUI {
       ? house.furniture.find((f) => f.id === (this.activeBoardFurnitureId || 'board') && f.kind === 'board')
       : null;
     const defaultBoardTitle = activeFurniture?.publicAlias || 'Pizarra de estudio';
-    const boardMeta = this.expansion.boardRegistry.ensureBoard(
+    const boardMeta = this.remoteBoard?.state?.metadata??this.expansion.boardRegistry.ensureBoard(
       boardId,
       defaultBoardTitle,
       this.customBoardId ? this.currentArea : 'house',
-      house.ownerId || view.identity.fingerprint,
+      house.ownerId || this.boardAuthor(),
     );
+    const canConfigure=this.remoteBoard?.state?.configure??this.expansion.boardRegistry.canConfigure(boardId,this.boardAuthor(),view.network.isHost);
+    this.boardNameInput.disabled=this.boardAccessSelect.disabled=!canConfigure;
     if (this.boardNameInput) {
       setInput(this.boardNameInput, defaultText(boardMeta.displayName));
     }
@@ -2050,8 +2056,8 @@ class StudyUI {
       : !MAIN_BOARD_TOOLS.includes(this.boardTool) ? this.boardToolButtons.get(this.boardTool)?.textContent : null;
     setText(this.boardAdvancedToggle, advancedTool ? msg('Más · {tool}', { tool: advancedTool }) : msg('Más'));
     this.boardEditor?.sync();this.boardEditor?.setActive(this.boardTool==='select',this.boardTool==='text');
-    if(this.pane==='board'&&view.network.phase==='JOINED'&&view.network.boardRef!==this.wireBoardId())this.actions.selectBoard(this.wireBoardId());
-    const hasOwn=strokes.some(s=>!s.deleted&&s.author===view.identity.fingerprint);
+    if(!this.remoteBoard?.state&&this.pane==='board'&&view.network.phase==='JOINED'&&view.network.boardRef!==this.wireBoardId())this.actions.selectBoard(this.wireBoardId());
+    const hasOwn=strokes.some(s=>!s.deleted&&s.author===this.boardAuthor());
     this.boardUndoButton.disabled = !this.boardEditor?.canUndo();
     if (this.boardRedoButton) {
       this.boardRedoButton.disabled = !this.boardEditor?.canRedo();
@@ -2088,12 +2094,12 @@ class StudyUI {
         if (input.checked) this.hiddenAuthors.delete(author);
         else this.hiddenAuthors.add(author);
       });
-      const name: DisplayText = author === view.identity.fingerprint ? msg('Mis trazos') :
+      const name: DisplayText = author === this.boardAuthor() ? msg('Mis trazos') :
         defaultText(view.network.members.find((member) => member.identity.fingerprint === author)?.identity.displayName || '') || `${author.slice(0, 10)}…`;
       append(label, input, node('span', '', name), node('small', '', msg('Solo en mi vista')));
       this.boardLayers.append(label);
       // In my own house I can clear anyone's layer (one undoable step).
-      if (moderator && author !== view.identity.fingerprint && live(author).length) {
+      if (moderator && author !== this.boardAuthor() && live(author).length) {
         const clear = button(msg('Borrar capa'), 'sv-button sv-button-small sv-layer-clear');
         setDisplayAttribute(clear, 'aria-label', msg('Borrar la capa de {name}', { name: typeof name === 'string' ? name : t(name) }));
         clear.addEventListener('click', () => { void (async () => {
@@ -2344,14 +2350,49 @@ class StudyUI {
   }
   private async companionRequest(tool:CompanionTool,action:string,value:unknown):Promise<unknown>{
     const view=this.view;if(!view)throw Error(t('Dispositivo no conectado.'));
-    if(tool==='focus'){if(action==='open'){this.stopMoving();this.focusClock.open();return this.focusClock.snapshot();}if(action==='state')return this.focusClock.snapshot();if(action==='audio-get')return this.focusClock.soundAsset();if(action==='audio-save')return this.focusClock.importSound(value);return this.focusClock.command(z.enum(FOCUS_COMMANDS).parse(action),value);}
-    if(tool==='notebook'){if(action==='open'){this.stopMoving();await this.notebooks.open();return null;}if(action==='state'){const state=this.notebooks.companionState();if(state.shared)return {shared:this.notebooks.companionSharedState(),book:null,page:state.page};return {book:(await this.companionNotebooks.repo.list()).find(b=>b.id===state.book)??null,page:state.page};}if(action==='shared-edit'){const operation=z.strictObject({namespace:z.string(),scope:z.string(),operation:z.unknown()}).parse(value);return this.notebooks.companionSharedCommit(operation.namespace,operation.scope,operation.operation);}if(action==='select'){const selected=z.strictObject({id:z.string().uuid(),page:z.string().uuid().optional()}).parse(value);const book=(await this.companionNotebooks.repo.list()).find(b=>b.id===selected.id);if(!book)throw Error('Copia no válida.');await this.notebooks.flushCompanion();this.notebooks.adoptCompanionBook(book,selected.page);return null;}return this.companionNotebooks.request(action,value);}
-    if(tool==='avatar'){if(action==='open'){this.stopMoving();if(!this.vanity.root.open)this.vanity.open(view.identity);return {identity:view.identity,appearance:getAvatarCustomization(),sheet:avatarSheetData()};}if(action==='save'){const draft=z.strictObject({appearance:appearanceSchema,sheet:z.string().max(700000).nullable()}).parse(value);if(draft.sheet)await setAvatarSheet(draft.sheet);await this.actions.updateAppearance(draft.appearance);return null;}}
+    if(tool==='focus'){if(action==='open')return this.focusClock.snapshot();if(action==='state')return this.focusClock.snapshot();if(action==='audio-get')return this.focusClock.soundAsset();if(action==='audio-save')return this.focusClock.importSound(value);const result=this.focusClock.command(z.enum(FOCUS_COMMANDS).parse(action),value);if(action==='start'){this.focusClock.setHudVisible(true);if(!this.companionActiveView().tool){this.stopMoving();this.focusClock.open();}}return result;}
+    if(!['focus','media'].includes(tool)&&this.companionActiveView().tool!==tool)throw Error('Esta acción ya no está disponible.');
+    if(tool==='notebook'){if(action==='open')return null;if(action==='state'){const state=this.notebooks.companionState();if(state.shared)return {shared:this.notebooks.companionSharedState(),book:null,page:state.page};return {book:(await this.companionNotebooks.repo.list()).find(b=>b.id===state.book)??null,page:state.page};}if(action==='shared-edit'){const operation=z.strictObject({namespace:z.string(),scope:z.string(),operation:z.unknown()}).parse(value);return this.notebooks.companionSharedCommit(operation.namespace,operation.scope,operation.operation);}if(action==='select'){const selected=z.strictObject({id:z.string().uuid(),page:z.string().uuid().optional()}).parse(value);const book=(await this.companionNotebooks.repo.list()).find(b=>b.id===selected.id);if(!book)throw Error('Copia no válida.');await this.notebooks.flushCompanion();this.notebooks.adoptCompanionBook(book,selected.page);return null;}return this.companionNotebooks.request(action,value);}
+    if(tool==='avatar'){if(action==='open'){return {identity:view.identity,appearance:getAvatarCustomization(),sheet:avatarSheetData()};}if(action==='save'){const draft=z.strictObject({appearance:appearanceSchema,sheet:z.string().max(700000).nullable()}).parse(value);if(draft.sheet)await setAvatarSheet(draft.sheet);await this.actions.updateAppearance(draft.appearance);return null;}}
     if(tool==='animal'){if(!this.petCollection.creationOpen)throw Error('Abre el mueble Taller de mascotas en el jugador principal.');if(action==='open'){return {owner:view.identity.fingerprint};}if(action==='save'){const draft=z.strictObject({pet:ownedPetSchema,place:z.boolean()}).parse(value);if(draft.pet.owner!==view.identity.fingerprint||this.pets.isReserved(draft.pet.appearance.id))throw Error(t('Esta mascota no está disponible.'));await cachePetAsset(draft.pet.appearance.hash,draft.pet.sheet);await saveOwnedPet(draft.pet);if(draft.place)this.placeCustomPet(draft.pet);return null;}}
-    if(tool==='whiteboard'){if(action==='open'){if(this.pane!=='board'){this.customBoardId=null;const board=this.currentHouse()?.furniture.find(f=>f.kind==='board');if(!board)throw Error(t('Abre una pizarra en el jugador principal.'));this.interactWithFurniture(board);}return this.companionBoard();}if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema).max(128)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error(t('Esta pizarra es de solo lectura.'));const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error(t('No se pudo guardar la selección.'));}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return this.companionBoard();}}
+    if(tool==='whiteboard'){
+      if(action==='rename'||action==='access'){
+        const id=this.boardId();if(!this.expansion.boardRegistry.canConfigure(id,view.identity.fingerprint,view.network.isHost))throw Error('Esta pizarra es de solo lectura.');
+        if(action==='rename'){const name=z.string().trim().min(1).max(40).parse(value);this.boardNameInput.value=name;this.boardNameInput.dispatchEvent(new Event('change'));}
+        else this.expansion.boardRegistry.setAccessLevel(id,z.enum(['public_edit','view_only','owner_only']).parse(value),view.identity.fingerprint,view.network.isHost);
+        this.refreshBoardControls();return this.companionBoard();
+      }
+      if(action==='latex'||action==='tutor'){
+        if(!this.canDrawBoard())throw Error('Esta pizarra es de solo lectura.');
+        if(action==='latex'){const v=z.strictObject({text:z.string().max(50000),prompt:z.string().max(4000),image:z.string().max(8000000)}).parse(value);return this.expansion.ollamaGateway.latex(v.text,v.prompt,v.image);}
+        const v=z.strictObject({texts:z.array(z.string().max(10000)).max(1000),prompt:z.string().max(4000)}).parse(value);return this.expansion.ollamaGateway.tutor(v.texts,v.prompt);
+      }
+if(action==='open')return this.companionBoard();if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema).max(128)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error(t('Esta pizarra es de solo lectura.'));const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error(t('No se pudo guardar la selección.'));}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return this.companionBoard();}}
     throw Error(t('Esta acción ya no está disponible.'));
   }
-  private companionBoard(){const board=this.wireBoardId();return {board,author:this.view!.identity.fingerprint,strokes:this.allStrokes(this.boardId()).map(s=>({...s,boardId:board})),canEdit:this.canDrawBoard(),moderate:this.moderatesBoard()};}
+  private companionActiveView():{tool:CompanionTool|null;key:string}{
+    if(this.notebooks.root.open)return {tool:'notebook',key:this.notebooks.companionState().book??'shared'};
+    if(this.vanity.root.open)return {tool:'avatar',key:'editor'};
+    if(this.petCollection.creationOpen)return {tool:'animal',key:'editor'};
+    if(this.pane==='board')return {tool:'whiteboard',key:this.wireBoardId()};
+    return {tool:null,key:'waiting'};
+  }
+  private followCompanionView(){
+    if(this.companion?.secondary)return;
+    const {tool,key}=this.companionActiveView();
+    if(tool&&this.focusClock.root.open){this.focusClock.root.close();if(this.focusClock.snapshot().started)this.focusClock.setHudVisible(true);}
+    this.companion?.followPrimary(tool,key);
+  }
+  private companionBoardSurface():CompanionBoard {
+    if(!this.remoteBoard)this.remoteBoard=new CompanionBoard({node:this.boardPane,
+      activate:()=>{this.remoteBoardReturn=this.pane;this.pane='board';this.boardPane.hidden=false;this.cancelBoardGesture();this.boardEditor.deselect();this.lastLayersSignature='';this.lastBoardRenderSig='';},
+      changed:()=>{this.refreshBoardControls();this.lastBoardRenderSig='';},
+      deactivate:()=>{this.commitBoardText();this.cancelBoardGesture();this.boardEditor.deselect();this.pane=this.remoteBoardReturn;this.boardPane.hidden=true;}
+    },error=>this.notify(errorMessage(error)));
+    return this.remoteBoard;
+  }
+  private companionBoard(){const board=this.wireBoardId(),id=this.boardId(),view=this.view!;return {board,author:view.identity.fingerprint,strokes:this.allStrokes(id).map(s=>({...s,boardId:board})),canEdit:this.canDrawBoard(),moderate:this.moderatesBoard(),configure:this.expansion.boardRegistry.canConfigure(id,view.identity.fingerprint,view.network.isHost),display:this.isDisplayBoard(),metadata:this.expansion.boardRegistry.ensureBoard(id)};}
+
   private async savePetDetails(config:PetConfig){const owner=this.view?.identity.fingerprint;if(!owner||!config.custom)return;const pet=(await readOwnedPets(owner)).find(p=>p.appearance.id===config.id);if(!pet)return;const name=config.name?.trim()||pet.appearance.name,phrase=config.phrase??pet.appearance.phrase;if(name===pet.appearance.name&&phrase===pet.appearance.phrase)return;await saveOwnedPet({...pet,appearance:{...pet.appearance,name,phrase,revision:pet.appearance.revision+1}});}
   private async savePetHome(home:PetHome,config:PetConfig){
     const view=this.view;if(!view||home.owner!==view.identity.fingerprint)throw Error('network');
@@ -2472,7 +2513,9 @@ class StudyUI {
     const house=this.ownDecoratedHouse();this.actions.updateOwnHouse({ ...house, ...patch, revision: house.revision + 1 });
   }
 
+  private boardAuthor():string{return this.remoteBoard?.state?.author??this.view?.identity.fingerprint??'';}
   private boardId(): string {
+    if(this.remoteBoard?.state)return this.remoteBoard.state.board;
     if (this.customBoardId) return this.customBoardId;
     const view = this.view;
     const isOwn = !this.houseOwnerId || this.houseOwnerId === view?.identity.fingerprint;
@@ -2493,17 +2536,20 @@ class StudyUI {
     return this.localPosition.space?.roomId?scopedBoard(scope,this.localPosition.space,furniture):houseBoardId(scope,furniture);
   }
   private wireBoardId(): string {
+    if(this.remoteBoard?.state)return this.remoteBoard.state.board;
     if(this.customBoardId)return `area:${this.currentArea}:${this.customBoardId}`;
     if(this.localPosition.space?.roomId)return scopedBoard(this.houseOwnerId||this.view!.identity.fingerprint,this.localPosition.space,this.activeBoardFurnitureId||'board');
     return `house:${this.houseOwnerId||this.view?.identity.fingerprint||'0'.repeat(64)}:${this.activeBoardFurnitureId||'board'}`;
   }
   private allStrokes(boardId: string): BoardStroke[] {
+    if(this.remoteBoard?.state)return this.remoteBoard.all();
     const byId=new Map<string,BoardStroke>();for(const stroke of this.expansion.boardRegistry.getStrokes(boardId))byId.set(stroke.id,{...stroke,boardId});
     if(this.view?.network.boardRef===this.wireBoardId())for(const stroke of this.view.network.strokes){const old=byId.get(stroke.id);if(!old||stroke.seq>=old.seq)byId.set(stroke.id,{...stroke,boardId});}
     return [...byId.values()];
   }
   private boardCommits=new Map<string,Promise<void>>();
   private async commitBoardChanges(changes: BoardStroke[]): Promise<void> {
+    if(this.remoteBoard?.state)return this.remoteBoard.commit(changes);
     // Capture scope before any await: a completed gesture belongs to its original board.
     const boardId=this.boardId(),ref=this.wireBoardId(),online=this.view?.network.phase==='JOINED';
     const original=new Map(this.expansion.boardRegistry.getStrokes(boardId).map(s=>[s.id,structuredClone(s)]));
@@ -2530,8 +2576,9 @@ class StudyUI {
   }
 
   private canDrawBoard(): boolean {
+    if(this.remoteBoard?.state)return this.remoteBoard.state.canEdit;
     const view = this.view;
-    if (!view || view.lockedIdentity) return false;
+    if (!view || view.lockedIdentity && view.network.phase==='JOINED') return false;
     const boardId = this.boardId();
     if (!this.expansion.boardRegistry.canEdit(boardId, view.identity.fingerprint, view.network.isHost)) {
       return false;
@@ -2560,12 +2607,13 @@ class StudyUI {
   private removeOwnStroke(stroke: BoardStroke): void { void this.boardEditor.apply([{...stroke,deleted:true}]); }
 
   private clearOwnStrokes(): void {
-    if(!this.view)return;const changes=this.allStrokes(this.boardId()).filter(s=>!s.deleted&&s.author===this.view!.identity.fingerprint).map(s=>({...s,deleted:true}));
+    if(!this.view)return;const changes=this.allStrokes(this.boardId()).filter(s=>!s.deleted&&s.author===this.boardAuthor()).map(s=>({...s,deleted:true}));
     void this.boardEditor.apply(changes).then(ok=>{if(ok)this.notify(t("Se borraron {p0} trazo(s) tuyos.", { p0: changes.length }));});
   }
 
   /** Boards of my own house: there I may erase, move and edit everyone's layers. */
   private moderatesBoard(): boolean {
+    if(this.remoteBoard?.state)return this.remoteBoard.state.moderate;
     const me = this.view?.identity.fingerprint;
     return !!me && !this.customBoardId && (!this.houseOwnerId || this.houseOwnerId === me);
   }
@@ -2580,7 +2628,7 @@ class StudyUI {
     this.boardExtraFrames = 2;
   }
 
-  private isDisplayBoard():boolean{return !this.customBoardId&&this.currentHouse()?.furniture.some(f=>f.id===this.activeBoardFurnitureId&&f.kind==='sketchboard')===true;}
+  private isDisplayBoard():boolean{if(this.remoteBoard?.state)return this.remoteBoard.state.display;return !this.customBoardId&&this.currentHouse()?.furniture.some(f=>f.id===this.activeBoardFurnitureId&&f.kind==='sketchboard')===true;}
 
   private boardCamera(): BoardCamera {
     if(this.isDisplayBoard())return DEFAULT_CAMERA;
@@ -2778,7 +2826,8 @@ class StudyUI {
             imagePngBase64 = undefined;
           }
         }
-        const res = await this.expansion.ollamaGateway.latex(textContext, prompt, imagePngBase64 || this.boardCanvas.toDataURL('image/png'));
+        const image=imagePngBase64 || this.boardCanvas.toDataURL('image/png');
+        const res = this.remoteBoard?.state?await this.remoteBoard.command('latex',{text:textContext,prompt,image}) as {latex:string;summary:string}:await this.expansion.ollamaGateway.latex(textContext,prompt,image);
         if (this.pane !== 'board' || this.boardId() !== boardId) return;
         const cam = this.boardCamera();
         const existingCount = visible.length;
@@ -2815,7 +2864,7 @@ class StudyUI {
 
     void (async () => {
       try {
-        const res = await this.expansion.ollamaGateway.tutor(strokesText, prompt);
+        const res = this.remoteBoard?.state?await this.remoteBoard.command('tutor',{texts:strokesText,prompt}) as {hint:string;steps:string[]}:await this.expansion.ollamaGateway.tutor(strokesText,prompt);
         if (this.pane !== 'board' || this.boardId() !== boardId) return;
         const cam = this.boardCamera();
         const baseX = Math.round(cam.x + 420 / cam.zoom);
@@ -3428,7 +3477,7 @@ class StudyUI {
     const point=clampBoardPoint(this.boardWorldPoint(event));
     if(this.boardTool==='eraser'){
       this.boardErasing=event.pointerId;this.boardCursor=this.canvasPoint(event,this.boardCanvas);
-      this.eraserGesture=new EraserGesture(this.allStrokes(this.boardId()),s=>!this.hiddenAuthors.has(s.author)&&(s.author===this.view?.identity.fingerprint||this.moderatesBoard()),this.eraserPrefs.mode,this.eraserRadius(),textBox);
+      this.eraserGesture=new EraserGesture(this.allStrokes(this.boardId()),s=>!this.hiddenAuthors.has(s.author)&&(s.author===this.boardAuthor()||this.moderatesBoard()),this.eraserPrefs.mode,this.eraserRadius(),textBox);
       this.captureBoardPointer(event);this.eraseAt(point);return;
     }
     if(boardAtCapacity(this.allStrokes(this.boardId()),this.boardId()))return;
@@ -3523,8 +3572,8 @@ class StudyUI {
     const online = view.network.phase === 'JOINED';
     const stroke = makeStroke(
       boardId,
-      view.identity.fingerprint,
-      nextSequence(existing, view.identity.fingerprint, boardId),
+      this.boardAuthor(),
+      nextSequence(existing, this.boardAuthor(), boardId),
       draft.tool,
       draft.color,
       draft.width,
@@ -3537,7 +3586,7 @@ class StudyUI {
   }
 
   private onKeyDown = (event: KeyboardEvent): void => {
-    if(this.companion?.secondary)return;
+    if(this.companion?.secondary){if(this.remoteBoard?.root.open&&this.boardEditor.key(event))event.preventDefault();return;}
     // A locked identity prevents connecting, but local controls work after choosing offline mode.
     if (!this.view || this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelierOpen||this.petCollection.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
     const key = event.key.toLowerCase();
@@ -3612,7 +3661,7 @@ class StudyUI {
     const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.05) : 0;
     this.lastFrame = now;
     advanceAnim(dt);this.pets.tick(dt,now);
-    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelierOpen?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
+    this.followCompanionView();
     const view = this.view;
     if (view && (this.pane === 'world' || this.pane === 'house')) {
       let vx = Number(this.keys.has('d') || this.keys.has('arrowright') || this.dpadKeys.has('arrowright'))

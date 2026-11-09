@@ -1,28 +1,38 @@
 import {z} from 'zod';
 import {strokeSchema} from '../../../packages/core/src/protocol/schema';
-import type {BoardStroke,BoardPoint} from '../../../packages/core/src/protocol/types';
-import {DEFAULT_CAMERA,screenToWorld,zoomAt,strokeHit,panBy,type BoardCamera} from '../../../packages/core/src/whiteboard/model';
-import {BoardEditor} from '../ui/board-editor';
-import {drawBoard} from '../whiteboard/draw';
-import {msg,setDisplayText,setDisplayAttribute} from '../i18n';
-const stateSchema=z.strictObject({board:z.string(),author:z.string(),strokes:z.array(strokeSchema),canEdit:z.boolean(),moderate:z.boolean()});
-export type CompanionBoardState=z.infer<typeof stateSchema>;
+import {whiteboardMetadataSchema} from '../../../packages/core/src/whiteboard/boards-registry';
+import type {BoardStroke} from '../../../packages/core/src/protocol/types';
+import {msg,setDisplayAttribute} from '../i18n';
+export const companionBoardSchema=z.strictObject({board:z.string(),author:z.string(),strokes:z.array(strokeSchema),canEdit:z.boolean(),moderate:z.boolean(),configure:z.boolean(),display:z.boolean(),metadata:whiteboardMetadataSchema});
+export type CompanionBoardState=z.infer<typeof companionBoardSchema>;
+export interface BoardSurface {node:HTMLElement;activate():void;changed():void;deactivate():void;}
+/** Mount the actual village whiteboard, including its toolbar and input controller.
+ * Only its data/command port changes. Camera, pen preferences and history remain local. */
 export class CompanionBoard {
- readonly root=document.createElement('dialog');private canvas=document.createElement('canvas');private wrap=document.createElement('div');private toolbar=document.createElement('nav');private editor:BoardEditor;private state:CompanionBoardState={board:'',author:'',strokes:[],canEdit:false,moderate:false};private camera:BoardCamera={...DEFAULT_CAMERA};private tool='pen';private color='#315f51';private draft:BoardStroke|null=null;private pan:{x:number;y:number}|null=null;private pointer:number|null=null;private pending=new Map<string,BoardStroke>();private error=document.createElement('p');private timer:ReturnType<typeof setInterval>;private polling=false;private paintFrame=0;
- constructor(private request:(action:string,value?:unknown)=>Promise<unknown>){this.root.className='sv-companion-board';setDisplayAttribute(this.root,'aria-label',msg('Pizarra'));this.canvas.width=1536;this.canvas.height=864;this.canvas.style.touchAction='none';this.wrap.className='sv-companion-board-wrap';this.wrap.append(this.canvas);const button=(label:string,run:()=>void)=>{const b=document.createElement('button');b.type='button';b.className='sv-button';setDisplayText(b,msg(label));b.onclick=run;return b;};const tools=[['pen','Lápiz'],['line','Línea'],['rectangle','Rectángulo'],['circle','Círculo'],['arrow','Flecha'],['text','Texto'],['select','Seleccionar'],['erase','Borrador'],['hand','Mano']];for(const [id,label]of tools){const b=button(label,()=>{this.cancel();this.tool=id;for(const item of this.toolbar.querySelectorAll('[data-tool]'))item.setAttribute('aria-pressed',String((item as HTMLElement).dataset.tool===id));this.editor.setActive(id==='select',id==='text');});b.dataset.tool=id;b.setAttribute('aria-pressed',String(id===this.tool));this.toolbar.append(b);}const color=document.createElement('input');color.type='color';color.value=this.color;setDisplayAttribute(color,'aria-label',msg('Color del lápiz'));color.oninput=()=>this.color=color.value;
-  this.editor=new BoardEditor({wrap:this.wrap,canvas:this.canvas,board:()=>this.state.board,author:()=>this.state.author,strokes:()=>this.all().filter(s=>!s.deleted),all:()=>this.all(),canEdit:()=>this.state.canEdit,moderate:()=>this.state.moderate,camera:()=>this.camera,world:e=>this.world(e),commit:changes=>this.commit(changes),changed:()=>this.queuePaint(),notify:message=>this.error.textContent=message});this.toolbar.append(color,button('Deshacer',()=>void this.editor.undo()),button('Rehacer',()=>void this.editor.redo()),button('−',()=>this.zoom(.8)),button('+',()=>this.zoom(1.25)),button('Cerrar',()=>this.root.close()));this.root.append(this.toolbar,this.wrap,this.error);document.body.append(this.root);
-  this.canvas.onpointerdown=e=>{if(e.button!==0||this.pointer!==null)return;e.preventDefault();if(this.editor.pointerDown(e,this.tool==='select'))return;if(this.tool==='hand'){this.pointer=e.pointerId;this.pan={x:e.clientX,y:e.clientY};this.canvas.setPointerCapture(e.pointerId);return;}if(!this.state.canEdit)return;const point=this.world(e);if(this.tool==='text'){this.editor.editText(point);return;}if(this.tool==='erase'){const hit=this.all().filter(s=>!s.deleted&&(s.author===this.state.author||this.state.moderate)).reverse().find(s=>strokeHit(s,point,12));if(hit)void this.editor.apply([{...hit,deleted:true}]);return;}this.pointer=e.pointerId;this.canvas.setPointerCapture(e.pointerId);this.draft={id:crypto.randomUUID(),boardId:this.state.board,author:this.state.author,seq:0,tool:this.tool as BoardStroke['tool'],points:[point],color:this.color,width:4,deleted:false};this.paint();};
-  this.canvas.onpointermove=e=>{if(this.editor.pointerMove(e))return;if(this.pointer===e.pointerId&&this.pan){const ratio=768/this.canvas.getBoundingClientRect().width;this.camera=panBy(this.camera,(e.clientX-this.pan.x)*ratio,(e.clientY-this.pan.y)*ratio);this.pan={x:e.clientX,y:e.clientY};this.paint();return;}if(this.pointer!==e.pointerId||!this.draft)return;const points=this.draft.points;if(this.tool==='pen'){if(points.length<1500)points.push(this.world(e));}else points[1]=this.world(e);this.paint();};
-  this.canvas.onpointerup=e=>{if(this.editor.pointerUp(e))return;if(this.pointer===e.pointerId&&this.pan){this.pointer=null;this.pan=null;return;}if(this.pointer!==e.pointerId||!this.draft)return;this.canvas.onpointermove!(e);const draft=this.draft;this.pointer=null;const job=this.editor.apply([draft]);this.draft=null;void job.finally(()=>{this.pending.delete(draft.id);this.paint();});this.paint();};this.canvas.onpointercancel=()=>this.cancel();this.root.onclose=()=>this.cancel();this.timer=setInterval(()=>void this.poll(),600);
+ readonly root=document.createElement('dialog');state:CompanionBoardState|null=null;
+ private home=document.createComment('whiteboard home');private timer:ReturnType<typeof setInterval>;private generation=0;private polling=false;private mutation=0;
+ private pending=new Map<string,BoardStroke>();private jobs=new Set<Promise<unknown>>();
+ private request:(action:string,value?:unknown)=>Promise<unknown>=async()=>{throw Error('Dispositivo no conectado.');};
+ constructor(private surface:BoardSurface,private notify:(error:unknown)=>void){
+  this.root.className='sv-companion-board';setDisplayAttribute(this.root,'aria-label',msg('Pizarra'));document.body.append(this.root);
+  this.root.onclose=()=>{if(!this.root.open)this.close();};
+  this.timer=setInterval(()=>void this.poll(),600);
  }
- private all(){const map=new Map(this.state.strokes.map(s=>[s.id,s]));for(const [id,s]of this.pending)map.set(id,s);return [...map.values()];}
- private world(e:MouseEvent):BoardPoint{const r=this.canvas.getBoundingClientRect();return screenToWorld(this.camera,(e.clientX-r.x)*768/r.width,(e.clientY-r.y)*432/r.height);}
- private zoom(factor:number){this.camera=zoomAt(this.camera,384,216,factor);this.paint();}
- private cancel(){this.pan=null;this.pointer=null;this.draft=null;this.editor.cancel();this.paint();}
- async open(raw:unknown){this.state=stateSchema.parse(raw);if(!this.root.open)this.root.showModal();this.paint();}
- private async commit(changes:BoardStroke[]){for(const s of changes)this.pending.set(s.id,s);try{localStorage.setItem('studyvillage-companion-pending-board:'+this.state.board,JSON.stringify({board:this.state.board,changes}));this.state=stateSchema.parse(await this.request('commit',{board:this.state.board,changes}));localStorage.removeItem('studyvillage-companion-pending-board:'+this.state.board);}finally{for(const s of changes)this.pending.delete(s.id);}this.paint();}
- private async poll(){if(!this.root.open||this.polling||this.pointer!==null||this.pending.size)return;this.polling=true;try{const state=stateSchema.parse(await this.request('state'));if(state.board!==this.state.board)this.cancel();this.state=state;this.paint();}catch(e){this.error.textContent=String(e);}finally{this.polling=false;}}
- private queuePaint(){if(!this.paintFrame)this.paintFrame=requestAnimationFrame(()=>{this.paintFrame=0;this.paint();});}
- private paint(){if(!this.editor)return;const ctx=this.canvas.getContext('2d')!;ctx.setTransform(2,0,0,2,0,0);drawBoard(ctx,this.editor.displayed(this.all()).filter(s=>!s.deleted),this.draft,this.camera,768,432,false,2);this.editor.draw(ctx);}
- dispose(){cancelAnimationFrame(this.paintFrame);clearInterval(this.timer);this.editor.dispose();this.root.remove();}
+ async open(raw:unknown,request:(action:string,value?:unknown)=>Promise<unknown>){
+  this.close();this.generation++;this.request=request;this.state=companionBoardSchema.parse(raw);
+  this.surface.node.before(this.home);this.root.append(this.surface.node);this.root.show();this.surface.activate();this.surface.changed();
+ }
+ all(){const map=new Map(this.state?.strokes.map(s=>[s.id,s])??[]);for(const [id,stroke]of this.pending)map.set(id,stroke);return [...map.values()];}
+ async command(action:string,value?:unknown){const generation=this.generation;const result=await this.request(action,value);if(generation===this.generation&&['rename','access'].includes(action)){this.state=companionBoardSchema.parse(result);this.surface.changed();}return result;}
+ commit(changes:BoardStroke[]):Promise<void>{
+  const state=this.state;if(!state)return Promise.reject(Error('Esta acción ya no está disponible.'));
+  this.mutation++;const generation=this.generation,request=this.request,key='studyvillage-companion-pending-board:'+state.board+':'+crypto.randomUUID();
+  for(const stroke of changes)this.pending.set(stroke.id,stroke);
+  const job=(async()=>{try{localStorage.setItem(key,JSON.stringify({board:state.board,changes}));const result=companionBoardSchema.parse(await request('commit',{board:state.board,changes}));localStorage.removeItem(key);if(generation===this.generation)this.state=result;}finally{if(generation===this.generation){for(const stroke of changes)this.pending.delete(stroke.id);this.surface.changed();}}})();
+  this.jobs.add(job);void job.finally(()=>this.jobs.delete(job)).catch(()=>{});return job;
+ }
+ close(){if(!this.state)return;this.surface.deactivate();this.generation++;this.root.close();this.home.replaceWith(this.surface.node);this.state=null;this.pending.clear();}
+ async flush(){await Promise.allSettled([...this.jobs]);}
+ private async poll(){if(!this.root.open||this.polling||this.jobs.size)return;this.polling=true;const generation=this.generation,mutation=this.mutation;try{const state=companionBoardSchema.parse(await this.request('state'));if(generation===this.generation&&mutation===this.mutation&&state.board===this.state?.board){this.state=state;this.surface.changed();}}catch(e){if(generation===this.generation)this.notify(e);}finally{this.polling=false;}}
+ dispose(){clearInterval(this.timer);this.close();this.root.remove();}
 }

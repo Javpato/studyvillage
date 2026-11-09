@@ -38,3 +38,20 @@ describe('pairing readiness, timeout and cancellation',()=>{
   vi.useFakeTimers();let finish!:()=>void;const factory=network(),cb=callbacks();cb.prepare=()=>new Promise(r=>finish=r);const a=new CompanionSession(cb,factory),b=new CompanionSession(callbacks(),factory);await a.invite('A');await b.join(a.state.code,'B');await flush();const approval=a.approve('creator',['focus']);expect(a.state.phase).toBe('finalizing');await vi.advanceTimersByTimeAsync(20000);expect(a.state.phase).toBe('disconnected');finish();await approval;expect(a.state.phase).toBe('disconnected');a.dispose();b.dispose();vi.useRealTimers();
  });
 });
+
+describe('primary-owned companion view context',()=>{
+ it('publishes close and rejects commands for a closed or replaced tool',async()=>{
+  const factory=network(),request=vi.fn(async()=>42),view=vi.fn(),a=new CompanionSession(callbacks(request),factory),b=new CompanionSession({...callbacks(),view},factory);
+  try{await a.invite('A');await b.join(a.state.code,'B');await flush();await a.approve('creator',['whiteboard','focus']);await flush();
+   await expect(b.request('whiteboard','open')).rejects.toThrow('disponible');
+   a.publishView('whiteboard','board-a:1');await flush();expect(view).toHaveBeenLastCalledWith('whiteboard','board-a:1');expect(await b.request('whiteboard','commit',{})).toBe(42);
+   a.publishView('whiteboard','board-b:2');await flush();await expect(b.request('whiteboard','commit',{},'board-a:1')).rejects.toThrow('disponible');
+   a.publishView(null,'waiting:3');await flush();expect(view).toHaveBeenLastCalledWith(null,'waiting:3');await expect(b.request('whiteboard','commit')).rejects.toThrow('disponible');
+   expect(await b.request('focus','state')).toBe(42);expect(request).toHaveBeenCalledTimes(2);
+  }finally{a.dispose();b.dispose();}
+ });
+ it('does not replay a committed mutation when a retry arrives after the view closed',async()=>{
+  vi.useFakeTimers();const factory=network(),request=vi.fn(async()=>42),a=new CompanionSession(callbacks(request),factory),b=new CompanionSession(callbacks(),factory);
+  try{await a.invite('A');await b.join(a.state.code,'B');await flush();await a.approve('creator',['whiteboard']);await flush();a.publishView('whiteboard','a:1');await flush();Channel.dropReplies=1;const result=b.request('whiteboard','commit',{});await flush();a.publishView(null,'closed:2');await flush();await vi.advanceTimersByTimeAsync(32000);expect(await result).toBe(42);expect(request).toHaveBeenCalledTimes(1);}finally{a.dispose();b.dispose();vi.useRealTimers();}
+ });
+});
