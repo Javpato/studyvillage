@@ -6,27 +6,26 @@ Una aldea acogedora en pixel art para tener tu propio rincón, visitar a tus ami
 
 ## Estado y descargas
 
-**[1.0.0-dev.8 está publicada](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.8)** con cuatro instaladores verificados, información de compilación y sumas SHA-256. Descarga el archivo de tu sistema en la tabla. La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages; cada entrega de instaladores queda asociada a su propia etiqueta de versión.
+**[1.0.0-dev.9 está publicada](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.9)** con cuatro instaladores verificados, información de compilación y sumas SHA-256. Descarga el archivo de tu sistema en la tabla. La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages; cada entrega de instaladores queda asociada a su propia etiqueta de versión.
 
 | Dispositivo | Qué abrir o descargar |
 |---|---|
 | Navegador, iPhone o iPad | [Web de StudyVillage](https://javpato.github.io/studyvillage/); en Safari, Compartir → Añadir a pantalla de inicio |
-| Windows x64 | [StudyVillage-Setup-x64.exe](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-Setup-x64.exe) |
-| Linux x64 | [StudyVillage-linux-x64.AppImage](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-linux-x64.AppImage) |
-| macOS Intel o Apple Silicon | [StudyVillage-macos-universal.dmg](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-macos-universal.dmg) — el mismo archivo para ambos |
-| Android | [StudyVillage-development.apk](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.8/StudyVillage-development.apk) |
+| Windows x64 | [StudyVillage-Setup-x64.exe](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-Setup-x64.exe) |
+| Linux x64 | [StudyVillage-linux-x64.AppImage](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-linux-x64.AppImage) |
+| macOS Intel o Apple Silicon | [StudyVillage-macos-universal.dmg](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-macos-universal.dmg) — el mismo archivo para ambos |
+| Android | [StudyVillage-development.apk](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-development.apk) |
 
 Son versiones de desarrollo. Los instaladores de escritorio no tienen firma comercial ni notarización; el APK usa firma de desarrollo. Exporta una copia de tus datos antes de desinstalar o cambiar de dispositivo. No hay instalador nativo de iOS.
 
-## Novedades de dev.8
+## Novedades de dev.9
 
-- Solicitudes de amistad con aceptación y avisos de amistad/voz silenciosos, fáciles de cerrar y sin acumulación.
-- Pantallas compartidas que cada persona puede mover, redimensionar o minimizar para sí misma; audio opcional cuando el navegador y sistema lo permiten.
-- **Ajustes → Mando:** guía de conexión USB/Bluetooth, detección, prueba de botones y controles para menús, aldea y Bloques del Bosque. Escribir y dibujar siguen usando teclado, ratón o pantalla táctil.
-- Bloques del Bosque con juego a la izquierda, cámaras a la derecha, ocultación local del vídeo y «Terminar partida» junto a «Comenzar».
-- Mejoras de teléfono/iPad, campo de invitación sobre el teclado, jardín más visible y tamaño estable con zoom; controles de llamada abajo a la izquierda en ordenador.
-- Teléfono organizable por carpetas, mejoras de sprites y partidas de Bloques contra NPC incluidas desde los cambios posteriores a dev.7.
-- Reloj flotante que conserva su posición y tamaño al arrastrarlo, ocultarlo y recargar, también con controles personalizados.
+- Animales personalizados desde el **mueble Taller de mascotas**, con sprites editables, una habilidad existente y su casa. La app Mascotas conserva la gestión y edición; crear o duplicar requiere el mueble.
+- App **Dispositivos** en la carpeta Ajustes: abre StudyVillage en ambos equipos, enlázalos con un código y elige aquí el jugador principal y las herramientas del compañero.
+- Edición del teléfono con clic derecho o pulsación de **un segundo**, carpetas con icono y color propios y controles que no tapan el estudio en pantallas pequeñas.
+- Mascotas y casas visibles, caricias, comida y bots; ojos corregidos, salto del conejo, bola persistente del hámster y diálogo automático más compacto del loro.
+- Pizarra y armario más fiables, diálogos NPC ajustables, ciclos automáticos de concentración/descanso, enlaces a repositorios y traducciones corregidas.
+- Micrófono estable al cambiar de zona y herramientas compartidas entre dispositivos: cuaderno, pizarra, editores, reloj y medios.
 
 Las solicitudes de amistad sobreviven a desconexiones en servidores actualizados. **Actualizar la web o un instalador no actualiza el servidor de tu aldea:** su administrador debe actualizarlo desde esta misma versión. Los servidores anteriores conservan las demás funciones. Consulta [las notas completas](docs/RELEASE_NOTES.md).
 
@@ -37,8 +36,8 @@ Empiezas con una casa sencilla: una pizarra, un escritorio, una planta, un armar
 El teléfono reúne los accesos cotidianos:
 
 - **Inicio:** Aldea y Contactos.
-- **Hogar:** Mi casa, Habitaciones, Decorar y Mi jardín.
-- **Ajustes:** Ajustes, Voz y Editar controles en computadora y dispositivos táctiles.
+- **Hogar:** Mi casa, Habitaciones, Decorar, Mi jardín y Mascotas.
+- **Ajustes:** Ajustes, Voz, Editar controles y Dispositivos en computadora y dispositivos táctiles.
 
 Organiza el teléfono con clic derecho sobre un icono o manteniéndolo pulsado durante un segundo. En edición puedes arrastrar accesos, agruparlos en carpetas, cambiar el nombre de una carpeta tocando su título y añadir accesos desde **Biblioteca de apps**. La × quita el acceso y conserva sus datos; Ajustes siempre permanece disponible. En **Personalizar carpeta** puedes elegir un icono existente y cualquier color, previsualizarlo, guardar, cancelar o restablecer la apariencia. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad. La app **Dispositivos**, en la carpeta Ajustes, permite asociar dos equipos con un código; quien lo crea elige el jugador principal y las herramientas del compañero.
 
@@ -50,7 +49,7 @@ Para mantener una aldea en tu propio equipo o servidor, sigue la [guía de servi
 
 Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra colaborativa, tarjetas, quizzes, proyectos, música local y un reloj de concentración. Son actividades dentro de la aldea: tú eliges cuáles forman parte de tu día. Las herramientas manuales funcionan sin IA; la integración local con Ollama es opcional.
 
-La web y `main` incluyen ahora ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Acércate al animal y pulsa **E** para acariciarlo, llamarlo o enviarlo a casa. Consulta la [entrega inicial](docs/AMENDMENT.md) y las [correcciones de mascotas, teléfono, mando e idiomas](docs/PETS-CONTROLS.md). Los instaladores dev.8 conservan su versión etiquetada.
+La web y los instaladores dev.9 incluyen ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Acércate al animal y pulsa **E** para acariciarlo, llamarlo o enviarlo a casa. Consulta la [entrega inicial](docs/AMENDMENT.md) y las [correcciones de mascotas, teléfono, mando e idiomas](docs/PETS-CONTROLS.md). Consulta también [animales personalizados y dispositivos asociados](docs/CUSTOM-PETS-COMPANION.md).
 
 ## Empezar a jugar
 
