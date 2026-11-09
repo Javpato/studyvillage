@@ -7,12 +7,12 @@ describe('phone layout',()=>{
  it('starts with the requested apps and folders',()=>{expect(defaultPhoneLayout().entries).toEqual([
   {type:'app',id:'village'},{type:'app',id:'contacts'},
   {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden','pets']},
-  {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor']},
+  {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor','devices']},
  ]);});
  it('moves apps without duplication and preserves settings when deleting its folder',()=>{
   let layout=movePhoneApp(defaultPhoneLayout(),'ink','home');layout=movePhoneApp(layout,'ink',null);
   layout=removePhoneFolder(layout,'settings');expect(phoneLayoutSchema.parse(layout)).toEqual(layout);
-  expect(layout.entries.slice(-3)).toEqual(['settings','voice','hud-editor'].map(id=>({type:'app',id})));
+  expect(layout.entries.slice(-4)).toEqual(['settings','voice','hud-editor','devices'].map(id=>({type:'app',id})));
   expect(removePhoneApp(layout,'settings')).toBe(layout);expect(removePhoneApp(layout,'ink').entries.some(e=>e.id==='ink')).toBe(false);
  });
  it('rejects duplicates and missing settings, and recovers invalid local state',()=>{
@@ -43,7 +43,7 @@ import {dropPhoneItem} from '../../packages/core/src/phone/layout';
 it('distinguishes Settings app from its namesake folder and keeps it installed',()=>{
  let layout=movePhoneApp(defaultPhoneLayout(),'settings',null);
  layout=dropPhoneItem(layout,{type:'app',id:'settings'},{type:'group',target:{type:'folder',id:'settings'}});
- expect(layout.entries.find(e=>e.type==='folder'&&e.id==='settings')).toMatchObject({apps:['voice','hud-editor','settings']});
+ expect(layout.entries.find(e=>e.type==='folder'&&e.id==='settings')).toMatchObject({apps:['voice','hud-editor','devices','settings']});
  expect(phoneLayoutSchema.parse(layout)).toEqual(layout);
 });
 it('inserts apps and whole folders into packed slots without nesting or losing custom names',()=>{
@@ -53,4 +53,16 @@ it('inserts apps and whole folders into packed slots without nesting or losing c
  expect(dropPhoneItem(layout,{type:'folder',id:'settings'},{type:'group',target:{type:'folder',id:'home'}})).toBe(layout);
  layout=dropPhoneItem(layout,{type:'app',id:'garden'},{type:'insert',folder:'home',index:1});expect(layout.entries[2]).toMatchObject({apps:['house','garden','rooms','decorate','pets']});
  expect(original.entries[2]).toMatchObject({apps:['house','rooms','decorate','garden','pets']});
+});
+
+it('introduces Devices once without changing custom folders or reinstalling a removed shortcut',()=>{
+ const old=defaultPhoneLayout();delete old.introducedApps;
+ const settings=old.entries.find(e=>e.type==='folder'&&e.id==='settings')!;
+ if(settings.type!=='folder')throw Error('Expected folder');
+ settings.apps=settings.apps.filter(id=>id!=='devices');settings.name='My tools';settings.appearance={icon:'notes',color:'#123456'};
+ const upgraded=normalizePhoneLayout(old);
+ expect(upgraded.entries.find(e=>e.id==='settings')).toMatchObject({name:'My tools',appearance:settings.appearance,apps:['settings','voice','hud-editor','devices']});
+ expect(settings.apps).not.toContain('devices');
+ expect(normalizePhoneLayout(upgraded)).toEqual(upgraded);
+ const removed=removePhoneApp(upgraded,'devices');expect(normalizePhoneLayout(removed)).toEqual(removed);
 });

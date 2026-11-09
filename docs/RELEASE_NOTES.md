@@ -1,18 +1,16 @@
-# StudyVillage 1.0.0-dev.8
+# StudyVillage 1.0.0-dev.9
 
-Esta entrega reúne los cambios de la aldea posteriores a dev.7 y actualiza los cuatro instaladores al mismo código.
+Actualiza la web y los cuatro instaladores al mismo código, con mascotas personalizadas, dispositivos asociados y las correcciones posteriores a dev.8.
 
 ## Novedades
 
-- Solicitudes de amistad: enviar, aceptar, rechazar y cancelar; aceptación mutua y recuperación al reconectar a un servidor actualizado.
-- Avisos de amistad y voz: uno a la vez, sin sonido ni cola, cierre inmediato y acceso a la solicitud.
-- Audio opcional al compartir pantalla. Cada espectador puede mover, redimensionar, minimizar y restaurar sus ventanas sin cambiar la vista de los demás.
-- Mando estándar: sección propia en Ajustes con guía USB/Bluetooth, selección, prueba y navegación de menús, aldea y Bloques del Bosque. Para escribir y dibujar se usa teclado, ratón o pantalla táctil.
-- Bloques del Bosque: juego a la izquierda y cámaras a la derecha, botón exterior para ocultar vídeo localmente y terminar junto a comenzar. Incluye dificultades, práctica y rivales NPC.
-- Correcciones de contención en teléfono, teclado del código de aldea en iPad, distribución del jardín y estabilidad de tamaño con zoom. Controles de llamada predeterminados abajo a la izquierda en ordenador.
-- Organización del teléfono por carpetas, mejoras de arrastre y descripciones/previsualización de sprites. Se retira la estación de proyectos de la plaza; sus datos y otros accesos se conservan.
-- Reloj flotante: arrastre sin saltos después de editar los controles, tamaño contenido en teléfono y posición/visibilidad conservadas al recargar.
-- README y manual técnico reorganizados por funciones y componentes.
+- Crea animales desde el **mueble Taller de mascotas**: dibuja o importa sus sprites, elige una habilidad existente y su casa. La app Mascotas conserva la gestión y edición de animales existentes; crear o duplicar requiere el taller. Se corrige el error de validación al colocar ese mueble.
+- Nueva app **Dispositivos**, en la carpeta Ajustes del teléfono, con tres instrucciones breves. Abre StudyVillage en ambos equipos, introduce el código y el creador elige el jugador principal y las herramientas del compañero. También está en la biblioteca de apps.
+- Cuaderno, pizarra, editores de personajes/animales, concentración y medios en el compañero. Para crear un animal desde él, abre primero el taller del jugador principal. El perfil del compañero se conserva.
+- Edita el teléfono manteniendo un elemento pulsado **1 segundo**, o con clic derecho/F2. Iconos y colores de carpetas personalizables y ayudas según el dispositivo activo.
+- Mascotas visibles con recursos reemplazables, casas diferenciadas, comida, caricias, seguimiento y bots. Ojos corregidos, salto del conejo, bola persistente del hámster y diálogo automático más compacto del loro.
+- Pizarra y armario más fiables, diálogos NPC ajustables, ciclos automáticos de concentración/descanso, enlaces a repositorios y traducciones ES/EN/FR corregidas.
+- El micrófono se conserva al desplazarse entre zonas de proximidad, y se inicializa al abrir una aldea. Salir de una sesión y cambiar de canal explícito siguen revocando la captura.
 
 ## Actualizar
 

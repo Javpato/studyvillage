@@ -40,7 +40,7 @@ El teléfono reúne los accesos cotidianos:
 - **Hogar:** Mi casa, Habitaciones, Decorar y Mi jardín.
 - **Ajustes:** Ajustes, Voz y Editar controles en computadora y dispositivos táctiles.
 
-Organiza el teléfono con clic derecho sobre un icono o manteniéndolo pulsado durante tres segundos. En edición puedes arrastrar accesos, agruparlos en carpetas, cambiar el nombre de una carpeta tocando su título y añadir accesos desde **Biblioteca de apps**. La × quita el acceso y conserva sus datos; Ajustes siempre permanece disponible. En **Personalizar carpeta** puedes elegir un icono existente y cualquier color, previsualizarlo, guardar, cancelar o restablecer la apariencia. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad.
+Organiza el teléfono con clic derecho sobre un icono o manteniéndolo pulsado durante un segundo. En edición puedes arrastrar accesos, agruparlos en carpetas, cambiar el nombre de una carpeta tocando su título y añadir accesos desde **Biblioteca de apps**. La × quita el acceso y conserva sus datos; Ajustes siempre permanece disponible. En **Personalizar carpeta** puedes elegir un icono existente y cualquier color, previsualizarlo, guardar, cancelar o restablecer la apariencia. La distribución se guarda en cada dispositivo y se incluye en las copias de seguridad. La app **Dispositivos**, en la carpeta Ajustes, permite asociar dos equipos con un código; quien lo crea elige el jugador principal y las herramientas del compañero.
 
 ## Compartir el tiempo
 

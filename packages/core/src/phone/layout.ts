@@ -1,7 +1,7 @@
 import {z} from 'zod';
 
 export const PHONE_APPS = {
- pets:'Mascotas', village:'Aldea', contacts:'Contactos', identity:'Identidad', house:'Mi casa', rooms:'Habitaciones',
+ devices:'Dispositivos', pets:'Mascotas', village:'Aldea', contacts:'Contactos', identity:'Identidad', house:'Mi casa', rooms:'Habitaciones',
  decorate:'Decorar', garden:'Mi jardín', settings:'Ajustes', connection:'Conexión', voice:'Voz',
  'hud-editor':'Editar controles', ink:'Cuaderno de tinta', music:'Música', study:'Estudio', projects:'Proyectos', focus:'Concentración', tetris:'Bloques del Bosque',
 } as const;
@@ -9,17 +9,17 @@ export type PhoneAppId = keyof typeof PHONE_APPS;
 const appId=z.enum(Object.keys(PHONE_APPS) as [PhoneAppId,...PhoneAppId[]]);
 const app=z.strictObject({type:z.literal('app'),id:appId});
 const folder=z.strictObject({type:z.literal('folder'),id:z.string().min(1).max(80),name:z.string().trim().min(1).max(48),builtin:z.boolean().optional(),appearance:z.object({icon:z.string().max(80),color:z.string().regex(/^#[0-9a-fA-F]{6}$/)}).optional().catch(undefined),apps:z.array(appId).max(16)});
-export const phoneLayoutSchema=z.strictObject({version:z.literal(1),entries:z.array(z.discriminatedUnion('type',[app,folder])).max(48)}).superRefine((layout,ctx)=>{
+export const phoneLayoutSchema=z.strictObject({version:z.literal(1),introducedApps:z.array(appId).max(32).optional(),entries:z.array(z.discriminatedUnion('type',[app,folder])).max(48)}).superRefine((layout,ctx)=>{
  const apps=layout.entries.flatMap(e=>e.type==='app'?[e.id]:e.apps);
  const folders=layout.entries.filter(e=>e.type==='folder').map(e=>e.id);
  if(new Set(apps).size!==apps.length||new Set(folders).size!==folders.length||!apps.includes('settings'))ctx.addIssue({code:'custom',message:'Invalid phone layout'});
 });
 export type PhoneLayout=z.infer<typeof phoneLayoutSchema>;
 export type PhoneFolder=Extract<PhoneLayout['entries'][number],{type:'folder'}>;
-export function defaultPhoneLayout():PhoneLayout{return {version:1,entries:[
+export function defaultPhoneLayout():PhoneLayout{return {version:1,introducedApps:['devices'],entries:[
  {type:'app',id:'village'},{type:'app',id:'contacts'},
  {type:'folder',id:'home',name:'Hogar',builtin:true,apps:['house','rooms','decorate','garden','pets']},
- {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor']},
+ {type:'folder',id:'settings',name:'Ajustes',builtin:true,apps:['settings','voice','hud-editor','devices']},
 ]};}
 export function removePhoneFolder(layout:PhoneLayout,id:string):PhoneLayout{
  const found=layout.entries.find(e=>e.type==='folder'&&e.id===id);
@@ -41,7 +41,17 @@ export function removePhoneApp(layout:PhoneLayout,id:PhoneAppId):PhoneLayout{
 /** Also used when importing older backups. Removed shortcuts never delete app data. */
 export function normalizePhoneLayout(layout:PhoneLayout):PhoneLayout {
  const retired=new Set(['identity','connection']);
- return {...layout,entries:layout.entries.flatMap<PhoneLayout['entries'][number]>(e=>e.type==='app'?(retired.has(e.id)?[]:[e]):[{...e,apps:e.apps.filter(id=>!retired.has(id))}]).filter(e=>e.type==='app'||e.apps.length>0)};
+ const next:PhoneLayout={...layout,entries:layout.entries.flatMap<PhoneLayout['entries'][number]>(e=>e.type==='app'?(retired.has(e.id)?[]:[e]):[{...e,apps:e.apps.filter(id=>!retired.has(id))}]).filter(e=>e.type==='app'||e.apps.length>0)};
+ // Introduce the shortcut once; subsequent explicit removal stays respected.
+ if(!next.introducedApps?.includes('devices')){
+  if(!next.entries.some(e=>e.type==='app'?e.id==='devices':e.apps.includes('devices'))){
+   const settings=next.entries.find(e=>e.type==='folder'&&e.id==='settings');
+   if(settings?.type==='folder'&&settings.apps.length<16)settings.apps.push('devices');
+   else if(next.entries.length<48)next.entries.push({type:'app',id:'devices'});
+  }
+  next.introducedApps=[...next.introducedApps??[],'devices'];
+ }
+ return next;
 }
 /** Compatibility helper; interactive code uses typed references. */
 export function dropPhoneApp(layout:PhoneLayout,id:PhoneAppId,target:string|null,group=false):PhoneLayout {

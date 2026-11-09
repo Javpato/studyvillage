@@ -2694,7 +2694,6 @@
   "Color hexadecimal": "Color hexadecimal",
   "Escribe un color como #4a7856.": "Escribe un color como #4a7856.",
   "Pulsa Listo para salir de edición": "Pulsa Listo para salir de edición",
-  "Mantén pulsado un elemento 3 segundos para editar": "Mantén pulsado un elemento 3 segundos para editar",
   "{button} · Editar teléfono": "{button} · Editar teléfono",
   "Clic derecho sobre un elemento para editar · F2": "Clic derecho sobre un elemento para editar · F2",
   "Editar teléfono": "Editar teléfono",
@@ -2797,5 +2796,12 @@
   "Exportar trabajo pendiente": "Exportar trabajo pendiente",
   "Micrófono activo": "Micrófono activo",
   "Volver a enlazar": "Volver a enlazar",
-  "Silenciado": "Silenciado"
+  "Silenciado": "Silenciado",
+  "Dispositivos": "Dispositivos",
+  "Para crear o duplicar un animal, usa el mueble Taller de mascotas.": "Para crear o duplicar un animal, usa el mueble Taller de mascotas.",
+  "Abre el mueble Taller de mascotas en el jugador principal.": "Abre el mueble Taller de mascotas en el jugador principal.",
+  "Mantén pulsado un elemento 1 segundo para editar": "Mantén pulsado un elemento 1 segundo para editar",
+  "Abre StudyVillage en los dos dispositivos.": "Abre StudyVillage en los dos dispositivos.",
+  "Crea un código aquí y escríbelo en el otro.": "Crea un código aquí y escríbelo en el otro.",
+  "Aquí, elige el jugador principal y confirma.": "Aquí, elige el jugador principal y confirma."
 }

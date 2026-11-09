@@ -1,3 +1,13 @@
+# dev.9 release candidate — 9 November 2026
+
+Requested: keep pet management in the phone but create animals only through the furniture, reduce phone edit hold to one second, add a Devices phone app with short pairing instructions, and update every release.
+
+Implemented candidate: creation/duplication restricted to the furniture atelier, including companion creation requests; existing animals remain editable/manageable in the phone. Devices is installed in the Settings folder with one-time layout migration that preserves customized folders and respects subsequent shortcut removal. Three localized pairing steps reuse the existing approved-code/role/tool flow. Hold timing and its ES/EN/FR hint now use one second. Version is `1.0.0-dev.9`, including Android version code 10008. Release validation adds live pairing and production WebKit workshop/Devices journeys; existing native installer verification gates remain required.
+
+Completed: typecheck, phone migration unit checks and catalogue checks. Focused browser and full baseline checks are running. Next: push candidate, dispatch the existing four-platform release workflow (without creating or moving an old tag), verify all native receipts and published checksums, update download links, retain only current delivery packages and clean task output. Earlier releases remain published until the new release passes all gates. No native or physical-device success is claimed yet.
+
+---
+
 # Animal atelier placement correction — 9 November 2026
 
 Reported: placing the animal atelier displays the generic “complete the texts and answers” validation message. Reproduced before the fix by serializing/projection of a placeable `pet-atelier`: the local-store furniture enum omitted it, although the catalogue and wire/room schemas accepted it. This is a validation mismatch, not a missing text field. The asset-pack validator had the same stale list.

@@ -2699,7 +2699,6 @@
   "Color hexadecimal": "Couleur hexadécimale",
   "Escribe un color como #4a7856.": "Saisissez une couleur telle que #4a7856.",
   "Pulsa Listo para salir de edición": "Sélectionnez Terminé pour quitter le mode édition",
-  "Mantén pulsado un elemento 3 segundos para editar": "Maintenez un élément appuyé pendant 3 secondes pour le modifier",
   "{button} · Editar teléfono": "{button} · Modifier le téléphone",
   "Clic derecho sobre un elemento para editar · F2": "Clic droit sur un élément pour le modifier · F2",
   "Editar teléfono": "Modifier le téléphone",
@@ -2800,5 +2799,12 @@
   "Exportar trabajo pendiente": "Exporter le travail en attente",
   "Micrófono activo": "Microphone actif",
   "Volver a enlazar": "Associer à nouveau",
-  "Silenciado": "Micro coupé"
+  "Silenciado": "Micro coupé",
+  "Dispositivos": "Appareils",
+  "Para crear o duplicar un animal, usa el mueble Taller de mascotas.": "Pour créer ou dupliquer un animal, utilise le meuble Atelier des animaux.",
+  "Abre el mueble Taller de mascotas en el jugador principal.": "Ouvre le meuble Atelier des animaux sur l’appareil du joueur principal.",
+  "Mantén pulsado un elemento 1 segundo para editar": "Maintiens un élément pendant 1 seconde pour modifier le téléphone",
+  "Abre StudyVillage en los dos dispositivos.": "Ouvre StudyVillage sur les deux appareils.",
+  "Crea un código aquí y escríbelo en el otro.": "Crée un code ici et saisis-le sur l’autre appareil.",
+  "Aquí, elige el jugador principal y confirma.": "Ici, choisis le joueur principal et confirme."
 }

@@ -51,8 +51,10 @@ jobs:
       - run: npm run test:pages
       - name: Complete Chromium regression suite
         run: xvfb-run -a npm run test:e2e
-      - name: Phone and starter house in WebKit
-        run: npm run test:webkit -- phone-layout.spec.ts initial-house.spec.ts
+      - name: Live device pairing through the phone app
+        run: SV_LIVE_PAIR=1 npm run test:e2e -- companion-live.spec.ts
+      - name: Phone, workshop and starter house in WebKit
+        run: npm run test:webkit -- phone-layout.spec.ts phone-devices.spec.ts custom-pets.spec.ts initial-house.spec.ts
       - uses: actions/upload-artifact@v7
         with:
           name: release-web

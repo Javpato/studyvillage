@@ -80,7 +80,7 @@ Physical Apple Pencil/palm rejection, Android active pen, actual Windows/macOS e
 
 ## Direct editing and Forest Blocks
 
-- The phone is organized directly: right click, or hold an icon for three seconds; drag to reorder/group, remove shortcuts with ×, rename open folders by their title, and add optional tools through the App library. Settings remains available; removing a shortcut preserves its data. Legacy layouts are normalized when loaded.
+- The phone is organized directly: right click, or hold an icon for one second; drag to reorder/group, remove shortcuts with ×, rename open folders by their title, and add optional tools through the App library. Settings remains available; removing a shortcut preserves its data. Legacy layouts are normalized when loaded.
 - Garden editing uses a separate high-density canvas, placement grid, invalid-zone outlines, zoom and pan. Opening, saving or canceling it preserves the player's actual location.
 - Edit controls supports desktop and touch profiles, including clock placement, size and visibility. Identity stays in Settings; signaling/TURN configuration is under Servers → Advanced connection.
 - Forest Blocks is available at the community arcade and as an optional phone shortcut. Solo play runs offline, with a separate optional power-practice mode and local records. Battles support up to 16 participants on a sufficiently sized persistent server, spanning neighborhoods; temporary villages retain their existing six-person capacity.
