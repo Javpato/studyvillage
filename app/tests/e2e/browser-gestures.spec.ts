@@ -7,7 +7,10 @@ const output='test-results/sv-browser-gestures';
 test('long-press policy covers detached dialogs without disabling editable or intentional copy content',async({page,browserName})=>{
  await page.goto('/');const menu=page.getByTestId('phone-button');await expect(menu).toBeVisible();
  await expect(menu).toHaveCSS('user-select','none');await expect(menu).toHaveCSS('touch-action','manipulation');await expect(page.locator('.sv-stage-pane canvas')).toHaveCSS('touch-action','none');
- const point=(await menu.boundingBox())!;await page.touchscreen.tap(point.x+point.width/2,point.y+point.height/2);await expect(page.locator('.sv-phone')).toBeVisible();await page.touchscreen.tap(point.x+point.width/2,point.y+point.height/2);await expect(page.locator('.sv-phone')).toBeHidden();expect(await page.evaluate(()=>window.visualViewport!.scale)).toBe(1);
+ await menu.tap();const phone=page.locator('.sv-phone');await expect(phone).toBeVisible();
+ // The open phone covers the menu button once its entrance animation settles.
+ // Close through its visible control instead of tapping stale background coordinates.
+ await phone.getByRole('button',{name:'Cerrar menú',exact:true}).tap();await expect(phone).toBeHidden();expect(await page.evaluate(()=>window.visualViewport!.scale)).toBe(1);
  const dialog=await settings(page),input=dialog.getByLabel('Nombre visible',{exact:true});await input.fill('Copy this name');await input.evaluate(el=>(el as HTMLInputElement).setSelectionRange(0,4));expect(await input.evaluate(el=>(el as HTMLInputElement).selectionEnd!-(el as HTMLInputElement).selectionStart!)).toBe(4);
  await expect(input).toHaveCSS('user-select','text');
  const policy=await dialog.evaluate(el=>{

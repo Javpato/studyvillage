@@ -6,9 +6,16 @@ Status: candidate preparation; **not yet a verified or published release**. Rele
 
 Completed before extended checks: clean source tree; GitHub `main` matches local source; dev.10 tag does not exist; previous dev.9 has all six expected assets. Previous runtime Linux/macOS checks: [42611843139](https://github.com/Javpato/studyvillage/actions/runs/42611843139).
 
-Candidate commit and exact workflow links will be recorded immediately after push/dispatch. Workflow: [Build and publish Releases](https://github.com/Javpato/studyvillage/actions/workflows/releases.yml).
+Candidate [`9ac6e1142d63628bbec9b97522caa45fb09e9d29`](https://github.com/Javpato/studyvillage/commit/9ac6e1142d63628bbec9b97522caa45fb09e9d29) is pushed to `main`. [Release workflow 42644584362](https://github.com/Javpato/studyvillage/actions/runs/42644584362) is running; [Pages 42644556682](https://github.com/Javpato/studyvillage/actions/runs/42644556682) is running.
 
-Remaining: local version/build checks; push candidate; release validation and native checks on all five platform/architecture combinations; publication; downloaded asset checksums/provenance; update README download links only after publication; replace superseded local release packages and remove task test output. Physical iPad, Pencil, microphones/speakers and cross-network hardware remain outside automated certification.
+Local candidate checks passed: 551 application + 37 server tests, both TypeScript checks, 2,871 ES/EN/FR messages, web/PWA and server builds. Installer tests initially hit sandbox `spawnSync git EPERM`; the complete baseline passed outside the sandbox. The built web content remains `studyvillage-861b8b1ef7de1d6f` (177 files including the worker), matching the already published companion runtime.
+
+
+First release run 42644584362 stopped before packaging: 237 Chromium journeys passed, 18 optional journeys skipped, and one gesture journey failed. Investigation reproduced the stale-coordinate test failure: the phone panel moves over the original menu-button location as its entrance animation settles. The test now uses native taps on the visible menu and close controls, retaining text-selection, context-menu, double-click suppression and zoom assertions. Runtime files are unchanged. Corrected gesture suite: 9/9 Chromium executions (three repetitions), 2/2 WebKit journeys with its CDP-only case intentionally skipped. Candidate Pages deployment 42644556682 passed.
+
+The correction will be pushed before restarting the complete release gates; the new candidate and run will be recorded below.
+
+Remaining: release validation and native checks on all five platform/architecture combinations; publication; downloaded asset checksums/provenance; update README download links only after publication; replace superseded local release packages and remove task test output. Physical iPad, Pencil, microphones/speakers and cross-network hardware remain outside automated certification.
 
 ---
 
