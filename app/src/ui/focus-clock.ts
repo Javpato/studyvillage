@@ -1,6 +1,10 @@
+import {FocusAudio} from './focus-audio';
+import {FocusPrograms,focusStepLabel} from './focus-programs';
+import {loadFocusAudio,saveFocusAudio} from '../../../packages/runtime/src/storage/focus-audio';
+import {FOCUS_COMMANDS,type FocusCommand} from './focus-clock-model';
 import {layoutViewport,subscribeViewport} from '../input/browser-viewport';
 import {currentHudProfile,loadHud,saveHud,type HudWidget} from '../input/hud-layout';
-import {msg,setDisplayText,setDisplayAttribute,subscribeLanguage} from '../i18n';
+import {msg,t as msgText,setDisplayText,setDisplayAttribute,subscribeLanguage} from '../i18n';
 import {FocusClockModel,FOCUS_CLOCK_KEY,newFocusClockState,parseFocusClockState,durationFromFields,clockParts,formatClock,type FocusMode} from './focus-clock-model';
 import './study-desk.css';
 const element=<K extends keyof HTMLElementTagNameMap>(tag:K,cls='',text?:string):HTMLElementTagNameMap[K]=>{const node=document.createElement(tag);node.className=cls;if(text)setDisplayText(node,msg(text));return node;};
@@ -13,24 +17,26 @@ export class FocusClock {
  private face=element('output','sv-focus-face');private ring=element('div','sv-focus-dial');private phase=element('span','sv-desk-eyebrow');private status=element('p','sv-focus-status');private error=element('p','sv-desk-error');
  private start=button('Comenzar',()=>this.toggle(),'sv-desk-button sv-desk-primary');private fields:Record<FocusMode,HTMLInputElement[]>={focus:[],break:[]};
  private hudFace=element('span','sv-focus-hud-time');private hudPhase=element('span','sv-focus-hud-mode');private hudPlay=button('',()=>this.toggle(),'sv-desk-icon-button');private switches=new Set<HTMLInputElement>();
+ private audio=new FocusAudio(key=>setDisplayText(this.error,msg(key)));private programs!:FocusPrograms;private linkRole:'primary'|'companion'|null=null;private remoteFocus=false;private pomodoroHint=element('p','sv-subtle','Los intervalos se repiten automáticamente. Los cambios se aplican al siguiente intervalo. Reiniciar detiene la sesión.');private next=element('p','sv-subtle');private fallback=element('p','sv-subtle');
  private valid=true;private pointer:{id:number;x:number;y:number;left:number;top:number}|null=null;
  private hudLayout:HudWidget|null=null;
- private resize=()=>this.placeHud();private visibility=()=>{if(this.model.tick())this.save();this.paint();};
+ private resize=()=>this.placeHud();private visibility=()=>{this.tick();this.paint();};
  constructor(){
-  let saved=newFocusClockState();try{const raw=localStorage.getItem(FOCUS_CLOCK_KEY);if(raw)saved=parseFocusClockState(JSON.parse(raw));}catch{/* Keep an unreadable preference untouched until the user changes a setting. */}this.model=new FocusClockModel(saved);
+  let saved=newFocusClockState();try{const raw=localStorage.getItem(FOCUS_CLOCK_KEY);if(raw)saved=parseFocusClockState(JSON.parse(raw));}catch{/* Keep an unreadable preference untouched until the user changes a setting. */}this.model=new FocusClockModel(saved);this.audio.baseline(this.model.state.alert.id);
   setDisplayAttribute(this.root,'aria-label',msg('Reloj de concentración'));
   const header=element('header','sv-desk-header');const titles=element('div');titles.append(element('span','sv-desk-eyebrow','Un rato para ti'),element('h2','','Reloj de concentración'));const close=button('×',()=>this.root.close(),'sv-desk-close');setDisplayAttribute(close,'aria-label',msg('Cerrar'));header.append(titles,close);
-  const body=element('div','sv-focus-body');const display=element('section','sv-focus-display');const dialInner=element('div','sv-focus-dial-inner');setDisplayAttribute(this.face,'aria-label',msg('Tiempo restante'));this.face.setAttribute('aria-live','off');dialInner.append(this.phase,this.face,element('span','sv-focus-dial-note','A tu ritmo'));this.ring.append(dialInner);this.status.setAttribute('role','status');display.append(this.ring,this.status);
+  const body=element('div','sv-focus-body');const display=element('section','sv-focus-display');const dialInner=element('div','sv-focus-dial-inner');setDisplayAttribute(this.face,'aria-label',msg('Tiempo restante'));this.face.setAttribute('aria-live','off');dialInner.append(this.phase,this.face,element('span','sv-focus-dial-note','A tu ritmo'));this.ring.append(dialInner);this.status.setAttribute('role','status');display.append(this.ring,this.status,this.next,this.fallback);
   const setup=element('section','sv-focus-setup');for(const mode of ['focus','break'] as const){
    const duration=element('fieldset','sv-focus-duration');duration.append(element('legend','',mode==='focus'?'Concentración':'Descanso'));const row=element('div','sv-focus-fields');
    for(const label of ['Horas','Minutos','Segundos']){const field=element('label','sv-focus-unit'),input=element('input');input.type='text';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';setDisplayAttribute(input,'aria-label',msg('{phase}: {unit}',{phase:msg(mode==='focus'?'Concentración':'Descanso'),unit:msg(label)}));input.oninput=()=>this.readFields();input.onblur=()=>{if(this.valid)this.syncFields();};field.append(input,element('span','',label));this.fields[mode].push(input);row.append(field);}duration.append(row);setup.append(duration);
   }
-  this.error.setAttribute('role','status');setup.append(this.error,element('p','sv-subtle','Los intervalos se repiten automáticamente. Los cambios se aplican al siguiente intervalo. Reiniciar detiene la sesión.'));
-  const actions=element('div','sv-focus-actions');actions.append(this.start,button('Reiniciar',()=>{this.model.reset();this.valid=true;this.error.textContent='';this.syncFields();this.save();this.paint();}));setup.append(actions,this.visibilitySwitch());body.append(display,setup);this.root.append(header,body);this.root.addEventListener('close',()=>{if(!this.valid){this.valid=true;this.error.textContent='';this.syncFields();this.paint();}});
+  this.error.setAttribute('role','status');setup.append(this.error,this.pomodoroHint);
+  const actions=element('div','sv-focus-actions');actions.append(this.start,button('Reiniciar',()=>{this.model.reset();this.valid=true;this.error.textContent='';this.syncFields();this.save();this.paint();}));this.programs=new FocusPrograms({command:(action,value)=>{this.command(action,value);},enable:()=>this.audio.enable(),preview:()=>this.audio.play(this.model.state.sound,loadFocusAudio()),import:async file=>{const asset=await this.audio.import(file);await this.importSound(asset);}});setup.append(actions,this.visibilitySwitch(),this.programs.root);body.append(display,setup);this.root.append(header,body);this.root.addEventListener('close',()=>{if(!this.valid){this.valid=true;this.error.textContent='';this.syncFields();this.paint();}});
   this.buildHud();document.body.append(this.root,this.hud);this.syncFields();this.paint();this.placeHud();
-  this.timer=setInterval(()=>{if(this.model.tick())this.save();this.paint();},250);this.unviewport=subscribeViewport(this.resize);document.addEventListener('visibilitychange',this.visibility);this.unlanguage=subscribeLanguage(()=>this.paint());
+  this.timer=setInterval(()=>{this.tick();this.paint();},250);this.unviewport=subscribeViewport(this.resize);document.addEventListener('visibilitychange',this.visibility);this.unlanguage=subscribeLanguage(()=>this.paint());
  }
  private readFields():void{
+  this.tick();
   const values=Object.fromEntries((['focus','break'] as const).map(mode=>[mode,durationFromFields(...this.fields[mode].map(f=>f.value) as [string,string,string])]));
   this.valid=values.focus!==null&&values.break!==null;
   for(const mode of ['focus','break'] as const)for(const input of this.fields[mode])input.setAttribute('aria-invalid',String(values[mode]===null));
@@ -38,7 +44,11 @@ export class FocusClock {
   else{this.error.textContent='';for(const mode of ['focus','break'] as const)this.model.setDuration(values[mode]!,mode);this.save();}this.paint();
  }
  private syncFields():void{for(const mode of ['focus','break'] as const)clockParts(this.model.state.durations[mode]).forEach((value,i)=>{this.fields[mode][i].value=value;this.fields[mode][i].setAttribute('aria-invalid','false');});}
- private toggle():void{if(!this.valid)return;if(this.model.running)this.model.pause();else this.model.start();this.save();this.paint();this.placeHud();}
+ private toggle():void{if(!this.valid)return;if(!this.model.running)void this.audio.enable();if(this.model.running)this.model.pause();else this.model.start();this.save();this.paint();this.placeHud();}
+ private tick(){if(this.model.tick()){this.save();if(this.linkRole!=='companion'&&(this.model.state.sound.target==='primary'||!this.remoteFocus))void this.audio.alert(this.model.state.alert,this.model.state.sound,loadFocusAudio());else this.audio.baseline(this.model.state.alert.id);}}
+ setLinked(role:'primary'|'companion'|null,focus:boolean){if(role==='companion'||role==='primary'&&focus&&this.model.state.sound.target==='companion')this.audio.silence();this.linkRole=role;this.remoteFocus=role==='primary'&&focus;this.paint();}
+ async importSound(value:unknown){const asset=await saveFocusAudio(value);this.command('sound',{...this.model.state.sound,kind:'custom',customId:asset.id});return asset.id;}
+ soundAsset(){return loadFocusAudio();}
  private save():void{try{localStorage.setItem(FOCUS_CLOCK_KEY,JSON.stringify(this.model.state));}catch{setDisplayText(this.error,msg('El reloj sigue funcionando, pero no se pudo guardar su configuración.'));}}
  private visibilitySwitch():HTMLElement{const label=element('label','sv-desk-switch');const input=element('input');input.type='checkbox';input.checked=this.model.visible;setDisplayAttribute(input,'aria-label',msg('Mostrar reloj flotante'));input.onchange=()=>this.setHudVisible(input.checked);label.append(input,element('span','','Mostrar reloj flotante'));this.switches.add(input);return label;}
  setHudVisible(show:boolean):void{this.model.state.hud=show;this.paint();this.placeHud();this.saveHudPosition();}
@@ -72,12 +82,13 @@ export class FocusClock {
   try{const profile=currentHudProfile();saveHud(profile,{...loadHud(profile),clock:value});this.hudLayout=value;}catch{setDisplayText(this.error,msg('El reloj sigue funcionando, pero no se pudo guardar su configuración.'));}
  }
  private paint():void{
-  const {remaining,mode}=this.model.state;this.face.textContent=formatClock(remaining);this.hudFace.textContent=formatClock(remaining);setDisplayText(this.phase,msg(mode==='focus'?'Concentración':'Descanso'));setDisplayText(this.hudPhase,msg(mode==='focus'?'Concentración':'Descanso'));this.root.dataset.mode=mode;this.hud.dataset.running=String(this.model.running);
-  this.ring.style.setProperty('--clock-progress',`${Math.max(0,Math.min(1,remaining/this.model.duration))*360}deg`);setDisplayText(this.status,msg(remaining===0?'Tiempo cumplido. Respira y estírate.':this.model.running?'Un paso cada vez.':this.model.state.status==='paused'?'En pausa. Continúa cuando quieras.':'Tu siguiente paso empieza aquí.'));
+  const {remaining,mode}=this.model.state;this.face.textContent=formatClock(remaining);this.hudFace.textContent=formatClock(remaining);this.phase.textContent=this.hudPhase.textContent=focusStepLabel(this.model.state);this.programs?.update(this.model.state);this.pomodoroHint.hidden=!!(this.model.state.run||this.model.state.selectedProgramId);for(const field of [...this.fields.focus,...this.fields.break])field.closest('fieldset')!.hidden=!!(this.model.state.run||this.model.state.selectedProgramId);const run=this.model.state.run;const next=run?.steps[this.model.state.stepIndex+1]??(run?.repeat?run.steps[0]:null);this.next.textContent=next?msgText('Siguiente: {name}',{name:next.name}):'';this.fallback.hidden=this.model.state.sound.target!=='companion'||this.remoteFocus||this.linkRole==='companion';setDisplayText(this.fallback,msg('Sin compañero conectado, las alertas suenan en el principal si su audio está activado.'));this.root.dataset.mode=mode;this.hud.dataset.running=String(this.model.running);
+  this.ring.style.setProperty('--clock-progress',`${Math.max(0,Math.min(1,remaining/this.model.duration))*360}deg`);setDisplayText(this.status,msg(this.model.state.status==='finished'?'Programa terminado.':remaining===0?'Tiempo cumplido. Respira y estírate.':this.model.running?'Un paso cada vez.':this.model.state.status==='paused'?'En pausa. Continúa cuando quieras.':'Tu siguiente paso empieza aquí.'));
   setDisplayText(this.start,msg(this.model.running?'Pausar':this.model.state.status==='paused'?'Continuar':'Comenzar'));this.start.disabled=!this.valid;this.hud.hidden=!this.model.visible;this.hudPlay.textContent=this.model.running?'Ⅱ':'▶';setDisplayAttribute(this.hudPlay,'aria-label',msg(this.model.running?'Pausar reloj':'Continuar reloj'));for(const input of this.switches)input.checked=this.model.visible;
  }
- snapshot(){return structuredClone(this.model.state);}
- command(action:"start"|"pause"|"reset"|"duration",value?:{mode:"focus"|"break";seconds:number}){if(action==="duration"&&value)this.model.setDuration(value.seconds,value.mode);else if(action!=="duration")this.model[action]();this.syncFields();this.save();this.paint();return this.snapshot();}
+ snapshot(){this.tick();return structuredClone(this.model.state);}
+ command(action:FocusCommand,value?:unknown){if(!FOCUS_COMMANDS.includes(action))throw Error('Esta acción ya no está disponible.');this.tick();this.model.command(action,value);this.syncFields();this.save();this.paint();return this.snapshot();}
+
  open():void{this.visibility();if(!this.root.open)this.root.showModal();}
- dispose():void{clearInterval(this.timer);this.unlanguage();this.unviewport();document.removeEventListener('visibilitychange',this.visibility);this.root.remove();this.hud.remove();}
+ dispose():void{this.programs.dispose();this.audio.dispose();clearInterval(this.timer);this.unlanguage();this.unviewport();document.removeEventListener('visibilitychange',this.visibility);this.root.remove();this.hud.remove();}
 }

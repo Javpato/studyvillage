@@ -1,3 +1,5 @@
+import {FOCUS_AUDIO_KEY,focusAudioSchema,verifyFocusAudio} from './focus-audio';
+import {parseFocusClockState} from '../../../core/src/focus/clock';
 import {ownedPetSchema,type OwnedPet} from '../../../core/src/pets/definitions';
 import {petCollection,replacePetCollection} from './pets';
 import {assertPetLimit} from '../../../core/src/pets/model';
@@ -16,7 +18,7 @@ import { validateAssetPack } from '../../../../app/src/assets/custom-assets';
 import { validatePublicIdentity } from '../../../core/src/identity';
 
 const MAX_BACKUP=128*1024*1024;
-const baseKeys=['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1','whiteboards-v1','workspaces-v1','custom-assets-v1','avatar-sheet-v1','language','village-name','servers-v1','ollama-v2','review-v2','flashcard-progress-v1','role-sets','eraser-v1','hud-layout-v1','controls-v2','portrait-zoom-v1','environment-v1','interactive-objects-v1','network-v1','focus-clock-v1','npc-dialogue-v1','apple-pencil-mode-v1','phone-layout-v1'];
+const baseKeys=['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1','whiteboards-v1','workspaces-v1','custom-assets-v1','avatar-sheet-v1','language','village-name','servers-v1','ollama-v2','review-v2','flashcard-progress-v1','role-sets','eraser-v1','hud-layout-v1','controls-v2','portrait-zoom-v1','environment-v1','interactive-objects-v1','network-v1','focus-clock-v1','focus-audio-v1','npc-dialogue-v1','apple-pencil-mode-v1','phone-layout-v1'];
 const acceptedKey=(key:string)=>/^studyvillage-mailbox-v1:(?:own|[a-f0-9]{64})$/.test(key)||baseKeys.some(base=>key===`studyvillage-${base}`||(['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1'].includes(base)&&key.startsWith(`studyvillage-${base}:room:`)));
 const backupSchema=z.strictObject({format:z.literal('studyvillage-backup'),version:z.literal(1),createdAt:z.number().finite().nonnegative(),local:z.unknown(),values:z.record(z.string().max(512),z.string().max(8*1024*1024)),notebooks:z.unknown(),pets:z.array(ownedPetSchema).max(1000).optional(),references:z.record(z.string().max(512),z.string().max(8*1024*1024)).optional()});
 export interface AppBackup {format:'studyvillage-backup';version:1;createdAt:number;local:LocalData;values:Record<string,string>;notebooks:NotebookSnapshot;pets?:OwnedPet[];references?:Record<string,string>}
@@ -38,6 +40,8 @@ function validateEntry(key:string,raw:string):void {
  if(key.startsWith('studyvillage-secure-notes-v1'))z.object({notebooks:z.array(z.object({id:z.string().max(96),name:z.string().max(120),ownerId:z.string().max(128),createdAt:z.number()})).max(1000),notes:z.array(secureNoteSchema).max(10000)}).parse(value);
  else if(key.startsWith('studyvillage-flashcard-decks-v1'))z.array(flashcardDeckSchema).max(1000).parse(value);
  else if(key.startsWith('studyvillage-quizzes-v1'))z.object({version:z.literal(1),quizzes:z.array(quizDefinitionSchema).max(1000),migrated:z.array(z.string()).max(10000)}).parse(value);
+ else if(key==='studyvillage-focus-clock-v1')parseFocusClockState(value);
+ else if(key===FOCUS_AUDIO_KEY)focusAudioSchema.parse(value);
  else if(key==='studyvillage-npc-dialogue-v1')z.object({opacity:z.number().min(.35).max(1),size:z.enum(['small','standard','large']).optional(),textSize:z.enum(['normal','large']),lines:z.union([z.literal(2),z.literal(3)]),progressive:z.boolean()}).parse(value);
  else if(key==='studyvillage-workspaces-v1'){const spaces=z.record(z.string(),workspaceSchema).parse(value);if(Object.keys(spaces).length>2000)throw new AppError('invalid','Copia fuera de límites.');for(const [scope,doc]of Object.entries(spaces))if(scope.endsWith('/@floor'))floorWorkspaceSchema.parse(doc);}
  else if(key==='studyvillage-custom-assets-v1')validateAssetPack(value);
@@ -61,6 +65,7 @@ export async function parseBackup(text:string):Promise<AppBackup>{
  if(parsed.references&&Object.keys(parsed.references).length>2000)throw new AppError('invalid','Copia fuera de límites.');
  const rooms=JSON.parse(parsed.values['studyvillage-workspaces-v1']??'{}') as Record<string,{furniture:{kind:string;id:string;pet?:import('../../../core/src/pets/model').PetConfig}[]}>;assertPetLimit([local.house?.furniture??[],local.house?.garden??[],...Object.entries(rooms).filter(([key])=>key.startsWith('own/')).map(([,doc])=>doc.furniture)]);
  for(const pet of parsed.pets??[])if(await hash(new TextEncoder().encode(pet.sheet))!==pet.appearance.hash)throw new AppError('invalid','La copia contiene un adjunto dañado.');
+ if(parsed.values[FOCUS_AUDIO_KEY])await verifyFocusAudio(JSON.parse(parsed.values[FOCUS_AUDIO_KEY]));
  const notebooks=NotebookRepository.parseSnapshot(parsed.notebooks);
  for(const attachment of notebooks.attachments)if(await hash(decode(attachment.base64))!==attachment.sha256)throw new AppError('invalid','La copia contiene un adjunto dañado.');
  return {...parsed,local,notebooks};

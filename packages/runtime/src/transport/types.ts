@@ -33,6 +33,7 @@ export interface TransportEndpoint {
   call(endpoint: string, stream: MediaStream, metadata: unknown): MediaCall;
   onConnection(callback: (channel: DataChannel) => void): () => void;
   onCall(callback: (call: MediaCall) => void): () => void;
+  onError?(callback: (kind: string) => void): () => void;
   onSignalingChange(callback: (connected: boolean) => void): () => void;
   destroy(): void;
 }

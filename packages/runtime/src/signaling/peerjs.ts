@@ -58,6 +58,7 @@ export async function createPeerEndpoint(requestedId?:string): Promise<Transport
   const peer:Peer=requestedId?new Peer(requestedId,options):new Peer(options);
   const connections = new Set<(channel: DataChannel) => void>();
   const calls = new Set<(call: MediaCall) => void>();
+  const errors = new Set<(kind:string)=>void>();
   const changes = new Set<(connected: boolean) => void>();
   let destroyed = false;
   let reconnect: ReturnType<typeof setTimeout> | undefined;
@@ -72,7 +73,7 @@ export async function createPeerEndpoint(requestedId?:string): Promise<Transport
     if (!destroyed) reconnect = setTimeout(() => { if (!destroyed && peer.disconnected) { try { peer.reconnect(); } catch { /* Existing P2P links remain valid. */ } } }, 2_000);
   });
   peer.on('open', () => { for (const callback of changes) callback(true); });
-  peer.on('error', () => { for (const callback of changes) callback(false); });
+  peer.on('error', error => { for (const callback of errors) callback(error.type); for (const callback of changes) callback(false); });
   const id = await new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => { peer.destroy(); reject(new Error('No se pudo abrir la señalización.')); }, 15_000);
     const opened = (endpoint: string) => { clearTimeout(timeout); peer.off('error', failed); resolve(endpoint); };
@@ -85,7 +86,8 @@ export async function createPeerEndpoint(requestedId?:string): Promise<Transport
     call: (endpoint, stream, metadata) => mediaAdapter(peer.call(endpoint, stream, { metadata })),
     onConnection: callback => { connections.add(callback); return () => connections.delete(callback); },
     onCall: callback => { calls.add(callback); return () => calls.delete(callback); },
+    onError: callback => { errors.add(callback); return () => errors.delete(callback); },
     onSignalingChange: callback => { changes.add(callback); return () => changes.delete(callback); },
-    destroy: () => { destroyed = true; if (reconnect) clearTimeout(reconnect); connections.clear(); calls.clear(); changes.clear(); peer.destroy(); },
+    destroy: () => { destroyed = true; if (reconnect) clearTimeout(reconnect); connections.clear(); calls.clear(); changes.clear(); errors.clear(); peer.destroy(); },
   };
 }

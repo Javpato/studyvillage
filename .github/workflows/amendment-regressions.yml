@@ -44,7 +44,11 @@ jobs:
       - if: ${{ inputs.pets_only && !inputs.controllers_only }}
         run: npm run test:webkit -- custom-pets.spec.ts pet-expressions.spec.ts
       - if: ${{ !inputs.controllers_only && !inputs.pets_only }}
-        run: SV_LIVE_PAIR=1 npm run test:e2e -- companion-live.spec.ts
+        run: SV_LIVE_PAIR=1 npm run test:e2e -- companion-live.spec.ts companion-connection.spec.ts
+      - if: ${{ inputs.companion_only && !inputs.controllers_only }}
+        run: npm run test:e2e -- focus-programs.spec.ts study-desk.spec.ts phone-devices.spec.ts
+      - if: ${{ inputs.companion_only && !inputs.controllers_only }}
+        run: npm run test:webkit -- focus-programs.spec.ts study-desk.spec.ts phone-devices.spec.ts
       - if: ${{ !inputs.pets_only && !inputs.companion_only }}
         run: npx playwright test --config app/playwright.controllers.config.ts
       - uses: actions/upload-artifact@v7
