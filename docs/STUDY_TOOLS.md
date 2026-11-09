@@ -28,7 +28,7 @@ The focus UI accepts hours, minutes and seconds, automatically repeats focus/res
 
 Saved **Programs** add named, reorderable steps and optional repetition. They stop at the final step by default. A running program keeps its own snapshot; edits apply at its next start. The same editor is available on an authorized companion. State v2 migrates existing Pomodoro sessions without resetting their deadlines or paused remainder.
 
-Alerts offer three built-in sounds, volume/silence and a custom file (up to 5 MB, normalized to ten seconds). Custom audio persists and is included in complete backups. Select the principal or companion device and activate audio there; closing the clock view does not stop alert delivery. Sleeping browsers cannot guarantee audible alarms. See [linked devices](CUSTOM-PETS-COMPANION.md) and [verification](VERIFICATION.md).
+Alerts offer three built-in sounds, volume/silence and a custom file (up to 5 MB, normalized to ten seconds). Custom audio persists and is included in complete backups. Select the principal device, companion, or both and activate audio on each selected device; closing the clock view does not stop alert delivery. Sleeping browsers cannot guarantee audible alarms. See [linked devices](CUSTOM-PETS-COMPANION.md) and [verification](VERIFICATION.md).
 
 HUD position, visibility and safe layout are managed separately from the clock's duration. On small screens the clock should remain reachable without obscuring essential controls. Use focus-clock and HUD layout tests when changing timer state, positioning or persistence.
 

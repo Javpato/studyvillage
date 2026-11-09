@@ -2349,12 +2349,12 @@ class StudyUI {
     this.stopMoving();this.furnitureNameTarget=item.id;this.furnitureNameInput.value=defaultText(item.publicAlias);setDisplayAttribute(this.furnitureNameInput,'placeholder',msg(FURNITURE_LABELS[item.kind]));this.furnitureNameDialog.showModal();this.furnitureNameInput.focus();this.furnitureNameInput.select();
   }
   private async companionRequest(tool:CompanionTool,action:string,value:unknown):Promise<unknown>{
-    const view=this.view;if(!view)throw Error(t('Dispositivo no conectado.'));
+    const view=this.view;if(!view)throw Error('Dispositivo no conectado.');
     if(tool==='focus'){if(action==='open')return this.focusClock.snapshot();if(action==='state')return this.focusClock.snapshot();if(action==='audio-get')return this.focusClock.soundAsset();if(action==='audio-save')return this.focusClock.importSound(value);const result=this.focusClock.command(z.enum(FOCUS_COMMANDS).parse(action),value);if(action==='start'){this.focusClock.setHudVisible(true);if(!this.companionActiveView().tool){this.stopMoving();this.focusClock.open();}}return result;}
     if(!['focus','media'].includes(tool)&&this.companionActiveView().tool!==tool)throw Error('Esta acción ya no está disponible.');
-    if(tool==='notebook'){if(action==='open')return null;if(action==='state'){const state=this.notebooks.companionState();if(state.shared)return {shared:this.notebooks.companionSharedState(),book:null,page:state.page};return {book:(await this.companionNotebooks.repo.list()).find(b=>b.id===state.book)??null,page:state.page};}if(action==='shared-edit'){const operation=z.strictObject({namespace:z.string(),scope:z.string(),operation:z.unknown()}).parse(value);return this.notebooks.companionSharedCommit(operation.namespace,operation.scope,operation.operation);}if(action==='select'){const selected=z.strictObject({id:z.string().uuid(),page:z.string().uuid().optional()}).parse(value);const book=(await this.companionNotebooks.repo.list()).find(b=>b.id===selected.id);if(!book)throw Error('Copia no válida.');await this.notebooks.flushCompanion();this.notebooks.adoptCompanionBook(book,selected.page);return null;}return this.companionNotebooks.request(action,value);}
+    if(tool==='notebook'){if(action==='open'){await this.notebooks.flushCompanion();return null;}if(action==='state'){await this.notebooks.flushCompanion();const state=this.notebooks.companionState();if(state.shared)return {shared:this.notebooks.companionSharedState(),book:null,page:state.page};return {book:(await this.companionNotebooks.repo.list()).find(b=>b.id===state.book)??null,page:state.page};}if(action==='shared-edit'){const operation=z.strictObject({namespace:z.string(),scope:z.string(),operation:z.unknown()}).parse(value);return this.notebooks.companionSharedCommit(operation.namespace,operation.scope,operation.operation);}if(action==='select'){const selected=z.strictObject({id:z.string().uuid(),page:z.string().uuid().optional()}).parse(value);const book=(await this.companionNotebooks.repo.list()).find(b=>b.id===selected.id);if(!book)throw Error('Copia no válida.');await this.notebooks.flushCompanion();this.notebooks.adoptCompanionBook(book,selected.page);return null;}return this.companionNotebooks.request(action,value);}
     if(tool==='avatar'){if(action==='open'){return {identity:view.identity,appearance:getAvatarCustomization(),sheet:avatarSheetData()};}if(action==='save'){const draft=z.strictObject({appearance:appearanceSchema,sheet:z.string().max(700000).nullable()}).parse(value);if(draft.sheet)await setAvatarSheet(draft.sheet);await this.actions.updateAppearance(draft.appearance);return null;}}
-    if(tool==='animal'){if(!this.petCollection.creationOpen)throw Error('Abre el mueble Taller de mascotas en el jugador principal.');if(action==='open'){return {owner:view.identity.fingerprint};}if(action==='save'){const draft=z.strictObject({pet:ownedPetSchema,place:z.boolean()}).parse(value);if(draft.pet.owner!==view.identity.fingerprint||this.pets.isReserved(draft.pet.appearance.id))throw Error(t('Esta mascota no está disponible.'));await cachePetAsset(draft.pet.appearance.hash,draft.pet.sheet);await saveOwnedPet(draft.pet);if(draft.place)this.placeCustomPet(draft.pet);return null;}}
+    if(tool==='animal'){if(!this.petCollection.creationOpen)throw Error('Abre el mueble Taller de mascotas en el jugador principal.');if(action==='open'){return {owner:view.identity.fingerprint};}if(action==='save'){const draft=z.strictObject({pet:ownedPetSchema,place:z.boolean()}).parse(value);if(draft.pet.owner!==view.identity.fingerprint||this.pets.isReserved(draft.pet.appearance.id))throw Error('Esta mascota no está disponible.');await cachePetAsset(draft.pet.appearance.hash,draft.pet.sheet);await saveOwnedPet(draft.pet);if(draft.place)this.placeCustomPet(draft.pet);return null;}}
     if(tool==='whiteboard'){
       if(action==='rename'||action==='access'){
         const id=this.boardId();if(!this.expansion.boardRegistry.canConfigure(id,view.identity.fingerprint,view.network.isHost))throw Error('Esta pizarra es de solo lectura.');
@@ -2367,21 +2367,24 @@ class StudyUI {
         if(action==='latex'){const v=z.strictObject({text:z.string().max(50000),prompt:z.string().max(4000),image:z.string().max(8000000)}).parse(value);return this.expansion.ollamaGateway.latex(v.text,v.prompt,v.image);}
         const v=z.strictObject({texts:z.array(z.string().max(10000)).max(1000),prompt:z.string().max(4000)}).parse(value);return this.expansion.ollamaGateway.tutor(v.texts,v.prompt);
       }
-if(action==='open')return this.companionBoard();if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema).max(128)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error(t('Esta pizarra es de solo lectura.'));const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error(t('No se pudo guardar la selección.'));}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return this.companionBoard();}}
-    throw Error(t('Esta acción ya no está disponible.'));
+if(action==='open')return this.companionBoard();if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema).max(128)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error('Esta pizarra es de solo lectura.');const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error('No se pudo guardar la selección.');}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return this.companionBoard();}}
+    throw Error('Esta acción ya no está disponible.');
   }
   private companionActiveView():{tool:CompanionTool|null;key:string}{
-    if(this.notebooks.root.open)return {tool:'notebook',key:this.notebooks.companionState().book??'shared'};
+    if(this.notebooks.root.open){const state=this.notebooks.companionState();return {tool:state.book||state.shared?'notebook':null,key:state.book??'shared'};}
     if(this.vanity.root.open)return {tool:'avatar',key:'editor'};
     if(this.petCollection.creationOpen)return {tool:'animal',key:'editor'};
     if(this.pane==='board')return {tool:'whiteboard',key:this.wireBoardId()};
     return {tool:null,key:'waiting'};
   }
+  private lastCompanionTool='';
   private followCompanionView(){
     if(this.companion?.secondary)return;
     const {tool,key}=this.companionActiveView();
-    if(tool&&this.focusClock.root.open){this.focusClock.root.close();if(this.focusClock.snapshot().started)this.focusClock.setHudVisible(true);}
-    this.companion?.followPrimary(tool,key);
+    const signature=(tool??'waiting')+':'+key;
+    if(signature!==this.lastCompanionTool&&tool&&this.focusClock.root.open){this.focusClock.root.close();if(this.focusClock.snapshot().started)this.focusClock.setHudVisible(true);}
+    this.lastCompanionTool=signature;
+    this.companion?.followPrimary(tool??(this.focusClock.root.open?'focus':null),key);
   }
   private companionBoardSurface():CompanionBoard {
     if(!this.remoteBoard)this.remoteBoard=new CompanionBoard({node:this.boardPane,

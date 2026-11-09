@@ -10,7 +10,7 @@ async function openHouseBoard(page: Page): Promise<void> {
 }
 
 for (const [device, width, height] of [['phone', 390, 844], ['iPad', 820, 1180], ['desktop', 1440, 1000]] as const) {
-  test(`${device}: simple board draws and reveals advanced tools without losing work`, async ({ page }) => {
+  test(`${device}: simple board draws and reveals advanced tools without losing work`, async ({ page, browserName, isMobile }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await openHouseBoard(page);
@@ -42,7 +42,7 @@ for (const [device, width, height] of [['phone', 390, 844], ['iPad', 820, 1180],
     const drawn = await pixels();
     const scroll = () => page.locator('.sv-board-pane').evaluate(e => ({ top:e.scrollTop, scroll:e.scrollHeight, client:e.clientHeight }));
     const beforeScroll = await scroll(); expect(beforeScroll.scroll).toBeLessThanOrEqual(beforeScroll.client+1);
-    await page.mouse.move(5, height-10); await page.mouse.wheel(0, 700); expect((await scroll()).top).toBe(0);
+    if(browserName==='webkit'&&isMobile){await page.locator('.sv-board-pane').evaluate(e=>e.scrollBy(0,700));}else{await page.mouse.move(5,height-10);await page.mouse.wheel(0,700);} expect((await scroll()).top).toBe(0);
     await more.click();
     await expect(options).toBeVisible();
     await expect(more).toHaveAttribute('aria-expanded', 'true');
@@ -70,7 +70,7 @@ for (const [device, width, height] of [['phone', 390, 844], ['iPad', 820, 1180],
     await page.getByRole('button', { name: '↶ Deshacer' }).click();
     await expect.poll(pixels).toBe(empty);
     await more.click();
-    await page.getByRole('button', { name: '← Volver a mi casa' }).click();
+    if(await page.getByTestId('board-back').isVisible())await page.getByTestId('board-back').click();else await page.getByRole('button',{name:'← Volver a mi casa',exact:true}).click();
     await openHouseBoard(page);
     await expect(more).toHaveAttribute('aria-expanded', 'false');
   });
