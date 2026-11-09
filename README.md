@@ -6,26 +6,26 @@ Una aldea acogedora en pixel art para tener tu propio rincón, visitar a tus ami
 
 ## Estado y descargas
 
-**[1.0.0-dev.9 está publicada](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.9)** con cuatro instaladores verificados, información de compilación y sumas SHA-256. Descarga el archivo de tu sistema en la tabla. La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages; cada entrega de instaladores queda asociada a su propia etiqueta de versión.
+**[1.0.0-dev.10 está publicada](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.10)** con cuatro instaladores verificados, información de compilación y sumas SHA-256. Descarga el archivo de tu sistema en la tabla. La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages; cada entrega de instaladores queda asociada a su propia etiqueta de versión.
 
 | Dispositivo | Qué abrir o descargar |
 |---|---|
 | Navegador, iPhone o iPad | [Web de StudyVillage](https://javpato.github.io/studyvillage/); en Safari, Compartir → Añadir a pantalla de inicio |
-| Windows x64 | [StudyVillage-Setup-x64.exe](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-Setup-x64.exe) |
-| Linux x64 | [StudyVillage-linux-x64.AppImage](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-linux-x64.AppImage) |
-| macOS Intel o Apple Silicon | [StudyVillage-macos-universal.dmg](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-macos-universal.dmg) — el mismo archivo para ambos |
-| Android | [StudyVillage-development.apk](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.9/StudyVillage-development.apk) |
+| Windows x64 | [StudyVillage-Setup-x64.exe](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.10/StudyVillage-Setup-x64.exe) |
+| Linux x64 | [StudyVillage-linux-x64.AppImage](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.10/StudyVillage-linux-x64.AppImage) |
+| macOS Intel o Apple Silicon | [StudyVillage-macos-universal.dmg](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.10/StudyVillage-macos-universal.dmg) — el mismo archivo para ambos |
+| Android | [StudyVillage-development.apk](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.10/StudyVillage-development.apk) |
 
 Son versiones de desarrollo. Los instaladores de escritorio no tienen firma comercial ni notarización; el APK usa firma de desarrollo. Exporta una copia de tus datos antes de desinstalar o cambiar de dispositivo. No hay instalador nativo de iOS.
 
-## Novedades de dev.9
+## Novedades de dev.10
 
-- Animales personalizados desde el **mueble Taller de mascotas**, con sprites editables, una habilidad existente y su casa. La app Mascotas conserva la gestión y edición; crear o duplicar requiere el mueble.
-- App **Dispositivos** en la carpeta Ajustes: abre StudyVillage en ambos equipos, enlázalos con un código y elige aquí el jugador principal y las herramientas del compañero.
-- Edición del teléfono con clic derecho o pulsación de **un segundo**, carpetas con icono y color propios y controles que no tapan el estudio en pantallas pequeñas.
-- Mascotas y casas visibles, caricias, comida y bots; ojos corregidos, salto del conejo, bola persistente del hámster y diálogo automático más compacto del loro.
-- Pizarra y armario más fiables, diálogos NPC ajustables, ciclos automáticos de concentración/descanso, enlaces a repositorios y traducciones corregidas.
-- Micrófono estable al cambiar de zona y herramientas compartidas entre dispositivos: cuaderno, pizarra, editores, reloj y medios.
+- El compañero sigue la herramienta del jugador principal y vuelve a la espera al cerrarla. Su pizarra ofrece los mismos controles de dibujo, selección, texto y modo Lápiz.
+- **Programas** de concentración guardados con etapas ordenadas, repetición opcional, pausa y recuperación tras recargar o suspender el dispositivo.
+- Sonidos integrados o audio propio y alertas en el principal, el compañero o ambos, incluso con el reloj cerrado. El compañero conserva su propio idioma y volumen.
+- Enlace de dispositivos con estados claros, tiempos de espera y reintentos. Actualiza ambos dispositivos antes de enlazarlos: dev.10 usa el protocolo de compañero 3.
+- Escritura reparada en las pizarras propias al reabrir una identidad guardada sin conexión. Micrófono y pantalla compartida permanecen activos al cerrar su vista, con una acción para detenerlos.
+- Incluye también las mascotas personalizadas, el taller, la app Dispositivos y las mejoras del teléfono de dev.9.
 
 Las solicitudes de amistad sobreviven a desconexiones en servidores actualizados. **Actualizar la web o un instalador no actualiza el servidor de tu aldea:** su administrador debe actualizarlo desde esta misma versión. Los servidores anteriores conservan las demás funciones. Consulta [las notas completas](docs/RELEASE_NOTES.md).
 
@@ -49,9 +49,9 @@ Para mantener una aldea en tu propio equipo o servidor, sigue la [guía de servi
 
 Si te apetece concentrarte, hay cuadernos de tinta y anotación de PDF, pizarra colaborativa, tarjetas, quizzes, proyectos, música local y un reloj de concentración. Son actividades dentro de la aldea: tú eliges cuáles forman parte de tu día. Las herramientas manuales funcionan sin IA; la integración local con Ollama es opcional.
 
-La web y los instaladores dev.9 incluyen ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Acércate al animal y pulsa **E** para acariciarlo, llamarlo o enviarlo a casa. Consulta la [entrega inicial](docs/AMENDMENT.md) y las [correcciones de mascotas, teléfono, mando e idiomas](docs/PETS-CONTROLS.md). Consulta también [animales personalizados y dispositivos asociados](docs/CUSTOM-PETS-COMPANION.md).
+La web y los instaladores dev.10 incluyen ciclos automáticos de concentración/descanso, diálogos NPC más grandes y ajustables, mejoras de pizarra y armario, vínculos de repositorios y cinco especies de mascotas con casas, comida, caricias y participación como bots. Puedes colocar hasta cinco casas de mascotas entre el interior y el jardín, sin desbloqueos. Acércate al animal y pulsa **E** para acariciarlo, llamarlo o enviarlo a casa. Consulta la [entrega inicial](docs/AMENDMENT.md) y las [correcciones de mascotas, teléfono, mando e idiomas](docs/PETS-CONTROLS.md). Consulta también [animales personalizados y dispositivos asociados](docs/CUSTOM-PETS-COMPANION.md).
 
-La web incorpora además **Programas** en el reloj: varias secuencias guardadas de etapas, repetición opcional, sonidos integrados o un archivo propio y alertas en el dispositivo elegido. El enlace ahora muestra cuándo el código está listo, dónde aprobar y cómo reintentar un fallo. Actualiza ambos navegadores antes de enlazar; los instaladores dev.9 conservan el protocolo anterior.
+La web y los instaladores dev.10 incorporan **Programas** en el reloj: varias secuencias guardadas de etapas, repetición opcional, sonidos integrados o un archivo propio y alertas en el dispositivo elegido. El enlace ahora muestra cuándo el código está listo, dónde aprobar y cómo reintentar un fallo. Actualiza ambos dispositivos antes de enlazar; los instaladores dev.9 conservan un protocolo anterior incompatible. Activa el audio en los dispositivos elegidos; no se garantiza una alarma audible mientras duermen.
 
 ## Empezar a jugar
 
