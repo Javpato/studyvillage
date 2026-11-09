@@ -512,6 +512,8 @@ export class ServerVillageClient implements VillageActions {
   selectMediaDevice(id:string):void{this.fire({op:'device.media',deviceId:id});}
   private requireMedia():void {if(!this.mediaActive)throw userError(t('Selecciona este dispositivo para voz y cámara en Ajustes → Servidores.'));}
   toggleGameCamera(): Promise<void> { this.requireMedia();return this.camera.toggle(); }
+  setCompanionMicrophone(stream:MediaStream|null):void{if(stream)this.requireMedia();this.media.setCompanionMicrophone(stream);}
+  setCompanionScreen(stream:MediaStream|null):void{if(stream)this.requireMedia();this.media.setCompanionScreen(stream);}
   toggleMicrophone(): Promise<void> { this.requireMedia();return this.media.toggleMicrophone(); }
   setMuted(value: boolean): void { this.media.setMuted(value); }
   setDeafened(value: boolean): void { this.media.setDeafened(value); }

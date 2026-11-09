@@ -1,12 +1,12 @@
 # Custom animals and linked devices — work in progress, 9 November 2026
 
-This candidate introduces the custom animal collection/atelier and proximity-microphone lifecycle correction. It is **not a verified release of the complete linked-device plan**. Candidate commit and workflow links will be recorded after pushing.
+This candidate introduces the custom animal collection/atelier and proximity-microphone lifecycle correction. It is **not a verified release of the complete linked-device plan**. Animal-editor candidate [`38fd8bd`](https://github.com/Javpato/studyvillage/commit/38fd8bd) is pushed to main. A second candidate adds the private companion connection and editors. Workflow links remain to be recorded.
 
 Implemented so far: reusable pixel drawing operations, 64×64 static / 448×256 animated pet artwork, independent existing ability and house selection, stable collection IDs, duplicate/edit/assign/unassign, empty houses, persistent collection and backup inclusion, bounded authenticated artwork transfer, indoor atelier furniture, ES/EN/FR labels. Proximity movement retains microphone capture while closing old audience calls; explicit channels/session exit still revoke it.
 
 Completed: 34 focused model/media tests passed using fake media devices. Application/server typecheck passed before adding the artwork channel; final types/catalog checks are running. No physical microphone, iPad, Apple Pencil, macOS or external-network verification has been performed for this candidate.
 
-Remaining: actual editor/placement/reload/multiplayer browser verification; full baseline; companion pairing, role assignment, scoped document/editor/timer ports and media routing; two-device tests and platform checks. Previous results below apply only to their named revisions, not this candidate.
+Completed since that candidate: full baseline (526 app + 37 server tests, types, catalogs, web/PWA/server build); real custom-animal create/place/reload browser journey; five pairing/document-merge unit cases; two isolated Chromium profiles paired over real PeerJS/WebRTC, controlled the authoritative focus timer and disconnected successfully. Companion code now includes expiring approval/roles/tool scopes, private/shared notebook ports, whiteboard editing, sprite editors and media routing. Remaining: expanded editor/permission/media/browser tests, regression baseline on final source, platform checks and reviewed UI. Physical microphone, iPad, Pencil and screen-capture permission flows remain unverified. Previous results below apply only to their named revisions, not this candidate.
 
 ---
 

@@ -976,6 +976,8 @@ export class VillageClient implements VillageActions {
     this.camera.setContext({ sessionId: online ? this.sessionId! : 'local', epoch: online ? this.epoch : 1,
       identityId: this.id, room: `${scene}:game:${game}`, roomName: game, peers });
   }
+  setCompanionMicrophone(stream:MediaStream|null):void{if(stream)this.requireMedia();this.media.setCompanionMicrophone(stream);}
+  setCompanionScreen(stream:MediaStream|null):void{if(stream)this.requireMedia();this.media.setCompanionScreen(stream);}
   toggleMicrophone(): Promise<void> { this.requireMedia();return this.media.toggleMicrophone(); }
   setMuted(value: boolean): void { this.media.setMuted(value); }
   setDeafened(value: boolean): void { this.media.setDeafened(value); }

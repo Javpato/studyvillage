@@ -90,6 +90,7 @@ export interface VillageActions {
   selectBoard(ref: BoardRef | null): void; commitBoard(ref: BoardRef, changes: BoardStroke[]): Promise<boolean>;
   sendStroke(stroke: BoardStroke): void; deleteStroke(strokeId: string): void;
   kickMember(identityId: IdentityId): void; kickVisitor(identityId: IdentityId): void;
+  setCompanionMicrophone?(stream:MediaStream|null):void;setCompanionScreen?(stream:MediaStream|null):void;
   toggleMicrophone(): Promise<void>; setMuted(muted: boolean): void;
   setDeafened(deafened: boolean): void; setPushToTalk(enabled: boolean): void; setTalking(talking: boolean): void;
   startScreen(withAudio?: boolean): Promise<void>; stopScreen(): void;

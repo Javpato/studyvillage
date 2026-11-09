@@ -1,0 +1,19 @@
+import {z} from 'zod';
+export const COMPANION_TOOLS=['notebook','whiteboard','avatar','animal','focus','media'] as const;
+export const companionToolSchema=z.enum(COMPANION_TOOLS);
+export type CompanionTool=typeof COMPANION_TOOLS[number];
+const id=z.string().uuid();
+export const pairPacketSchema=z.discriminatedUnion('type',[
+ z.strictObject({type:z.literal('hello'),name:z.string().min(1).max(60),nonce:id}),
+ z.strictObject({type:z.literal('approved'),session:id,nonce:id,primary:z.enum(['creator','joiner']),tools:z.array(companionToolSchema).max(6),name:z.string().max(60)}),
+ z.strictObject({type:z.literal('ready'),session:id}),
+ z.strictObject({type:z.literal('request'),session:id,id,seq:z.number().int().positive(),tool:companionToolSchema,action:z.string().max(40),value:z.unknown()}),
+ z.strictObject({type:z.literal('reply'),session:id,id,ok:z.boolean(),value:z.unknown()}),
+ z.strictObject({type:z.literal('view'),session:id,tool:companionToolSchema,key:z.string().max(200)}),
+ z.strictObject({type:z.literal('ping'),session:id}),
+ z.strictObject({type:z.literal('bye')}),
+]);
+export type PairPacket=z.infer<typeof pairPacketSchema>;
+export const PAIR_LIFETIME=5*60*1000;
+export type PairRole='primary'|'companion';
+export interface PairState {phase:'idle'|'inviting'|'waiting'|'approval'|'linked'|'disconnected';code:string;expires:number;localName:string;remoteName:string;role:PairRole|null;tools:CompanionTool[];error:string;}

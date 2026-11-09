@@ -52,9 +52,10 @@ function mediaAdapter(connection: MediaConnection): MediaCall {
   };
 }
 /** Called exclusively after an explicit host/join action. No PeerJS object exists on import. */
-export async function createPeerEndpoint(): Promise<TransportEndpoint> {
+export async function createPeerEndpoint(requestedId?:string): Promise<TransportEndpoint> {
   const { Peer } = await import('peerjs');
-  const peer: Peer = new Peer({ ...signalingOptions(), config:rtcConfiguration(), debug:0 });
+  const options={...signalingOptions(),config:rtcConfiguration(),debug:0 as const};
+  const peer:Peer=requestedId?new Peer(requestedId,options):new Peer(options);
   const connections = new Set<(channel: DataChannel) => void>();
   const calls = new Set<(call: MediaCall) => void>();
   const changes = new Set<(connected: boolean) => void>();

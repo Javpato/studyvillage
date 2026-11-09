@@ -113,6 +113,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
     deleteStroke: id => runSync(() => client.deleteStroke(id)),
     kickMember: id => runSync(() => client.kickMember(id)),
     kickVisitor: id => runSync(() => client.kickVisitor(id)),
+    setCompanionMicrophone:stream=>client.setCompanionMicrophone(stream),setCompanionScreen:stream=>client.setCompanionScreen(stream),
     toggleMicrophone: () => run(() => client.toggleMicrophone()),
     setMuted: muted => client.setMuted(muted),
     setDeafened: deafened => client.setDeafened(deafened),

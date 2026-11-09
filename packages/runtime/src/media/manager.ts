@@ -64,6 +64,18 @@ export class MediaManager {
   private currentDevices(): MediaDevicesAdapter | undefined {
     return this.devices ?? (typeof navigator !== 'undefined' ? navigator.mediaDevices : undefined);
   }
+  setCompanionMicrophone(stream:MediaStream|null):void {
+    if(stream&&!this.context)throw Error('Conéctate a una aldea para activar el micrófono.');
+    if(stream&&!stream.getAudioTracks().length)throw Error('No audio track');
+    this.consentGeneration++;this.microphonePending=false;this.stopMicrophone();this.microphone=stream;
+    if(stream)for(const track of stream.getTracks())track.addEventListener('ended',()=>{if(this.microphone===stream){this.stopMicrophone();this.changed();}},{once:true});
+    this.applyMute();this.reconcile();this.changed();
+  }
+  setCompanionScreen(stream:MediaStream|null):void {
+    if(stream&&!this.context)throw Error('Conéctate a una aldea para compartir pantalla.');
+    if(stream&&!stream.getVideoTracks().length)throw Error('No video track');
+    this.stopScreen();this.screen=stream;if(stream){this.phase='CAPTURING_LOCAL';for(const track of stream.getVideoTracks())track.addEventListener('ended',()=>{if(this.screen===stream)this.stopScreen();},{once:true});}this.reconcile();this.changed();
+  }
   async toggleMicrophone(): Promise<void> {
     if (this.microphone || this.microphonePending) {
       this.consentGeneration++; this.microphonePending = false; this.stopMicrophone(); this.changed(); return;

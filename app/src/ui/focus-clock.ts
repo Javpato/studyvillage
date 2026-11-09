@@ -76,6 +76,8 @@ export class FocusClock {
   this.ring.style.setProperty('--clock-progress',`${Math.max(0,Math.min(1,remaining/this.model.duration))*360}deg`);setDisplayText(this.status,msg(remaining===0?'Tiempo cumplido. Respira y estírate.':this.model.running?'Un paso cada vez.':this.model.state.status==='paused'?'En pausa. Continúa cuando quieras.':'Tu siguiente paso empieza aquí.'));
   setDisplayText(this.start,msg(this.model.running?'Pausar':this.model.state.status==='paused'?'Continuar':'Comenzar'));this.start.disabled=!this.valid;this.hud.hidden=!this.model.visible;this.hudPlay.textContent=this.model.running?'Ⅱ':'▶';setDisplayAttribute(this.hudPlay,'aria-label',msg(this.model.running?'Pausar reloj':'Continuar reloj'));for(const input of this.switches)input.checked=this.model.visible;
  }
+ snapshot(){return structuredClone(this.model.state);}
+ command(action:"start"|"pause"|"reset"|"duration",value?:{mode:"focus"|"break";seconds:number}){if(action==="duration"&&value)this.model.setDuration(value.seconds,value.mode);else if(action!=="duration")this.model[action]();this.syncFields();this.save();this.paint();return this.snapshot();}
  open():void{this.visibility();if(!this.root.open)this.root.showModal();}
  dispose():void{clearInterval(this.timer);this.unlanguage();this.unviewport();document.removeEventListener('visibilitychange',this.visibility);this.root.remove();this.hud.remove();}
 }

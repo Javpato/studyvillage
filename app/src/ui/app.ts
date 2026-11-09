@@ -1,3 +1,13 @@
+import {z} from 'zod';
+import {CompanionPanel} from '../companion/panel';
+import {NotebookAuthority} from '../companion/notebook-port';
+import type {CompanionTool} from '../../../packages/core/src/companion/protocol';
+import {ownedPetSchema} from '../../../packages/core/src/pets/definitions';
+import {saveOwnedPet} from '../../../packages/runtime/src/storage/pets';
+import {cachePetAsset} from '../assets/pet-custom';
+import {avatarSheetData,setAvatarSheet} from '../assets/avatar-sheet';
+import {appearanceSchema} from '../assets/appearance';
+import {strokeSchema} from '../../../packages/core/src/protocol/schema';
 import {PetCollectionPanel} from '../pets/collection-ui';
 import {loadPetCollection} from '../assets/pet-custom';
 import type {OwnedPet} from '../../../packages/core/src/pets/definitions';
@@ -432,6 +442,7 @@ class StudyUI {
   private hudEditTile!: HTMLButtonElement;
   private vanity:VanityPanel;private petCollection!:PetCollectionPanel;private placingPet:OwnedPet|null=null;private petArtOwner='';
   private hudCamera!:HTMLButtonElement;
+  private companion!:CompanionPanel;private companionNotebooks!:NotebookAuthority;
   private pets:PetWorld;
   private wardrobe: WardrobePanel;
   private spaces: HouseSpacesPanel;
@@ -460,6 +471,9 @@ class StudyUI {
     }},actions);
     this.petCollection=new PetCollectionPanel({owner:()=>this.view?.identity.fingerprint??'',homes:()=>this.pets.homesList(),reserved:id=>this.pets.isReserved(id),save:(home,config)=>this.savePetHome(home,config),place:pet=>this.placeCustomPet(pet)});
     this.notebooks.connect(actions,()=>this.view,()=>this.activityScope()||'village');
+    this.companionNotebooks=new NotebookAuthority(book=>this.notebooks.adoptCompanionBook(book),()=>this.notebooks.flushCompanion());
+    this.companion=new CompanionPanel({view:()=>this.view,prepare:async role=>{this.stopMoving();await this.notebooks.flushCompanion();if(role==='companion'){if(this.vanity.root.open||this.petCollection.atelier.root.open)throw Error(t('Cierra el taller antes de enlazar este dispositivo.'));await actions.leave();this.closePhone();for(const dialog of this.root.querySelectorAll<HTMLDialogElement>('dialog[open]'))dialog.close();}},request:(tool,action,value)=>this.companionRequest(tool,action,value),changed:()=>{const secondary=this.companion?.secondary??false;this.root.inert=secondary;document.body.classList.toggle('sv-companion-mode',secondary);this.stopMoving();if(this.view)this.refreshMedia();},disconnected:()=>{this.root.inert=false;document.body.classList.remove('sv-companion-mode');this.stopMoving();}},actions);
+
     this.mailbox=new MailboxUI(()=>this.view?.identity.fingerprint??'',command=>this.actions.mailboxCommand(command));
     this.garden=new GardenPanel(()=>this.view,house=>this.actions.saveHouseLayout(house),()=>this.stageCanvas,()=>this.pets.count());
     const spaceContext: SpacePanelContext = {
@@ -591,8 +605,10 @@ class StudyUI {
     this.servers?.update(view);
     const previousAccess=this.view?.network.pendingAccess;
     const justJoined = this.view?.network.phase !== 'JOINED' && view.network.phase === 'JOINED';
+    if(this.view&&this.view.identity.fingerprint!==view.identity.fingerprint)this.companion?.session.disconnect();
     this.view = view;if(this.petArtOwner!==view.identity.fingerprint){this.petArtOwner=view.identity.fingerprint;void loadPetCollection(this.petArtOwner).then(()=>{this.lastStageRenderSig='';});}
     this.notebooks.syncSession();
+    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelier.root.open?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
     if (justJoined && !this.houseOwnerId) this.actions.move({ ...this.localPosition, areaId: this.currentArea });
     this.pendingStrokes = this.pendingStrokes.filter((stroke) => !view.network.strokes.some((received) => received.id === stroke.id));
     const ownMember = view.network.members.find((member) => member.identity.fingerprint === view.identity.fingerprint);
@@ -642,7 +658,7 @@ class StudyUI {
     document.removeEventListener('visibilitychange',this.boardHidden);window.removeEventListener('orientationchange',this.boardRotated);
     this.boardEditor?.dispose();
     cancelAnimationFrame(this.raf); this.offAi?.();
-    this.petCollection.dispose();this.pets.dispose();this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();this.phoneEditor?.dispose();
+    this.companion.dispose();this.companionNotebooks.dispose();this.petCollection.dispose();this.pets.dispose();this.wardrobe.dispose();this.vanity.dispose();this.garden.dispose();this.mailbox.dispose();this.connectionPanel.dispose();this.phoneEditor?.dispose();
     this.gamepad?.dispose();this.mobileHud.dispose();
     this.expansion.dispose();
     window.removeEventListener('keydown', this.onKeyDown);
@@ -686,6 +702,7 @@ class StudyUI {
     this.offLanguage = subscribeLanguage(language => { languageSelect.value = language; this.forgetSignatures(); this.lastStageRenderSig = ''; this.lastBoardRenderSig = ''; this.boardExtraFrames = 3; if (this.view) this.update(this.view); });
     this.servers = new ServersPanel({ actions: this.actions, notify: message => this.notify(message), ownBoards: () => this.ownBoardsForImport() });
     this.settingsSection('Servidores').append(this.servers.root);
+    const linkDevice=button(msg('Enlazar dispositivo'));linkDevice.onclick=()=>{this.settingsDialog.close();this.companion.open();};this.settingsSection('Controles').append(linkDevice);
     const advanced=document.createElement('details'),summary=document.createElement('summary');setDisplayText(summary,msg('Conexión avanzada'));advanced.append(summary,...Array.from(this.connectionPanel.root.children));this.settingsSection('Servidores').append(advanced);
     const controls = this.settingsSection('Controles');
     append(controls, node('h3', '', msg('A tu ritmo')), node('p', '', msg('WASD o flechas para caminar · Shift para correr · Doble clic o doble toque para abrir casas, muebles y portales · E para usar lo que tengas cerca · M para abrir el menú · Escape para volver. Con los controles táctiles activados, un toque te acerca caminando.')), node('p', '', msg('Pizarra: Mano para desplazarte, rueda para mover el lienzo y Ctrl + rueda para acercarte. En pantallas táctiles puedes usar dos dedos para acercar y desplazar.')));
@@ -2175,7 +2192,7 @@ class StudyUI {
     this.micMeterFill.style.width = media.talking ? '82%' : media.micEnabled && !media.muted ? '28%' : '0%';
 
     const desired = new Map<string, { stream: MediaStream; kind: 'audio' | 'screen'; name: string; local: boolean }>();
-    if (media.localScreen && showingCurrentRoom) desired.set('local-screen', { stream: media.localScreen, kind: 'screen', name: t(media.localScreen.getAudioTracks().some(track=>track.readyState==='live')?'Tu pantalla · con audio':'Tu pantalla · sin audio'), local: true });
+    if (media.localScreen && showingCurrentRoom && !this.companion?.redirectScreen) desired.set('local-screen', { stream: media.localScreen, kind: 'screen', name: t(media.localScreen.getAudioTracks().some(track=>track.readyState==='live')?'Tu pantalla · con audio':'Tu pantalla · sin audio'), local: true });
     for (const remote of showingCurrentRoom ? media.remote : []) {
       const name = defaultText(view.network.voiceDirectory?.find(person=>person.fingerprint===remote.identityId)?.displayName || view.network.members.find((member) => member.identity.fingerprint === remote.identityId)?.identity.displayName || '') || remote.identityId.slice(0, 10);
       desired.set(`${remote.kind}:${remote.identityId}`, { stream: remote.stream, kind: remote.kind, name, local: false });
@@ -2240,6 +2257,7 @@ class StudyUI {
           void mount.element.play().catch(() => this.offerMediaPlayback(mount!.wrapper,mount!.element));
         }
       }
+      mount.element.muted=item.local||!!this.companion?.redirectOutput;
       if (item.kind === 'screen' && mount) {
         mount.wrapper.classList.toggle('is-spotlight', this.spotlightKey === key);
       }
@@ -2321,6 +2339,16 @@ class StudyUI {
     if(!this.view)return;const item=this.ownDecoratedHouse().furniture.find(f=>f.id===this.selectedFurnitureId);if(!item)return;
     this.stopMoving();this.furnitureNameTarget=item.id;this.furnitureNameInput.value=defaultText(item.publicAlias);setDisplayAttribute(this.furnitureNameInput,'placeholder',msg(FURNITURE_LABELS[item.kind]));this.furnitureNameDialog.showModal();this.furnitureNameInput.focus();this.furnitureNameInput.select();
   }
+  private async companionRequest(tool:CompanionTool,action:string,value:unknown):Promise<unknown>{
+    const view=this.view;if(!view)throw Error(t('Dispositivo no conectado.'));
+    if(tool==='focus'){if(action==='open'){this.stopMoving();this.focusClock.open();return this.focusClock.snapshot();}if(action==='state')return this.focusClock.snapshot();const command=z.enum(['start','pause','reset','duration']).parse(action);const duration=command==='duration'?z.strictObject({mode:z.enum(['focus','break']),seconds:z.number().int().min(1).max(86399)}).parse(value):undefined;return this.focusClock.command(command,duration);}
+    if(tool==='notebook'){if(action==='open'){this.stopMoving();await this.notebooks.open();return null;}if(action==='state'){const state=this.notebooks.companionState();if(state.shared)return {shared:this.notebooks.companionSharedState(),book:null,page:state.page};return {book:(await this.companionNotebooks.repo.list()).find(b=>b.id===state.book)??null,page:state.page};}if(action==='shared-edit'){const operation=z.strictObject({namespace:z.string(),scope:z.string(),operation:z.unknown()}).parse(value);return this.notebooks.companionSharedCommit(operation.namespace,operation.scope,operation.operation);}if(action==='select'){const selected=z.strictObject({id:z.string().uuid(),page:z.string().uuid().optional()}).parse(value);const book=(await this.companionNotebooks.repo.list()).find(b=>b.id===selected.id);if(!book)throw Error('Copia no válida.');await this.notebooks.flushCompanion();this.notebooks.adoptCompanionBook(book,selected.page);return null;}return this.companionNotebooks.request(action,value);}
+    if(tool==='avatar'){if(action==='open'){this.stopMoving();if(!this.vanity.root.open)this.vanity.open(view.identity);return {identity:view.identity,appearance:getAvatarCustomization(),sheet:avatarSheetData()};}if(action==='save'){const draft=z.strictObject({appearance:appearanceSchema,sheet:z.string().max(700000).nullable()}).parse(value);if(draft.sheet)await setAvatarSheet(draft.sheet);await this.actions.updateAppearance(draft.appearance);return null;}}
+    if(tool==='animal'){if(action==='open'){return {owner:view.identity.fingerprint};}if(action==='save'){const draft=z.strictObject({pet:ownedPetSchema,place:z.boolean()}).parse(value);if(draft.pet.owner!==view.identity.fingerprint||this.pets.isReserved(draft.pet.appearance.id))throw Error(t('Esta mascota no está disponible.'));await cachePetAsset(draft.pet.appearance.hash,draft.pet.sheet);await saveOwnedPet(draft.pet);if(draft.place)this.placeCustomPet(draft.pet);return null;}}
+    if(tool==='whiteboard'){if(action==='open'){if(this.pane!=='board'){this.customBoardId=null;const board=this.currentHouse()?.furniture.find(f=>f.kind==='board');if(!board)throw Error(t('Abre una pizarra en el jugador principal.'));this.interactWithFurniture(board);}return this.companionBoard();}if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema).max(128)}).parse(value);if(request.board!==this.boardId()||!this.canDrawBoard())throw Error(t('Esta pizarra es de solo lectura.'));const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error(t('No se pudo guardar la selección.'));}await this.commitBoardChanges(request.changes);return this.companionBoard();}}
+    throw Error(t('Esta acción ya no está disponible.'));
+  }
+  private companionBoard(){return {board:this.boardId(),author:this.view!.identity.fingerprint,strokes:this.allStrokes(this.boardId()),canEdit:this.canDrawBoard(),moderate:this.moderatesBoard()};}
   private async savePetHome(home:PetHome,config:PetConfig){
     const view=this.view;if(!view||home.owner!==view.identity.fingerprint)throw Error('network');
     const patch=(f:Furniture)=>f.id===home.furnitureId?{...f,pet:config,...(config.custom?{kind:config.custom.house}:{})}:f;
@@ -3505,8 +3533,9 @@ class StudyUI {
   }
 
   private onKeyDown = (event: KeyboardEvent): void => {
+    if(this.companion?.secondary)return;
     // A locked identity prevents connecting, but local controls work after choosing offline mode.
-    if (!this.view || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelier.root.open||this.petCollection.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
+    if (!this.view || this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelier.root.open||this.petCollection.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
     const key = event.key.toLowerCase();
     if(this.furnitureNameDialog.open)return;
     if(key==='escape'&&this.pane==='diagnostics'){this.leaveDiagnostics();event.preventDefault();return;}
@@ -3579,6 +3608,7 @@ class StudyUI {
     const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.05) : 0;
     this.lastFrame = now;
     advanceAnim(dt);this.pets.tick(dt,now);
+    this.companion?.followPrimary(this.notebooks.root.open?'notebook':this.pane==='board'?'whiteboard':this.vanity.root.open?'avatar':this.petCollection.atelier.root.open?'animal':null,this.notebooks.root.open?this.notebooks.companionState().book??'shared':this.pane==='board'?this.boardId():'editor');
     const view = this.view;
     if (view && (this.pane === 'world' || this.pane === 'house')) {
       let vx = Number(this.keys.has('d') || this.keys.has('arrowright') || this.dpadKeys.has('arrowright'))
@@ -3586,7 +3616,7 @@ class StudyUI {
       let vy = Number(this.keys.has('s') || this.keys.has('arrowdown') || this.dpadKeys.has('arrowdown'))
         - Number(this.keys.has('w') || this.keys.has('arrowup') || this.dpadKeys.has('arrowup'));
 
-      if (this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.phone.hidden === false || this.settingsDialog.open || this.activityOpen || this.decorating || this.garden.active || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelier.root.open||this.petCollection.root.open) || this.spaces.root.open || this.roomWorkspace.root.open || this.mobileHud?.root.open) {
+      if (this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.phone.hidden === false || this.settingsDialog.open || this.activityOpen || this.decorating || this.garden.active || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelier.root.open||this.petCollection.root.open) || this.spaces.root.open || this.roomWorkspace.root.open || this.mobileHud?.root.open) {
         vx = 0; vy = 0;
       }
       if (!this.moveTarget) this.movePath = [];
