@@ -11,7 +11,7 @@ for(const [width,height,touch] of [[390,844,true],[844,390,true],[820,1180,true]
  });
 }
 test('controller settings explain pairing and limits; local stop is next to start',async({page})=>{
- await page.goto('/');await openPhoneApp(page,'settings');await page.getByRole('tab',{name:'Mando',exact:true}).click();await expect(page.getByText('Conecta el mando por USB',{exact:false})).toBeVisible();await page.getByRole('dialog',{name:'Ajustes',exact:true}).getByRole('button',{name:'Cerrar',exact:true}).click();
+ await page.goto('/');await openPhoneApp(page,'settings');await page.getByRole('tab',{name:'Controles',exact:true}).click();await expect(page.getByText('Conecta el mando por USB',{exact:false})).toBeVisible();await page.getByRole('dialog',{name:'Ajustes',exact:true}).getByRole('button',{name:'Cerrar',exact:true}).click();
  await openPhoneApp(page,'tetris');await page.getByRole('button',{name:'Comenzar',exact:true}).click();const controls=page.locator('.sv-tetris-round-controls');await expect(controls.getByRole('button',{name:'Terminar partida',exact:true})).toBeVisible();await controls.getByRole('button',{name:'Terminar partida',exact:true}).click();await controls.getByRole('button',{name:'¿Terminar para todos?',exact:true}).click();await expect(controls.getByRole('button',{name:'Comenzar',exact:true})).toBeEnabled();
 });
 
@@ -19,7 +19,7 @@ test('one controller instance handles presses and releases on disconnect',async(
  await page.addInitScript(()=>{
   const pad={index:0,id:'Test controller',mapping:'standard',connected:true,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0,touched:false}))};(window as any).testPad=pad;Object.defineProperty(navigator,'getGamepads',{value:()=>pad.connected?[pad]:[]});
  });
- await page.goto('/');await openPhoneApp(page,'settings');await page.getByRole('tab',{name:'Mando',exact:true}).click();await expect(page.getByText('Mando conectado',{exact:true})).toHaveCount(1);await page.waitForTimeout(300);await expect(page.getByText('Mando conectado',{exact:true})).toHaveCount(1);
+ await page.goto('/');await openPhoneApp(page,'settings');await page.getByRole('tab',{name:'Controles',exact:true}).click();await expect(page.getByRole('dialog',{name:'Ajustes',exact:true}).getByText('Mando conectado',{exact:true})).toHaveCount(1);await page.waitForTimeout(300);await expect(page.getByRole('dialog',{name:'Ajustes',exact:true}).getByText('Mando conectado',{exact:true})).toHaveCount(1);
  // Close the menu and press Start in the same frame: a fresh press must survive the context change.
  await page.getByRole('dialog',{name:'Ajustes',exact:true}).getByRole('button',{name:'Cerrar',exact:true}).evaluate(button=>new Promise<void>(resolve=>requestAnimationFrame(()=>{(button as HTMLButtonElement).click();(window as any).testPad.buttons[9].pressed=true;resolve();})));
  await expect(page.locator('.sv-phone')).toBeVisible();await page.waitForTimeout(80);await expect(page.locator('.sv-phone')).toBeVisible();await page.evaluate(()=>{(window as any).testPad.buttons[9].pressed=false;});await page.waitForTimeout(80);

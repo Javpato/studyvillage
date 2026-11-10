@@ -555,8 +555,8 @@ class StudyUI {
       const modal=!!document.querySelector('dialog[open]');
       if(modal||!this.phone.hidden||this.garden.active||this.decorating)return 'menu';
       if(this.activityOpen)return this.expansion.gamepadPlaying()?'game':'menu';return 'world';
-    },key=>this.expansion.gamepadInput(key),()=>this.expansion.gamepadMenu());
-    this.settingsSection('Mando').append(this.gamepad.root);
+    },key=>this.expansion.gamepadInput(key),()=>this.expansion.gamepadMenu(),()=>this.stopMoving());
+    this.settingsSection('Controles').append(this.gamepad.root);
     this.raf = requestAnimationFrame(this.tick);
   }
 
@@ -3591,7 +3591,7 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
   private onKeyDown = (event: KeyboardEvent): void => {
     if(this.companion?.secondary){if(this.remoteBoard?.root.open&&this.boardEditor.key(event))event.preventDefault();return;}
     // A locked identity prevents connecting, but local controls work after choosing offline mode.
-    if (!this.view || this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelierOpen||this.petCollection.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
+    if (!this.view || document.querySelector('dialog[open]') || this.companion?.secondary || this.pets.panel.open || this.jukebox.root.open || this.focusClock.root.open || this.notebooks.root.open || this.mailbox.root.open || this.settingsDialog.open || (this.wardrobe.isOpen()||this.vanity.root.open||this.petCollection.atelierOpen||this.petCollection.root.open) || (this.view.lockedIdentity && !this.lockDismissed)) return;
     const key = event.key.toLowerCase();
     if(this.furnitureNameDialog.open)return;
     if(key==='escape'&&this.pane==='diagnostics'){this.leaveDiagnostics();event.preventDefault();return;}
