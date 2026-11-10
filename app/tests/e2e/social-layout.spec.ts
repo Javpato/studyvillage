@@ -17,6 +17,7 @@ test('controller settings explain pairing and limits; local stop is next to star
 
 test('one controller instance handles presses and releases on disconnect',async({page})=>{
  await page.addInitScript(()=>{
+  for(const key of ['studyvillage-gamepad','studyvillage-control-help'])if(localStorage.getItem(key)===null)localStorage.setItem(key,'on');
   const pad={index:0,id:'Test controller',mapping:'standard',connected:true,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0,touched:false}))};(window as any).testPad=pad;Object.defineProperty(navigator,'getGamepads',{value:()=>pad.connected?[pad]:[]});
  });
  await page.goto('/');await openPhoneApp(page,'settings');await page.getByRole('tab',{name:'Controles',exact:true}).click();await expect(page.getByRole('dialog',{name:'Ajustes',exact:true}).getByText('Mando conectado',{exact:true})).toHaveCount(1);await page.waitForTimeout(300);await expect(page.getByRole('dialog',{name:'Ajustes',exact:true}).getByText('Mando conectado',{exact:true})).toHaveCount(1);

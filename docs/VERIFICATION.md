@@ -581,3 +581,15 @@ Verified locally: full check passed (551 client tests + 37 server tests, types, 
 Visual review: 320/390px phones, 820px tablet, 1280px desktop and 740×360 short landscape; desktop Forest Blocks and navigation artwork inspected. Narrow phones use one readable action column below the SVG. All five viewport checks verify internal containment; focus scrolls into view. Packaged Pages checks passed in Chromium and WebKit, including offline cache, saved ink and legacy sprite upgrades. Final local build cache: `studyvillage-09c8f9c897e7f438`. Existing native installers were not regenerated.
 
 Candidate `f6ff8f4` workflow: https://github.com/Javpato/studyvillage/actions/runs/42891083323 . Final source refinements and validation are ready to push; publication of the final commit remains to be confirmed. Standard physical mapping reference: https://www.w3.org/TR/gamepad/#remapping . Button 3 stays the upper face action regardless of the manufacturer's printed label; no nonstandard remapping is guessed.
+
+Final source `e7a3d58` is pushed to `origin/main`. Final workflow: https://github.com/Javpato/studyvillage/actions/runs/42891930941 (in progress at this checkpoint). Initial candidate workflow 42891083323 succeeded and deployed; that does not yet certify publication of the final refinements.
+
+Final publication confirmed: https://github.com/Javpato/studyvillage/actions/runs/42891930941 completed successfully for `e7a3d58`; build and deploy both passed. Published web app: https://javpato.github.io/studyvillage/ . Task screenshots, logs, temporary staging patch and Playwright output were removed; current app/dist and server/dist were retained. No native release/tag was created. The only local changes are the owner's pre-existing heading edit and this final verification follow-up.
+
+## dev.11 release candidate — 2026-11-10
+
+Requested delivery: disable controller input and floating help by default, then refresh all platform installers. Missing/unreadable preferences now default off; only an explicitly stored `on` enables either feature. Existing on/off choices remain intact, and Settings → Controls still opens the guide. Controller and floating-help browser fixtures explicitly opt in instead of relying on previous defaults. New regression exercises a fresh profile and persistence of both explicit choices.
+
+Version prepared: 1.0.0-dev.11, Android version code 10010. No historical release or tag is changed. Completed before candidate push: app/server TypeScript and all 2909 ES/EN/FR messages. Remaining: browser defaults/persistence checks, complete release validation, four native installers, identical universal DMG on both Mac architectures, publication, independent download/hash verification, README download refresh and replacement of local release-current after validation.
+
+Workflow: https://github.com/Javpato/studyvillage/actions/workflows/releases.yml . This is a testable candidate, not a published release. Existing local documentation edits are preserved.

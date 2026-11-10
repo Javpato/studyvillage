@@ -3,6 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 async function study(page:Page){await page.getByTestId('phone-button').click();await openPhoneApp(page,'study');return page.getByRole('region',{name:'Estudio',exact:true});}
 for(const [device,width,height]of [['phone',390,844],['tablet',820,1180],['desktop',1440,1000]]as const){
  test(`${device}: illustrated study fills the available window above its controls, saves cards, notebooks and a solo quiz`,async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('studyvillage-control-help','on'));
   await page.setViewportSize({width,height});await page.goto('/');const root=await study(page);
   await expect(root.locator('.sv-study-portal')).toHaveCount(3);await expect(root.locator('.sv-study-portal svg')).toHaveCount(3);
   const activity=page.locator('.sv-activity:not([hidden])'),frame=(await activity.boundingBox())!;

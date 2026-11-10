@@ -64,7 +64,7 @@ En iPhone y iPad, abre la web en Safari y usa **Compartir → Añadir a pantalla
 - **Doble clic o doble toque:** acercarte y usar casas, muebles y portales.
 - **M:** abrir o cerrar el teléfono. **Escape:** cerrar o volver.
 - En pantallas táctiles, usa los controles en pantalla y personalízalos desde Editar controles.
-- Para usar un mando estándar, abre **Ajustes → Mando**. El emparejamiento Bluetooth se hace en el sistema operativo. Las ayudas cambian al dispositivo que estés usando; **Controles** muestra el mapeo del juego. En Gartic, escribir y dibujar requiere teclado, ratón o táctil; el mando permite navegar y enviar las acciones.
+- Para usar un mando estándar, abre **Ajustes → Controles** y activa **Activar mando**. Tanto el mando como **Mostrar ayuda flotante** están desactivados por defecto; tus elecciones se guardan en este dispositivo. El emparejamiento Bluetooth se hace en el sistema operativo. Las ayudas cambian al dispositivo que estés usando; **Controles** muestra el mapeo del juego. En Gartic, escribir y dibujar requiere teclado, ratón o táctil; el mando permite navegar y enviar las acciones.
 
 Puedes explorar y usar tus herramientas personales sin iniciar sesión. Guarda una identidad cifrada para que tus amigos puedan reconocerte entre sesiones. Los datos personales se conservan localmente: exporta una copia completa desde Identidad antes de borrar datos del navegador o cambiar de dispositivo. La escritura guardada puede reabrirse sin conexión después de la primera carga web.
 

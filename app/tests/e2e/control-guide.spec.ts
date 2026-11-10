@@ -1,7 +1,7 @@
 import {test,expect,type Page} from '@playwright/test';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
-async function mockPad(page:Page,id='Unknown controller',mapping='standard',connected=true){
- await page.addInitScript(({id,mapping,connected})=>{localStorage.setItem('studyvillage-language','fr');const pad={id,index:0,mapping,connected,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0,touched:false}))};(window as any).guidePad=pad;Object.defineProperty(navigator,'getGamepads',{value:()=>pad.connected?[pad]:[]});},{id,mapping,connected});
+async function mockPad(page:Page,id='Unknown controller',mapping='standard',connected=true,optIn=true){
+ await page.addInitScript(({id,mapping,connected,optIn})=>{if(optIn){for(const key of ['studyvillage-gamepad','studyvillage-control-help'])if(localStorage.getItem(key)===null)localStorage.setItem(key,'on');}localStorage.setItem('studyvillage-language','fr');const pad={id,index:0,mapping,connected,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0,touched:false}))};(window as any).guidePad=pad;Object.defineProperty(navigator,'getGamepads',{value:()=>pad.connected?[pad]:[]});},{id,mapping,connected,optIn});
 }
 async function frames(page:Page,button:number,down:boolean){await page.evaluate(async({button,down})=>{(window as any).guidePad.buttons[button].pressed=down;await new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r())));},{button,down});}
 async function press(page:Page,button:number){await frames(page,button,true);await frames(page,button,false);}
@@ -44,4 +44,9 @@ test('disabled controller cannot open help or navigate, while Settings can resto
  // The controller preference is distinct from the floating-help preference.
  const label=panel.locator('label').filter({hasText:'Activer la manette'});await label.locator('input').uncheck();await panel.getByRole('button',{name:'Fermer',exact:true}).click();await press(page,8);await expect(guide(page)).toBeHidden();await expect(page.locator('.sv-control-strip')).toBeHidden();
  await settings(page);await label.locator('input').check();await panel.getByRole('button',{name:'Fermer',exact:true}).click();await press(page,8);await expect(guide(page)).toBeVisible();
+});
+test('fresh profiles default both options off and retain explicit on/off choices',async({page})=>{
+ await mockPad(page,'Unknown controller','standard',true,false);await page.goto('/');await expect(page.getByTestId('phone-button')).toBeVisible();await expect(page.locator('.sv-control-strip')).toBeHidden();await press(page,8);await expect(guide(page)).toBeHidden();
+ const panel=await settings(page),enable=panel.getByLabel('Activer la manette',{exact:true}),floating=panel.getByLabel('Afficher l’aide flottante',{exact:true});await expect(enable).not.toBeChecked();await expect(floating).not.toBeChecked();await panel.getByRole('button',{name:'Contrôles',exact:true}).click();await expect(guide(page)).toBeVisible();await page.keyboard.press('Escape');await enable.check();await floating.check();
+ await page.reload();await settings(page);await expect(enable).toBeChecked();await expect(floating).toBeChecked();await enable.uncheck();await floating.uncheck();await page.reload();await settings(page);await expect(enable).not.toBeChecked();await expect(floating).not.toBeChecked();
 });
