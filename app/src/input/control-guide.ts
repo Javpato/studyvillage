@@ -17,7 +17,7 @@ export class ControlGuide {
   // Native dialog retains Tab/Enter/Escape behavior, without forwarding keystrokes to the world.
   this.root.addEventListener('keydown',e=>e.stopPropagation());
   const header=document.createElement('header'),heading=document.createElement('div');
-  heading.append(text('p','StudyVillage','sv-guide-eyebrow'),text('h2','Controles del mando'));
+  heading.append(text('p','StudyVillage','sv-guide-eyebrow'),text('h2','Controles del mando','sv-guide-title'));
   const close=text('button','Volver','sv-button sv-guide-close');close.type='button';close.onclick=()=>this.root.close();header.append(heading,close);
   const modes=document.createElement('div');modes.className='sv-guide-modes';setDisplayAttribute(modes,'aria-label',msg('Dispositivo de entrada'));modes.setAttribute('role','group');
   for(const [mode,label]of [['gamepad','Mando'],['keyboard','Teclado']]as const){const b=text('button',label);b.type='button';b.dataset.device=mode;b.onclick=()=>{this.device=mode;for(const button of modes.querySelectorAll('button'))button.setAttribute('aria-pressed',String(button===b));this.render();};modes.append(b);}
@@ -30,6 +30,7 @@ export class ControlGuide {
  setConnection(label:string,ready:boolean){setDisplayText(this.connection,msg(label));this.connection.dataset.ready=String(ready);}
  private renderTabs(){this.tabs.replaceChildren();for(const context of this.available){const label=context==='world'?'Exploración':context==='tetris'?'Forest Blocks':'Navegación';const b=text('button',label);b.type='button';b.dataset.context=context;b.setAttribute('aria-pressed',String(this.context===context));b.onclick=()=>{this.context=context;this.selected='';for(const tab of this.tabs.querySelectorAll('button'))tab.setAttribute('aria-pressed',String(tab===b));this.render();};this.tabs.append(b);}}
  private render(){
+  setDisplayText(this.root.querySelector('.sv-guide-title')!,msg(this.device==='keyboard'?'Atajos de teclado':'Controles del mando'));
   this.content.replaceChildren();this.rows=[];this.highlights=[];
   const actions=guideActions(this.context,this.phone);
   this.content.append(text('p',this.device==='gamepad'?'Guíate por la posición, sea cual sea tu mando.':'Atajos de teclado','sv-guide-intro'));
@@ -42,7 +43,7 @@ export class ControlGuide {
    const left=document.createElement('div'),right=document.createElement('div');left.className='sv-guide-actions sv-guide-left';right.className='sv-guide-actions sv-guide-right';
    const figure=document.createElement('figure');figure.className='sv-controller-diagram';figure.append(controllerArt());
    const caption=text('figcaption','Selecciona una acción o pulsa un botón para verlo en el mando.');figure.append(caption);
-   for(const [group,label,side]of [['movement','Movimiento',left],['actions','Acciones',right],['navigation','Navegación',this.context==='menu'?right:left]]as const){const grouped=actions.filter(a=>a.group===group);if(!grouped.length)continue;side.append(text('h3',label));for(const action of grouped)side.append(this.row(action,actions));}
+   for(const [group,label,side]of [['movement','Movimiento',left],['actions','Acciones',right],['navigation','Navegación',this.context==='menu'?right:left]]as const){const grouped=actions.filter(a=>a.group===group&&a.targets.length);if(!grouped.length)continue;side.append(text('h3',label));for(const action of grouped)side.append(this.row(action,actions));}
    layout.append(left,figure,right);this.content.append(layout);
    const note=text('p','La posición de los sticks puede variar. Los botones iluminados indican su función, no su marca.','sv-guide-note');this.content.append(note);
    this.highlights=[...figure.querySelectorAll('[data-pad]')];this.paint();

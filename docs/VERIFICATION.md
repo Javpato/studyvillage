@@ -565,3 +565,19 @@ Corrected release candidate `2e4cb49` is pushed. Workflow: https://github.com/Ja
 Native-check audit: Android still expected an Identity shortcut on the phone home, although the current default layout has Village, Contacts, Home and Settings and Identity lives within Settings. The APK smoke now checks all four current home entries; house navigation, installation, restart and crash checks remain intact. Desktop native checks already use the shared current phone-navigation helper. No application build changed in this follow-up. The corrected script is being saved before another release run.
 
 Android smoke syntax and all eight phone-layout unit tests passed before pushing `508e30d`. The application build remains `studyvillage-f29a1800aa311d31`; only the native test and verification notes changed after `9996ded`.
+
+## Controller guide redesign — 2026-11-10
+
+Candidate on existing main: original SVG controller, physical-position action cards, separate keyboard help, world/menu/Forest Blocks contexts referencing existing bindings, live button feedback, modal input isolation, persistent compact floating help and Settings → Controls access. Standard Gamepad API mappings remain authoritative; unmapped controllers have an explicit keyboard fallback. No manufacturer mapping was added.
+
+Completed before extended verification: app/server TypeScript, ES/EN/FR catalogue coverage (2908 messages), 38 focused controls/Tetris/minigame unit tests. New Chromium/WebKit journeys cover physical button families, disconnect/reconnect, unsupported mappings, persistent hiding, Settings recovery, live highlights, input isolation and five viewport sizes. Existing controller game journeys remain in scope.
+
+Remaining at this checkpoint: execute browser journeys and inspect screenshots; full unit suites; current production web/PWA build; deployment confirmation. Real physical Bluetooth/USB controllers are not available for hardware certification. This is a candidate, not a verified release. Workflow: https://github.com/Javpato/studyvillage/actions/workflows/pages.yml . Pre-existing verification heading edit is preserved locally.
+
+Candidate commit: `f6ff8f4` — https://github.com/Javpato/studyvillage/commit/f6ff8f4 . Browser/full checks start from this candidate.
+
+Verified locally: full check passed (551 client tests + 37 server tests, types, translations, web/PWA and server builds); a new dynamic-label regression also passed after correcting the previously untranslated `Confirmar` label. Initial controller/browser matrix: 30/30 Chromium/WebKit journeys, including Quiz, Gartic and Werewolves. Final guide matrix after narrow-phone and localization refinements: 28/28; production package: 17/17 guide/existing-controller journeys. Settings → Controls remains usable without Gamepad API, with a disabled controller, and with persistent floating help hidden. Physical family tests use simulated standard API devices, not physical pairing.
+
+Visual review: 320/390px phones, 820px tablet, 1280px desktop and 740×360 short landscape; desktop Forest Blocks and navigation artwork inspected. Narrow phones use one readable action column below the SVG. All five viewport checks verify internal containment; focus scrolls into view. Packaged Pages checks passed in Chromium and WebKit, including offline cache, saved ink and legacy sprite upgrades. Final local build cache: `studyvillage-09c8f9c897e7f438`. Existing native installers were not regenerated.
+
+Candidate `f6ff8f4` workflow: https://github.com/Javpato/studyvillage/actions/runs/42891083323 . Final source refinements and validation are ready to push; publication of the final commit remains to be confirmed. Standard physical mapping reference: https://www.w3.org/TR/gamepad/#remapping . Button 3 stays the upper face action regardless of the manufacturer's printed label; no nonstandard remapping is guessed.

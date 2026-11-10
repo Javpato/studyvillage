@@ -3,8 +3,13 @@ import {axisDirection,PressRepeater,keyboardGameAction,TETRIS_BINDINGS,setActive
 import {FALLBACK_PET_ART,validPetArt} from '../src/assets/pet-assets';
 import {defaultPhoneLayout,phoneLayoutSchema} from '../../packages/core/src/phone/layout';
 import {folderAppearance} from '../src/ui/folder-appearance';
+import {guideActions,POSITION_LABELS} from '../src/input/control-guide-model';
+import ES from '../src/i18n/es.json';
+import EN from '../src/i18n/en.json';
+import FR from '../src/i18n/fr.json';
 import {messageKeys} from '../../scripts/translation-keys.mjs';
 describe('input actions',()=>{
+ it('localizes the dynamically sourced action and position labels in every language',()=>{const labels=[...['world','menu','tetris'].flatMap(context=>guideActions(context as 'world'|'menu'|'tetris',true).map(a=>a.label)),...Object.values(POSITION_LABELS)];for(const dictionary of [ES,EN,FR])for(const label of labels)expect((dictionary as Record<string,string>)[label],label).toBeTruthy();});
  it('ignores stick drift and nonfinite samples',()=>{expect(axisDirection(.24)).toBe(0);expect(axisDirection(-.3)).toBe(-1);expect(axisDirection(NaN)).toBe(0);});
  it('confirms once until release and repeats navigation after a delay',()=>{const r=new PressRepeater();expect(r.press('confirm',true,0)).toBe(true);expect(r.press('confirm',true,1000)).toBe(false);r.press('confirm',false,1001);expect(r.press('confirm',true,1002)).toBe(true);expect(r.press('left',true,0,true)).toBe(true);expect(r.press('left',true,299,true)).toBe(false);expect(r.press('left',true,300,true)).toBe(true);expect(r.press('left',true,399,true)).toBe(false);expect(r.press('left',true,400,true)).toBe(true);});
  it('keyboard actions and controller help use the same mappings',()=>{for(const b of TETRIS_BINDINGS)for(const key of b.keys)expect(keyboardGameAction(key)).toBe(b.action);setActiveInput('gamepad','DualSense');expect(buttonGlyph(0)).toBe('✕');setActiveInput('keyboard');expect(activeInput()).toBe('keyboard');setActiveInput('gamepad','Unknown Standard');expect(buttonGlyph(0)).toBe('◇↓');});

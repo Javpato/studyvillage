@@ -21,6 +21,7 @@ export function guideActions(context:GuideContext, phone=false):GuideAction[] {
   {id:'move',label:'Caminar',targets:['left-stick',...directions],keys:['W A S D','↑ ← ↓ →'],group:'movement'},
   ...WORLD_BINDINGS.map(b=>entry(b,b.action==='run'?'movement':'actions')),
   entry(menu('controls'),'navigation'),
+  {id:'back',label:'Volver',targets:[],keys:['Escape'],group:'navigation'},
  ];
  return [...TETRIS_BINDINGS.map(b=>({...entry(b,['left','right','down'].includes(b.action)?'movement':'actions'),targets:[b.button,...(['left','right','down'].includes(b.action)?['left-stick' as const]:[])]})),entry(GAME_MENU_BINDING,'navigation'),entry(menu('controls'),'navigation')];
 }
