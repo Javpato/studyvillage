@@ -1,3 +1,21 @@
+# Published dev.11 — 10 November 2026
+
+**[StudyVillage v1.0.0-dev.11](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.11) is verified and published** with Windows x64 EXE, Linux x64 AppImage, universal macOS DMG and Android APK. Source/tag: [`c02c46a4c7bb5d444142b070c608d364c1ebc144`](https://github.com/Javpato/studyvillage/commit/c02c46a4c7bb5d444142b070c608d364c1ebc144). [Release workflow 42899845254](https://github.com/Javpato/studyvillage/actions/runs/42899845254) succeeded; publication completed at 21:38:31 UTC. [Pages 42899813607](https://github.com/Javpato/studyvillage/actions/runs/42899813607) also succeeded. This remains a development prerelease.
+
+Controller input and floating controls help default to **off**, including when preferences cannot be read. Explicit saved on/off choices remain intact. Settings → Controls continues to open the guide. All installers include the new physical-position SVG controller help and its mobile layout correction. Android version code is 10010; the companion protocol remains 3.
+
+Verified delivery:
+
+- 552 client + 37 server tests; types, 2909 ES/EN/FR messages, web/PWA/server builds, native bridge and packaged offline/cache checks passed.
+- Complete Chromium suite: **253 passed**, **18 intentionally skipped** optional journeys. Live pairing: **4 passed**. Expanded WebKit suite: **32 passed**. Local additional coverage includes fresh defaults and both stored choices, full controller/minigame journeys, compact production viewports and the entire 32-case WebKit matrix.
+- Windows installation and uninstall preserving data, Linux AppImage sandbox/startup/storage/notebook checks, Android emulator installation/startup/restart and the **identical universal DMG on both Apple Silicon and Intel** passed.
+- Downloaded all six published assets and independently verified every SHA-256 checksum, native file format, version, source, common web index/cache and native verification receipt. All packages match 177 web files and local cache **`studyvillage-d6ab5c44be2ad4da`**.
+- `deliverables/release-current/` now contains only the four verified dev.11 installers, `BUILD_INFO.json` and `SHA256SUMS`; the Linux AppImage is executable. Superseded local dev.10 installers were removed after verification. Historical GitHub tags/assets, source, dependencies, signing material and user data were preserved. Current `app/dist` and `server/dist` remain.
+
+Release findings and retries: the first candidate stopped on a real CSS load-order issue that made compact help 185.97px wide; compact rules now follow the shared base rules, and the original <185px assertion remains. The corrected source later had an isolated WebKit clock-click timeout and a five-second first-start timeout in the Linux smoke. The clock passed five isolated local repetitions and the full local matrix; the unchanged validation and Linux jobs then passed on retry. No test assertion was relaxed, failed candidate published or old release tag moved. Details and checkpoints are retained below. Task-owned test output, logs, temporary scripts and download staging were removed after the verified delivery was installed locally.
+
+---
+
 # Published dev.10 — 9 November 2026
 
 **[StudyVillage v1.0.0-dev.10](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.10) is verified and published**, with Windows x64 EXE, Linux x64 AppImage, universal macOS DMG and Android APK. Source/tag: [`691ba08a31daa8544c4cc637618de3c6a9b53c0c`](https://github.com/Javpato/studyvillage/commit/691ba08a31daa8544c4cc637618de3c6a9b53c0c). [Release workflow 42647455433](https://github.com/Javpato/studyvillage/actions/runs/42647455433) succeeded; publication completed at 16:06 UTC. [Pages 42647456901](https://github.com/Javpato/studyvillage/actions/runs/42647456901) also passed. This remains a development prerelease.
@@ -601,3 +619,21 @@ Local dev.11 verification passed: 552 client + 37 server tests, all types/transl
 Web defaults are published: Pages workflow https://github.com/Javpato/studyvillage/actions/runs/42897976070 succeeded for `e485aa1`. Native dev.11 publication remains pending release workflow 42897993663. Local test output is no longer needed; verified current web/server builds and dev.10 installers remain intact until new installer downloads pass verification.
 
 Release 42897993663 stopped before packaging: 250 Chromium journeys passed, 18 optional journeys skipped, and three compact-width checks failed (185.96875px versus a <185px limit). The mobile strip overrides lived in an earlier-loaded module stylesheet and were overwritten by the shared base styles. Moved the compact rules after their base rules in village-polish.css; kept the test limit unchanged. All ten Chromium/WebKit viewport checks passed after the correction. The dev.11 tag and installers were not published by the failed run.
+
+Corrected release candidate `c02c46a4c7bb5d444142b070c608d364c1ebc144` is pushed. New release workflow: https://github.com/Javpato/studyvillage/actions/runs/42899845254 . The local production build passed again; its cache is `studyvillage-d6ab5c44be2ad4da`. The complete release gates are running again against this corrected source; no failed-candidate tag was created.
+
+Corrected candidate update: the complete Chromium regression suite passed in release workflow 42899845254, including the compact-width cases that blocked the first candidate. Live pairing and expanded WebKit checks are next. Corrected web publication also succeeded: https://github.com/Javpato/studyvillage/actions/runs/42899813607 . Five additional production viewport checks passed locally after moving the compact CSS rules.
+
+The corrected candidate passed complete Chromium and live pairing, but the expanded WebKit job had one timeout waiting for “Pausar reloj” after clicking “Continuar reloj” in the existing desktop-clock resize/persistence journey; the other 31 WebKit cases passed. The exact failing production WebKit journey then passed five consecutive local runs unchanged. No reproducible clock defect or connection to the opt-in preferences was established, so no product change or relaxed assertion was made. Repeating the failed validation job on the identical `c02c46a` source, with all release gates retained. No dev.11 tag/installers have been published yet.
+
+Follow-up on the WebKit timeout: the entire 32-case production WebKit matrix passed locally unchanged, including the desktop-clock case in its original suite order (in addition to its five isolated passes). Release workflow 42899845254 attempt 2 is repeating the required validation and downstream jobs on the same `c02c46a` commit. The release remains unpublished until that attempt succeeds.
+
+Release attempt 2 passed the complete validation job, including Chromium, live pairing and the full WebKit matrix with the previously timed-out clock case. All required assertions remained unchanged. The four native packaging jobs are now running in workflow 42899845254; universal macOS still requires its second-architecture test before publication.
+
+Native packaging update: Linux built the AppImage and reached the actual-payload smoke test, but its first-window check timed out after the test's default five seconds while the app still displayed “StudyVillage · Preparando tu rincón…”. The other OS jobs continue. The validation job has passed; once native jobs finish, failed jobs can be repeated without redoing successful validation/packages. No incomplete release will be published.
+
+Native results from attempt 2: Windows EXE, Android APK and universal macOS DMG on Apple Silicon all passed packaging and native installation/startup checks. Only Linux's five-second first-start timeout failed; Intel and publication were correctly skipped. Repeating only failed/dependent jobs now preserves the successful validation and three packages, all on the same source `c02c46a`.
+
+Linux passed its unchanged AppImage startup/sandbox/storage/notebook checks on the failed-job retry. All four native package jobs are now successful. The identical universal DMG is being tested on Intel; publication remains gated on that result and consolidated installer/hash/provenance validation.
+
+Release publication succeeded on 2026-11-10 at 21:38:31 UTC: https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.11 . Workflow https://github.com/Javpato/studyvillage/actions/runs/42899845254 passed all required jobs for source/tag `c02c46a4c7bb5d444142b070c608d364c1ebc144`. Windows, Linux, Android and the identical macOS universal DMG on both Apple Silicon and Intel passed. All six assets are uploaded. Independent download/checksum verification and local replacement are in progress.
