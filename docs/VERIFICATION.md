@@ -1,12 +1,22 @@
-# Whiteboard candidate — 14 November 2026
+# Whiteboard update — 14 November 2026
 
-Candidate: `0731cd2` pushed to `main` after explicit owner authorization for Javpato/studyvillage main. Candidate is not yet verified. Initial candidate workflow: https://github.com/Javpato/studyvillage/actions/runs/43615522858 (superseded by local corrections; server snapshot test identified and fixed). Workflow destinations: https://github.com/Javpato/studyvillage/actions/workflows/pages.yml and https://github.com/Javpato/studyvillage/actions/workflows/amendment-regressions.yml.
+Owner explicitly authorized pushing this implementation to `https://github.com/Javpato/studyvillage` on `main`. Candidate `5b4ed6a` passed and published through [Pages 43616159083](https://github.com/Javpato/studyvillage/actions/runs/43616159083). The final sharing/recovery changes in this checkpoint supersede it; publication status must be checked after their push. Native dev.11 installers are unchanged.
 
-Implemented: IndexedDB migration/persistence, unlimited board operation counts and selections, durable pending shared edits, packet batching, persistent clipboard, bucket fills, animal/avatar previous-frame shadow and compositing, protocol compatibility gates (server 8, companion 4, peer board capability 2). Existing user edit below is preserved.
+Implemented: device IndexedDB storage with verified legacy migration, no lifetime operation/selection caps, large erase/clear/copy/cut/paste/duplicate operations with grouped undo, persistent clipboard, bucket fill, and animal/avatar previous-frame shadows and copying underneath. Network messages remain bounded internally: server snapshots are batched; peers acknowledge each edit batch; companion snapshots are paged. Pending edits retain their author/board/session scope and acknowledged progress. Received shared drawings are cached locally; failed device writes retain unsaved strokes for export and retry. Legacy rich-shape backups are converted without dropping shapes. Both devices must update: server protocol 8, companion 5, peer board capability 3.
 
-Completed: application/server type checks; 557 client tests and 37 server tests; 2918 ES/EN/FR messages; web/PWA/server builds; 9 initial browser regressions; 3 backup/recovery cases; all 3 expanded Chromium tests (2500-object migration, copy/duplicate/paste to 5000 objects, layer clear/undo/reload, bucket fill/undo/reload, animal shadow/composite/undo). Local corrections fix quadratic selection processing, one-step layer undo, initial server snapshot batching, avatar bucket color selection and pending-sync scope.
+Completed locally:
 
-Remaining: full unit/server tests; Chromium/WebKit migration, bulk edits, clipboard, fill, animation, backup and touch regression checks; review failures and final build; workflow check pending. Physical iPad/Pencil verification remains unperformed. This is not a verified release.
+- Full suite: 558 client + 37 server tests passed; the additional legacy-board backup regression and identity-backup checks passed (11 focused tests). Types, 2918 ES/EN/FR messages, web/PWA/server builds passed.
+- Chromium: migration of 2500 objects, copying/duplicating/pasting to 5000, clearing a complete layer and undoing it once, reload persistence, enclosed whiteboard fill/undo/reload, animal bucket/shadow/composite/undo, and backup/recovery journeys passed.
+- Production WebKit: 14 touch/layout/Pencil/eraser/large-board checks passed. All 4 final feature cases passed, including simulated storage failure preserving the saved drawing and retrying the unsaved stroke. These are browser simulations, not physical iPad/Pencil certification.
+- Local peer integration: signed 2200-object edits and deletes with batch acknowledgments passed. Local companion browser test: 2200-object paged snapshot plus bounded bulk commit passed.
+- Packaged Pages/offline/cache and sprite-upgrade checks passed in Chromium and WebKit. Final publication workflow reruns these against the pushed source.
+
+External live-pair testing was rejected by automatic approval review because the configured signaling destination was not explicitly authorized for test-data export. Local-only peer and browser tests were used instead. No external live-pair or physical iPad result is claimed.
+
+First candidate `0731cd2` failed its server snapshot regression in [43615522858](https://github.com/Javpato/studyvillage/actions/runs/43615522858); the initial reset now carries the first batch and the corrected server suite passes. Large selection testing also removed quadratic cleanup and undo loops. Original user documentation edits below were preserved.
+
+Remaining: push the final sharing/recovery candidate, record its SHA and Pages workflow result, and remove task-owned test output. Retain the current builds and existing installers.
 
 ---
 

@@ -365,6 +365,14 @@ describe('session integration using a FAKE in-memory transport, real WebCrypto (
     expect(a.instance.view.privateCall.with).toBeNull();
   });
 
+  it('streams a large signed edit with acknowledgments before sending the next batch',async()=>{
+    const network=new FakeNetwork(),clock=new ManualClock(),a=await client(network,clock,'A'),b=await client(network,clock,'B');
+    await a.instance.openVillage();await admit(a.instance,b.instance);const ref=a.identity.public.fingerprint;
+    a.instance.visitHouse(ref);b.instance.visitHouse(ref);await until(()=>b.instance.view.members.every(m=>m.houseId===ref));
+    const strokes=Array.from({length:2200},(_,i)=>({id:'bulk'+i,boardId:ref,author:ref,seq:1,color:'#123456',width:2,tool:'pen' as const,points:[{x:i%100,y:1}],deleted:false}));
+    await a.instance.commitBoard(ref,strokes);expect(b.instance.view.strokes).toHaveLength(2200);
+    await a.instance.commitBoard(ref,strokes.map(s=>({...s,seq:2,deleted:true})));expect(b.instance.view.strokes.every(s=>s.deleted)).toBe(true);
+  },20000);
   it('synchronizes signed board strokes, deduplicates them, and preserves author tombstones', async () => {
     const network = new FakeNetwork(), clock = new ManualClock(); const a = await client(network, clock, 'A'), b = await client(network, clock, 'B');
     await a.instance.openVillage(); await admit(a.instance, b.instance);

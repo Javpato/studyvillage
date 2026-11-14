@@ -1,3 +1,4 @@
+import {parseBoards} from '../../packages/runtime/src/storage/backup';
 import {describe,it,expect} from 'vitest';
 import {WhiteboardRegistry} from '../../packages/core/src/whiteboard/boards-registry';
 import {BoardStore} from '../../packages/runtime/src/session/board';
@@ -16,3 +17,5 @@ describe('buckets',()=>{
  it('fills only connected pixels and treats transparent RGB as transparent',()=>{const p=new Uint8ClampedArray(4*4*4);for(let y=0;y<4;y++)p.set([0,0,0,255],(y*4+2)*4);p[0]=150;expect(floodPixels(p,4,4,0,0,[255,0,0,255])).toBe(true);expect(p[3]).toBe(255);expect(p[(3*4+3)*4+3]).toBe(0);});
  it('rejects open regions and retains enclosed holes',()=>{const p=new Uint8ClampedArray(10*10*4);for(let y=1;y<9;y++)for(let x=1;x<9;x++)if(x===1||x===8||y===1||y===8||x===4&&y===4)p[(y*10+x)*4+3]=255;const runs=enclosedRegion(p,10,10,2,2)!;expect(runs.reduce((n,r)=>n+r[2]*r[3],0)).toBe(35);p[(1*10+2)*4+3]=0;expect(enclosedRegion(p,10,10,2,2)).toBeNull();});
 });
+
+it('restores legacy rich shapes and local board identifiers without losing content',()=>{const board='house:own:board:board';const s={...stroke(0),boardId:board};const saved=parseBoards({metadata:[],strokes:[[board,[s]]],elements:[[board,[{id:'legacy-circle',boardId:board,authorId:s.author,authorName:'A',kind:'circle',color:'#123456',width:2,points:[{x:1,y:1},{x:5,y:5}],deleted:false,updatedAt:10}]]]});expect(saved.strokes[0][1]).toHaveLength(2);expect(saved.strokes[0][1][1]).toMatchObject({id:'legacy-circle',tool:'circle',author:s.author});expect(saved.elements).toEqual([]);});

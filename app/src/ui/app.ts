@@ -653,6 +653,7 @@ class StudyUI {
     }
     if (this.waitingHouseId && view.network.phase !== 'JOINED') this.waitingHouseId = null;
     this.expansion.syncSession();
+    this.cacheSharedBoard();
     this.refresh();
   }
 
@@ -2370,7 +2371,7 @@ class StudyUI {
         if(action==='latex'){const v=z.strictObject({text:z.string().max(50000),prompt:z.string().max(4000),image:z.string().max(8000000)}).parse(value);return this.expansion.ollamaGateway.latex(v.text,v.prompt,v.image);}
         const v=z.strictObject({texts:z.array(z.string().max(10000)).max(1000),prompt:z.string().max(4000)}).parse(value);return this.expansion.ollamaGateway.tutor(v.texts,v.prompt);
       }
-if(action==='open')return this.companionBoard();if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error('Esta pizarra es de solo lectura.');const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error('No se pudo guardar la selección.');}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return this.companionBoard();}}
+if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().int().nonnegative()}).parse(value);return this.companionBoardPage(cursor.token,cursor.offset);}if(action==='open')return this.companionBoard();if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error('Esta pizarra es de solo lectura.');const current=new Map(this.allStrokes(this.boardId()).map(s=>[s.id,s]));for(const stroke of request.changes){const old=current.get(stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error('No se pudo guardar la selección.');}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return {saved:true};}}
     throw Error('Esta acción ya no está disponible.');
   }
   private companionActiveView():{tool:CompanionTool|null;key:string}{
@@ -2397,7 +2398,10 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
     },error=>this.notify(errorMessage(error)));
     return this.remoteBoard;
   }
-  private companionBoard(){const board=this.wireBoardId(),id=this.boardId(),view=this.view!;return {board,author:view.identity.fingerprint,strokes:this.allStrokes(id).map(s=>({...s,boardId:board})),canEdit:this.canDrawBoard(),moderate:this.moderatesBoard(),configure:this.expansion.boardRegistry.canConfigure(id,view.identity.fingerprint,view.network.isHost),display:this.isDisplayBoard(),metadata:this.expansion.boardRegistry.ensureBoard(id)};}
+  private companionSnapshots=new Map<string,{at:number;data:ReturnType<StudyUI['companionBoardData']>}>();
+  private companionBoard(){const token=crypto.randomUUID();this.companionSnapshots.set(token,{at:Date.now(),data:this.companionBoardData()});while(this.companionSnapshots.size>2)this.companionSnapshots.delete(this.companionSnapshots.keys().next().value!);return this.companionBoardPage(token,0);}
+  private companionBoardPage(token:string,offset:number){const snapshot=this.companionSnapshots.get(token);if(!snapshot||Date.now()-snapshot.at>120000||snapshot.data.board!==this.wireBoardId())throw Error('La pizarra cambió antes de guardar.');const strokes=boardBatches(snapshot.data.strokes.slice(offset)).next().value??[],nextOffset=offset+strokes.length;return {...snapshot.data,strokes,...(nextOffset<snapshot.data.strokes.length?{next:{token,offset:nextOffset}}:{})};}
+  private companionBoardData(){const board=this.wireBoardId(),id=this.boardId(),view=this.view!;return {board,author:view.identity.fingerprint,strokes:this.allStrokes(id).map(s=>({...s,boardId:board})),canEdit:this.canDrawBoard(),moderate:this.moderatesBoard(),configure:this.expansion.boardRegistry.canConfigure(id,view.identity.fingerprint,view.network.isHost),display:this.isDisplayBoard(),metadata:this.expansion.boardRegistry.ensureBoard(id)};}
 
   private async savePetDetails(config:PetConfig){const owner=this.view?.identity.fingerprint;if(!owner||!config.custom)return;const pet=(await readOwnedPets(owner)).find(p=>p.appearance.id===config.id);if(!pet)return;const name=config.name?.trim()||pet.appearance.name,phrase=config.phrase??pet.appearance.phrase;if(name===pet.appearance.name&&phrase===pet.appearance.phrase)return;await saveOwnedPet({...pet,appearance:{...pet.appearance,name,phrase,revision:pet.appearance.revision+1}});}
   private async savePetHome(home:PetHome,config:PetConfig){
@@ -2547,10 +2551,18 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
     if(this.localPosition.space?.roomId)return scopedBoard(this.houseOwnerId||this.view!.identity.fingerprint,this.localPosition.space,this.activeBoardFurnitureId||'board');
     return `house:${this.houseOwnerId||this.view?.identity.fingerprint||'0'.repeat(64)}:${this.activeBoardFurnitureId||'board'}`;
   }
+  private cachedBoardWrites=new Set<string>();
+  private cacheSharedBoard():void {
+    if(this.remoteBoard?.state||!this.expansion.boardRegistry.loaded||this.view?.network.phase!=='JOINED'||this.view.network.boardRef!==this.wireBoardId())return;
+    const board=this.boardId();if(this.cachedBoardWrites.has(board))return;
+    const current=new Map(this.expansion.boardRegistry.getStrokes(board).map(s=>[s.id,s]));const changes=this.view.network.strokes.filter(s=>{const old=current.get(s.id);return !old||!old.deleted&&s.seq>old.seq;}).map(s=>({...s,boardId:board}));if(!changes.length)return;
+    this.cachedBoardWrites.add(board);void this.expansion.boardRegistry.commitLocal(board,changes).then(()=>{this.cachedBoardWrites.delete(board);this.cacheSharedBoard();}).catch(e=>{this.cachedBoardWrites.delete(board);this.notify(errorMessage(e));});
+  }
   private allStrokes(boardId: string): BoardStroke[] {
     if(this.remoteBoard?.state)return this.remoteBoard.all();
     const byId=new Map<string,BoardStroke>();for(const stroke of this.expansion.boardRegistry.getStrokes(boardId))byId.set(stroke.id,{...stroke,boardId});
     if(this.view?.network.boardRef===this.wireBoardId())for(const stroke of this.view.network.strokes){const old=byId.get(stroke.id);if(!old||stroke.seq>=old.seq)byId.set(stroke.id,{...stroke,boardId});}
+    for(const stroke of this.expansion.boardRegistry.unsavedStrokes(boardId)){const old=byId.get(stroke.id);if(!old||stroke.seq>old.seq)byId.set(stroke.id,stroke);}
     return [...byId.values()];
   }
   private boardCommits=new Map<string,Promise<void>>();
@@ -2564,6 +2576,7 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
       for(const batch of boardBatches(pending.changes)){
         if(this.view?.network.phase!=='JOINED'||this.view.network.sessionId!==scope||this.wireBoardId()!==ref||this.boardAuthor()!==author)throw Error('Dispositivo no conectado.');
         if(!await this.actions.commitBoard(ref,batch.map(s=>({...s,boardId:ref}))))throw Error('No se pudo guardar la selección.');
+        pending.changes=pending.changes.slice(batch.length);await setBoardExtra('pending:'+pending.id,pending);
       }
       await setBoardExtra('pending:'+pending.id,undefined);this.boardSaveStates.set(pending.board,'saved');
     }}catch(e){this.notify(t('Guardado en este dispositivo. Sincronización pendiente.')+' '+errorMessage(e));}

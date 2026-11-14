@@ -12,7 +12,7 @@ import { NotebookRepository, type NotebookSnapshot } from '../../../documents/sr
 import { secureNoteSchema } from '../../../core/src/notes/secure-notes';
 import { flashcardDeckSchema,quizDefinitionSchema } from '../../../core/src/study/library';
 import { strokeSchema } from '../../../core/src/protocol/schema';
-import { whiteboardMetadataSchema } from '../../../core/src/whiteboard/boards-registry';
+import { WhiteboardRegistry,whiteboardMetadataSchema } from '../../../core/src/whiteboard/boards-registry';
 import { workspaceSchema, floorWorkspaceSchema } from '../../../core/src/house/workspaces';
 import {mailboxNotesSchema,localMailboxSchema} from '../../../core/src/house/mailbox';
 import { validateAssetPack } from '../../../../app/src/assets/custom-assets';
@@ -46,9 +46,7 @@ function validateEntry(key:string,raw:string):void {
  else if(key==='studyvillage-npc-dialogue-v1')z.object({opacity:z.number().min(.35).max(1),size:z.enum(['small','standard','large']).optional(),textSize:z.enum(['normal','large']),lines:z.union([z.literal(2),z.literal(3)]),progressive:z.boolean()}).parse(value);
  else if(key==='studyvillage-workspaces-v1'){const spaces=z.record(z.string(),workspaceSchema).parse(value);if(Object.keys(spaces).length>2000)throw new AppError('invalid','Copia fuera de límites.');for(const [scope,doc]of Object.entries(spaces))if(scope.endsWith('/@floor'))floorWorkspaceSchema.parse(doc);}
  else if(key==='studyvillage-custom-assets-v1')validateAssetPack(value);
- else if(key==='studyvillage-whiteboards-v1'){
-  z.object({metadata:z.array(z.tuple([z.string(),whiteboardMetadataSchema])).max(2000),strokes:z.array(z.tuple([z.string(),z.array(strokeSchema)])).max(2000),elements:z.array(z.tuple([z.string(),z.array(z.object({id:z.string(),boardId:z.string(),authorId:z.string(),authorName:z.string(),kind:z.enum(['pen','line','rectangle','circle','arrow','text']),color:z.string().regex(/^#[0-9a-f]{6}$/i),width:z.number().min(.25).max(100),points:z.array(z.object({x:z.number().finite(),y:z.number().finite()})).max(200000),text:z.string().max(100000).optional(),deleted:z.boolean(),updatedAt:z.number()})).max(2000)])).max(2000)}).parse(value);
- }
+ else if(key==='studyvillage-whiteboards-v1')parseBoards(value);
  else if(key.startsWith('studyvillage-group-projects-v1')){
   z.array(z.object({id:z.string().max(128),name:z.string().max(120),description:z.string().max(10000),repoUrl:z.string().max(1000).nullable(),liveShareUrl:z.string().max(1000).nullable(),liveShareBy:z.string().max(128).nullable(),ownerId:z.string().max(128),ownerName:z.string().max(120),working:z.record(z.string(),z.object({name:z.string().max(120),color:z.string().regex(/^#[0-9a-f]{6}$/i)})),tasks:z.array(z.object({id:z.string(),text:z.string().max(1000),done:z.boolean(),by:z.string().nullable()})).max(1000),updatedAt:z.number()})).max(1000).parse(value);
  }
@@ -84,8 +82,9 @@ export function previewBackup(backup:AppBackup,current?:AppBackup):BackupPreview
 }
 async function recoveryDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const req=indexedDB.open('studyvillage-backup-recovery',1);req.onupgradeneeded=()=>req.result.createObjectStore('recovery');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
 async function journal(action:'put'|'get'|'delete',key:string,value?:unknown):Promise<unknown>{const db=await recoveryDb();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('recovery',action==='get'?'readonly':'readwrite'),store=tx.objectStore('recovery');const req=action==='get'?store.get(key):action==='put'?store.put(value,key):store.delete(key);let result:unknown;req.onsuccess=()=>result=req.result;tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(tx.error);});}finally{db.close();}}
-function parseBoards(value:unknown):BoardSnapshot {
- const snapshot=z.object({metadata:z.array(z.tuple([z.string(),whiteboardMetadataSchema])),strokes:z.array(z.tuple([z.string(),z.array(z.unknown())])),elements:z.array(z.unknown())}).parse(value);
+export function parseBoards(value:unknown):BoardSnapshot {
+ const snapshot=z.object({metadata:z.array(z.tuple([z.string(),whiteboardMetadataSchema])),strokes:z.array(z.tuple([z.string(),z.array(z.unknown())])),elements:z.array(z.tuple([z.string(),z.array(z.object({id:z.string(),boardId:z.string(),authorId:z.string(),authorName:z.string(),kind:z.enum(['pen','line','rectangle','circle','arrow','text']),color:z.string(),width:z.number(),points:z.array(z.object({x:z.number(),y:z.number()})),text:z.string().optional(),deleted:z.boolean(),updatedAt:z.number()}))]))}).parse(value);
+ const registry=new WhiteboardRegistry({getItem:()=>JSON.stringify(snapshot),setItem:()=>{}});const ids=new Set([...snapshot.strokes.map(([id])=>id),...snapshot.elements.map(([id])=>id)]);snapshot.strokes=[...ids].map(id=>[id,registry.getStrokes(id)]);snapshot.elements=[];
  for(const [id,strokes]of snapshot.strokes)for(const raw of strokes){const stroke=raw as BoardStrokeForBackup;strokeSchema.parse({...stroke,boardId:'a'.repeat(64)});if(stroke.boardId!==id)throw new AppError('invalid','Copia no válida.');}
  return snapshot as BoardSnapshot;
 }

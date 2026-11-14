@@ -110,6 +110,7 @@ export const payloadSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('player.relay'), identityId: fingerprintSchema, position: positionSchema }),
   z.strictObject({ type: z.literal('board.stroke'), document: signedStrokeSchema }),
   z.strictObject({ type:z.literal('board.commit'),document:boardCommitSchema }),
+  z.strictObject({type:z.literal('board.commit.ack'),id:idSchema}),
   z.strictObject({ type: z.literal('board.sync.request'), boardId: boardRefSchema, cursor: integer }),
   z.strictObject({ type: z.literal('board.sync.response'), boardId: boardRefSchema, document: signedStrokeSchema.nullable(), next: integer.nullable() }),
   z.strictObject({type:z.literal('device.media'),endpoint:endpointSchema}),

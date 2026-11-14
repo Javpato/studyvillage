@@ -286,7 +286,7 @@ export class VillageClient implements VillageActions {
       const start = () => {
         if (link.closed || link.hello || !this.endpoint || !this.sessionId) return;
         link.hello = {
-          v: 1, boardVersion:2, kind: 'auth.hello', sessionId: this.sessionId, epoch: this.epoch, intent: intent!,
+          v: 1, boardVersion:3, kind: 'auth.hello', sessionId: this.sessionId, epoch: this.epoch, intent: intent!,
           identity: structuredClone(this.identity.public), from: this.endpoint.id, to: raw.endpoint, nonce: randomId(32),
           generation: intent === 'join' ? this.invite!.generation : 0, secret: intent === 'join' ? this.invite!.secret : '',
         };
@@ -301,7 +301,7 @@ export class VillageClient implements VillageActions {
     if (!this.active(link)) return;
     link.lastSeen = this.clock.now();
     if (message.kind === 'auth.hello') {
-      if(message.boardVersion!==2)throw new Error('Actualiza StudyVillage en los dos dispositivos y crea un código nuevo.');
+      if(message.boardVersion!==3)throw new Error('Actualiza StudyVillage en los dos dispositivos y crea un código nuevo.');
       if (link.step !== 'hello' || !this.endpoint || message.sessionId !== this.sessionId || message.epoch !== this.epoch || message.from !== link.raw.endpoint || message.to !== this.endpoint.id) throw new Error('Unexpected hello');
       if ([...this.links].some(other => other !== link && !other.closed && other.raw.endpoint === message.from)) throw new Error('Duplicate identity');
       if (message.intent === 'join') {
@@ -318,11 +318,11 @@ export class VillageClient implements VillageActions {
       link.transcript = { v: 1, sessionId: message.sessionId, epoch: message.epoch, intent: message.intent, initiator: message.identity.fingerprint, responder: this.id, from: message.from, to: message.to, initiatorNonce: message.nonce, responderNonce: randomId(32), generation: message.generation, secret: message.secret };
       link.step = 'proof';
       const signature = await sign(this.identity, 'auth-responder', link.transcript);
-      if (this.active(link)) link.wire.send({ v: 1, boardVersion:2, kind: 'auth.challenge', identity: structuredClone(this.identity.public), transcript: link.transcript, signature });
+      if (this.active(link)) link.wire.send({ v: 1, boardVersion:3, kind: 'auth.challenge', identity: structuredClone(this.identity.public), transcript: link.transcript, signature });
       return;
     }
     if (message.kind === 'auth.challenge') {
-      if(message.boardVersion!==2)throw new Error('Actualiza StudyVillage en los dos dispositivos y crea un código nuevo.');
+      if(message.boardVersion!==3)throw new Error('Actualiza StudyVillage en los dos dispositivos y crea un código nuevo.');
       if (link.step !== 'challenge' || !link.hello) throw new Error('Unexpected challenge');
       const identity = await validatePublicIdentity(message.identity);
       const expected = typeof link.expected === 'string' ? link.expected : link.expected?.fingerprint;
@@ -551,6 +551,7 @@ export class VillageClient implements VillageActions {
       } return;
     }
     if (payload.type === 'player.relay') { if (!fromHost || this.isHost) throw new Error('Wrong position relay'); const member = this.members.get(payload.identityId); if (member) { const changedArea = areaOf(member.position) !== areaOf(payload.position); member.position = payload.position; if (changedArea) this.syncMedia(); this.notify(); } return; }
+    if(payload.type==='board.commit.ack'){this.boardReceipts.get(payload.id)?.ack(link.raw.endpoint);return;}
     if (payload.type === 'board.commit') { await this.receiveBoardCommit(link, payload.document); return; }
     if (payload.type === 'board.stroke') { await this.receiveStroke(link, payload.document, false); return; }
     if (payload.type === 'board.sync.request') {
@@ -779,7 +780,7 @@ export class VillageClient implements VillageActions {
         const result = this.board.applyBatch(documents);
         if (result === 'full') throw new Error('La pizarra alcanzó su capacidad. Exporta tu trabajo antes de continuar.');
         if (result === 'forbidden') throw new Error('Solo puedes cambiar tus propios objetos.');
-        if (result === 'applied' && !localOnly) this.shareBoardCommit(document);
+        if (!localOnly) await this.deliverBoardCommit(document);
         this.notify(); resolve(true);
       } catch (error) { reject(error); }
     }); });
@@ -794,8 +795,15 @@ export class VillageClient implements VillageActions {
     if (!this.active(link) || !this.sameRoom(author.fingerprint, document.boardId)) return;
     const result = this.board.applyBatch(document.documents);
     if (result === 'forbidden') throw new Error('Another author owns this object');
-    if (result === 'full') this.setError('La pizarra alcanzó su capacidad; no se aplicó la selección.');
+    if (result === 'full') throw new Error('La pizarra alcanzó su capacidad; no se aplicó la selección.');
     else if (result === 'applied') this.notify();
+    this.send(link,{type:'board.commit.ack',id:document.id});
+  }
+  private boardReceipts=new Map<string,{ack(endpoint:string):void}>();
+  private deliverBoardCommit(document:SignedBoardCommit):Promise<void>{
+    const waiting=new Set<string>();for(const member of this.members.values())if(this.sameRoom(member.identity.fingerprint,document.boardId))for(const endpoint of this.deviceEndpoints(member))if(endpoint!==this.endpoint?.id)waiting.add(endpoint);
+    if(!waiting.size)return Promise.resolve();
+    return new Promise((resolve,reject)=>{const timer=this.clock.setTimeout(()=>{this.boardReceipts.delete(document.id);reject(Error('Guardado en este dispositivo. Sincronización pendiente.'));},15000);this.boardReceipts.set(document.id,{ack:endpoint=>{waiting.delete(endpoint);if(!waiting.size){this.clock.clearTimeout(timer);this.boardReceipts.delete(document.id);resolve();}}});this.shareBoardCommit(document);});
   }
   private shareBoardCommit(document: SignedBoardCommit): void {
     let pending = false;
