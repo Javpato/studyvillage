@@ -273,7 +273,7 @@ export class World {
       case 'board.select': {
         if (body.ref && !this.canAccessBoard(c, body.ref)) throw new Reject('forbidden');
         c.board = body.ref;
-        if(body.ref){const documents=this.store.strokes(this.boardKey(c.neighborhood,body.ref)) as SignedStroke[],byId=new Map(documents.map(d=>[d.stroke.id,d]));this.send(c,{t:'board',ref:body.ref,documents:[],reset:true});for(const batch of boardBatches(documents.map(d=>d.stroke)))this.send(c,{t:'board',ref:body.ref,documents:batch.map(s=>byId.get(s.id)!),reset:false});}
+        if(body.ref){const documents=this.store.strokes(this.boardKey(c.neighborhood,body.ref)) as SignedStroke[],byId=new Map(documents.map(d=>[d.stroke.id,d]));let reset=true;for(const batch of boardBatches(documents.map(d=>d.stroke))){this.send(c,{t:'board',ref:body.ref,documents:batch.map(s=>byId.get(s.id)!),reset});reset=false;}if(reset)this.send(c,{t:'board',ref:body.ref,documents:[],reset:true});}
         return null;
       }
       case 'board.commit': return this.withRequest(c, async () => {

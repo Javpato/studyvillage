@@ -1,7 +1,7 @@
 import {WhiteboardRegistry,type WhiteboardMetadata} from '../../../core/src/whiteboard/boards-registry';
 import type {BoardStroke} from '../../../core/src/protocol/types';
 export interface BoardSnapshot {metadata:[string,WhiteboardMetadata][];strokes:[string,BoardStroke[]][];elements:[]}
-export interface PendingBoard {createdAt:number;id:string;board:string;ref:string;author:string;changes:BoardStroke[]}
+export interface PendingBoard {scope:string|null;createdAt:number;id:string;board:string;ref:string;author:string;changes:BoardStroke[]}
 const legacyKey='studyvillage-whiteboards-v1';
 let opening:Promise<IDBDatabase>|undefined;
 function open():Promise<IDBDatabase>{return opening??=new Promise((resolve,reject)=>{const r=indexedDB.open('studyvillage-whiteboards',1);r.onupgradeneeded=()=>{r.result.createObjectStore('metadata');r.result.createObjectStore('strokes',{keyPath:['boardId','id']});r.result.createObjectStore('extras');};r.onsuccess=()=>{r.result.onversionchange=()=>{r.result.close();opening=undefined;};resolve(r.result);};r.onerror=()=>{opening=undefined;reject(r.error);};});}

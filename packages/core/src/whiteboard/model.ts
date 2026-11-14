@@ -73,7 +73,7 @@ function distanceToSegment(p: BoardPoint, a: BoardPoint, b: BoardPoint): number 
  */
 export function strokeHit(stroke: BoardStroke, point: BoardPoint, radius: number, textBox?: BoardRect | null): boolean {
   if (stroke.deleted || !stroke.points.length) return false;
-  if(stroke.tool==='fill'){for(let i=0;i<stroke.points.length;i+=4)if(pointInPolygon(point,stroke.points.slice(i,i+4)))return true;}
+  if(stroke.tool==='fill'){for(let i=0;i<stroke.points.length;i+=4){const quad=stroke.points.slice(i,i+4);if(pointInPolygon(point,quad)||quad.some((p,j)=>distanceToSegment(point,p,quad[(j+1)%4])<=radius))return true;}return false;}
   const reach = radius + stroke.width / 2;
   const [first] = stroke.points;
   const last = stroke.points[stroke.points.length - 1];

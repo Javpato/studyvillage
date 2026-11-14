@@ -1,5 +1,5 @@
 import {fillDrawing} from '../whiteboard/fill';
-import {pendingBoards,setBoardExtra,type PendingBoard} from '../../../packages/runtime/src/storage/whiteboards';
+import {boardExtra,pendingBoards,setBoardExtra,type PendingBoard} from '../../../packages/runtime/src/storage/whiteboards';
 import {boardBatches} from '../../../packages/core/src/whiteboard/batches';
 import {CompanionBoard} from '../companion/board';
 import {z} from 'zod';
@@ -94,7 +94,7 @@ import {
 } from '../house/model';
 import { drawHouseInterior, drawFurniturePreview } from '../house/draw';
 import {
-  BOARD_COLORS, DEFAULT_CAMERA, boardAtCapacity, clampBoardPoint, fitCamera, makeStroke, newestOwnStroke,
+  BOARD_COLORS, DEFAULT_CAMERA, clampBoardPoint, fitCamera, makeStroke, newestOwnStroke,
   nextSequence, panBy, screenToWorld, strokeHit, strokesBounds, visibleStrokes, zoomAt,
   type BoardCamera, type BoardUiTool,
 } from '../../../packages/core/src/whiteboard/model';
@@ -2071,17 +2071,16 @@ class StudyUI {
     this.boardClearButton.classList.toggle('is-armed', this.boardClearArmed);
     this.boardCanvas.dataset.tool = this.richBoardTool || this.boardTool;
     setText(this.boardZoomLabel, `${Math.round(this.boardCamera().zoom * 100)}%`);
-    const syncKey=`${view.network.phase}:${this.wireBoardId()}:${this.boardAuthor()}`;if(this.syncAttempt!==syncKey){this.syncAttempt=syncKey;void this.flushBoardPending();}
+    const syncKey=`${view.network.phase}:${view.network.sessionId}:${this.wireBoardId()}:${this.boardAuthor()}`;if(this.syncAttempt!==syncKey){this.syncAttempt=syncKey;void this.flushBoardPending();}
     const canDraw = this.canDrawBoard();
     if(!this.expansion.boardRegistry.loaded){setText(this.boardStatus,this.expansion.boardRegistry.storageError?msg('No se pudo guardar. Exporta tus cambios.'):msg('Cargando pizarra…'));return;}
-    show(this.boardReadOnlyStatus, !canDraw || boardAtCapacity(strokes, boardId));
+    show(this.boardReadOnlyStatus, !canDraw);
     setText(this.boardReadOnlyStatus, !canDraw ? msg('Esta pizarra es de solo lectura. Puedes consultar los permisos en Más.') : msg('La pizarra ha alcanzado su capacidad.'));
     setText(this.boardStatus, !canDraw
       ? msg('Entra en la casa o solicita permisos de edición para dibujar en esta pizarra.')
-      : boardAtCapacity(strokes, boardId)
-        ? msg('Pizarra llena · {count}/{count} operaciones', { count: LIMITS.boardOperations })
-        : msg('{count} trazos en esta pizarra', { count: strokes.filter(stroke => !stroke.deleted).length }));
-    this.boardCanvas.classList.toggle('is-disabled', !canDraw || boardAtCapacity(strokes, boardId));
+      : msg('{count} trazos en esta pizarra', { count: strokes.filter(stroke => !stroke.deleted).length }));
+    const saved=this.boardSaveStates.get(boardId);if(canDraw&&saved)setText(this.boardStatus,saved==='saving'?msg('Guardando…'):saved==='pending'?msg('Guardado en este dispositivo. Sincronización pendiente.'):msg('Guardado en este dispositivo'));
+    this.boardCanvas.classList.toggle('is-disabled', !canDraw);
     const authors = [...new Set(strokes.map((stroke) => stroke.author))].sort();
     const moderator = this.moderatesBoard() && canDraw;
     const live = (author: string) => strokes.filter(stroke => stroke.author === author && !stroke.deleted);
@@ -2109,8 +2108,7 @@ class StudyUI {
         setDisplayAttribute(clear, 'aria-label', msg('Borrar la capa de {name}', { name: typeof name === 'string' ? name : t(name) }));
         clear.addEventListener('click', () => { void (async () => {
           const objects = live(author);
-          // Commits hold up to 128 objects; a big layer is cleared in several steps.
-          for (let i = 0; i < objects.length; i += 100) if (!await this.boardEditor.apply(objects.slice(i, i + 100).map(stroke => ({ ...stroke, deleted: true })))) return;
+          if(!await this.boardEditor.apply(objects.map(stroke=>({...stroke,deleted:true}))))return;
           this.notify(t('Capa borrada ({count} objetos). Puedes deshacerlo.', { count: objects.length }));
         })(); });
         this.boardLayers.append(clear);
@@ -2556,25 +2554,30 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
     return [...byId.values()];
   }
   private boardCommits=new Map<string,Promise<void>>();
+  private boardSaveStates=new Map<string,'saving'|'saved'|'pending'>();
   private pendingSync=false;private syncQueued=false;private syncAttempt='';
   private async flushBoardPending():Promise<void>{
     if(this.pendingSync){this.syncQueued=true;return;}if(this.view?.network.phase!=='JOINED')return;
-    const ref=this.wireBoardId(),author=this.boardAuthor();this.pendingSync=true;
+    const ref=this.wireBoardId(),author=this.boardAuthor(),scope=this.view.network.sessionId;this.pendingSync=true;
     try{for(const pending of await pendingBoards()){
-      if(pending.ref!==ref||pending.author!==author)continue;
+      if(pending.ref!==ref||pending.author!==author||pending.scope!==scope&&!(pending.scope===null&&ref.startsWith(`house:${author}:`)))continue;
       for(const batch of boardBatches(pending.changes)){
-        if(this.view?.network.phase!=='JOINED'||this.wireBoardId()!==ref||this.boardAuthor()!==author)throw Error('Dispositivo no conectado.');
+        if(this.view?.network.phase!=='JOINED'||this.view.network.sessionId!==scope||this.wireBoardId()!==ref||this.boardAuthor()!==author)throw Error('Dispositivo no conectado.');
         if(!await this.actions.commitBoard(ref,batch.map(s=>({...s,boardId:ref}))))throw Error('No se pudo guardar la selección.');
       }
-      await setBoardExtra('pending:'+pending.id,undefined);
+      await setBoardExtra('pending:'+pending.id,undefined);this.boardSaveStates.set(pending.board,'saved');
     }}catch(e){this.notify(t('Guardado en este dispositivo. Sincronización pendiente.')+' '+errorMessage(e));}
     finally{this.pendingSync=false;if(this.syncQueued){this.syncQueued=false;void this.flushBoardPending();}}
   }
   private async commitBoardChanges(changes: BoardStroke[]): Promise<void> {
     if(this.remoteBoard?.state)return this.remoteBoard.commit(changes);
     const boardId=this.boardId(),ref=this.wireBoardId(),author=this.boardAuthor();
-    const pending:PendingBoard={createdAt:Date.now(),id:crypto.randomUUID(),board:boardId,ref,author,changes:structuredClone(changes)};
-    await this.expansion.boardRegistry.commitLocal(boardId,changes,pending);
+    this.boardSaveStates.set(boardId,'saving');setText(this.boardStatus,msg('Guardando…'));
+    const scopeKey='scope:'+boardId+':'+author,scope=this.view?.network.sessionId??await boardExtra<string>(scopeKey)??null;
+    if(scope)await setBoardExtra(scopeKey,scope);
+    const pending:PendingBoard={scope,createdAt:Date.now(),id:crypto.randomUUID(),board:boardId,ref,author,changes:structuredClone(changes)};
+    try{await this.expansion.boardRegistry.commitLocal(boardId,changes,pending);}catch(e){this.boardSaveStates.delete(boardId);throw e;}
+    this.boardSaveStates.set(boardId,this.view?.network.phase==='JOINED'?'pending':'saved');
     this.lastBoardRenderSig='';this.boardExtraFrames=3;
     setText(this.boardStatus,msg('Guardado en este dispositivo'));
     await this.flushBoardPending();
@@ -3487,7 +3490,6 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
       this.eraserGesture=new EraserGesture(this.allStrokes(this.boardId()),s=>!this.hiddenAuthors.has(s.author)&&(s.author===this.boardAuthor()||this.moderatesBoard()),this.eraserPrefs.mode,this.eraserRadius(),textBox);
       this.captureBoardPointer(event);this.eraseAt(point);return;
     }
-    if(boardAtCapacity(this.allStrokes(this.boardId()),this.boardId()))return;
     if(this.richBoardTool){this.richBoardDraft={kind:this.richBoardTool,start:point,current:point};this.captureBoardPointer(event);return;}
     if(this.boardTool==='text'){this.openBoardText(point);return;}
     const tool=this.boardTool;if(tool==='select'||tool==='hand')return;
@@ -3497,7 +3499,7 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
 
   private fillingBoard=false;
   private async fillBoardAt(point:BoardPoint):Promise<void>{
-    if(this.fillingBoard)return;this.fillingBoard=true;
+    if(this.fillingBoard)return;this.fillingBoard=true;setText(this.boardStatus,msg('Rellenando…'));
     const boardId=this.boardId(),author=this.boardAuthor(),color=this.boardColor.value;
     try{const parts=await fillDrawing(visibleStrokes(this.allStrokes(boardId),boardId,this.hiddenAuthors),point);if(this.boardId()!==boardId||this.boardAuthor()!==author)return;
       if(!parts){this.notify(t('Cierra el contorno antes de rellenar.'));return;}
@@ -3584,7 +3586,6 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
     if (!view) return;
     const boardId = this.boardId();
     const existing = this.allStrokes(boardId);
-    if (boardAtCapacity(existing, boardId)) return;
     const online = view.network.phase === 'JOINED';
     const stroke = makeStroke(
       boardId,

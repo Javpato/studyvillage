@@ -27,7 +27,7 @@ export class BoardEditor {
  setActive(active:boolean,textTool=false):void{if(this.active!==active||this.textTool!==textTool){this.active=active;this.textTool=textTool;this.renderToolbar();}}
  get version():number{return this.paintVersion;}
  private changed():void{this.paintVersion++;this.ctx.changed();}
- sync():void{if(this.board!==this.ctx.board()){this.cancel();this.selected.clear();this.board=this.ctx.board();this.renderToolbar();}for(const id of this.selected)if(!this.ctx.strokes().some(s=>s.id===id&&!s.deleted))this.selected.delete(id);}
+ sync():void{if(this.board!==this.ctx.board()){this.cancel();this.selected.clear();this.board=this.ctx.board();this.renderToolbar();}if(this.selected.size){const live=new Set(this.ctx.strokes().filter(s=>!s.deleted).map(s=>s.id));for(const id of this.selected)if(!live.has(id))this.selected.delete(id);}}
  private history(id=this.ctx.board()){if(!this.histories.has(id))this.histories.set(id,{undo:[],redo:[]});return this.histories.get(id)!;}
  canUndo():boolean{return this.history().undo.length>0;}canRedo():boolean{return this.history().redo.length>0;}
  private selectedObjects():BoardStroke[]{if(!this.selected.size)return[];return this.ctx.strokes().filter(s=>this.selected.has(s.id)&&!s.deleted);}
@@ -41,11 +41,11 @@ export class BoardEditor {
  }
  async undo():Promise<void>{await this.restore(false);}async redo():Promise<void>{await this.restore(true);}
  private async restore(redo:boolean):Promise<void>{const h=this.history(),source=redo?h.redo:h.undo,target=redo?h.undo:h.redo,command=source.at(-1);if(!command||this.busy)return;
-  const expected=redo?command.before:command.after,desired=redo?command.after:command.before;const current=this.ctx.all();const currentById=new Map(current.map(s=>[s.id,s])),desiredById=new Map(desired.map(s=>[s.id,s]));const ids=new Set([...expected,...desired].map(s=>s.id));const changes:BoardStroke[]=[];
+  const expected=redo?command.before:command.after,desired=redo?command.after:command.before;const current=this.ctx.all();const currentById=new Map(current.map(s=>[s.id,s])),desiredById=new Map(desired.map(s=>[s.id,s]));const ids=new Set([...expected,...desired].map(s=>s.id));const changes:BoardStroke[]=[];const replacements=new Map<string,string>();
   for(const id of ids){const now=currentById.get(id);const want=desiredById.get(id);if(!want){if(now&&!now.deleted)changes.push({...now,deleted:true});continue;}
-   if(now?.deleted&&!want.deleted){const replacement=crypto.randomUUID();for(const list of [command.before,command.after])for(const s of list)if(s.id===id)s.id=replacement;changes.push({...want,id:replacement,seq:0});}
+   if(now?.deleted&&!want.deleted){const replacement=crypto.randomUUID();replacements.set(id,replacement);changes.push({...want,id:replacement,seq:0});}
    else changes.push({...want,seq:now?.seq??0});}
-  if(await this.apply(changes,false)){source.pop();target.push(command);this.selected.clear();this.renderToolbar();}
+  if(await this.apply(changes,false)){for(const list of [command.before,command.after])for(const s of list)s.id=replacements.get(s.id)??s.id;source.pop();target.push(command);this.selected.clear();this.renderToolbar();}
  }
  pointerDown(event:PointerEvent,selectMode:boolean):boolean{this.sync();if(!selectMode)return false;if(event.button!==0)return false;
   const at=this.ctx.world(event),objects=this.selectedObjects(),bounds=selectionBounds(objects),pad=12/Math.max(.05,this.ctx.camera().zoom*this.ctx.canvas.clientWidth/768);

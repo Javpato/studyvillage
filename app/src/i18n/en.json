@@ -2915,5 +2915,6 @@
   "Cierra el contorno antes de rellenar.": "Close the outline before filling.",
   "No se pudo rellenar el dibujo.": "Could not fill the drawing.",
   "Guardado en este dispositivo. Sincronización pendiente.": "Saved on this device. Sync pending.",
-  "Cargando pizarra…": "Loading whiteboard…"
+  "Cargando pizarra…": "Loading whiteboard…",
+  "Rellenando…": "Filling…"
 }

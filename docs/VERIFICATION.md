@@ -1,3 +1,15 @@
+# Whiteboard candidate — 14 November 2026
+
+Candidate: `0731cd2` pushed to `main` after explicit owner authorization for Javpato/studyvillage main. Candidate is not yet verified. Initial candidate workflow: https://github.com/Javpato/studyvillage/actions/runs/43615522858 (superseded by local corrections; server snapshot test identified and fixed). Workflow destinations: https://github.com/Javpato/studyvillage/actions/workflows/pages.yml and https://github.com/Javpato/studyvillage/actions/workflows/amendment-regressions.yml.
+
+Implemented: IndexedDB migration/persistence, unlimited board operation counts and selections, durable pending shared edits, packet batching, persistent clipboard, bucket fills, animal/avatar previous-frame shadow and compositing, protocol compatibility gates (server 8, companion 4, peer board capability 2). Existing user edit below is preserved.
+
+Completed: application/server type checks; 557 client tests and 37 server tests; 2918 ES/EN/FR messages; web/PWA/server builds; 9 initial browser regressions; 3 backup/recovery cases; all 3 expanded Chromium tests (2500-object migration, copy/duplicate/paste to 5000 objects, layer clear/undo/reload, bucket fill/undo/reload, animal shadow/composite/undo). Local corrections fix quadratic selection processing, one-step layer undo, initial server snapshot batching, avatar bucket color selection and pending-sync scope.
+
+Remaining: full unit/server tests; Chromium/WebKit migration, bulk edits, clipboard, fill, animation, backup and touch regression checks; review failures and final build; workflow check pending. Physical iPad/Pencil verification remains unperformed. This is not a verified release.
+
+---
+
 # Published dev.11 — 10 November 2026
 
 **[StudyVillage v1.0.0-dev.11](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.11) is verified and published** with Windows x64 EXE, Linux x64 AppImage, universal macOS DMG and Android APK. Source/tag: [`c02c46a4c7bb5d444142b070c608d364c1ebc144`](https://github.com/Javpato/studyvillage/commit/c02c46a4c7bb5d444142b070c608d364c1ebc144). [Release workflow 42899845254](https://github.com/Javpato/studyvillage/actions/runs/42899845254) succeeded; publication completed at 21:38:31 UTC. [Pages 42899813607](https://github.com/Javpato/studyvillage/actions/runs/42899813607) also succeeded. This remains a development prerelease.
@@ -36,7 +48,7 @@ Limits remain: development desktop binaries are not commercially signed/notarize
 
 ---
 
- Companion workspace — published 9 November 2026
+# Companion workspace — published 9 November 2026
 
 Runtime [`b618f95636a7db68d70845f06de13a6b4357cf83`](https://github.com/Javpato/studyvillage/commit/b618f95636a7db68d70845f06de13a6b4357cf83) is pushed to `main` and **published to [StudyVillage](https://javpato.github.io/studyvillage/)** by [Pages 42611842975](https://github.com/Javpato/studyvillage/actions/runs/42611842975). Its public service worker matches the local production build byte for byte: **`studyvillage-861b8b1ef7de1d6f`**, 177 packaged files including the worker. [Final Linux/macOS matrix 42611843139](https://github.com/Javpato/studyvillage/actions/runs/42611843139) **passed on Ubuntu 24.04 and macOS 15**, including the full unit/build checks, four live pairing journeys and 24 Chromium + 24 production WebKit journeys per OS (104 browser executions total). Following test/documentation changes do not change runtime content. Existing dev.9 native installers remain unchanged; use the updated website on both devices.
 
