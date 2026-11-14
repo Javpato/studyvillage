@@ -1,3 +1,4 @@
+import {savedBoards,savedStrokes} from './board-storage';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect } from '@playwright/test';
 test('precision sizes persist and a partial eraser drag is undone together', async ({ page }) => {
@@ -11,10 +12,7 @@ test('precision sizes persist and a partial eraser drag is undone together', asy
   await openBoard();
   const canvas = page.getByLabel('Pizarra para dibujar');
   const box = (await canvas.boundingBox())!;
-  const strokes = () => page.evaluate(() => {
-    const saved = JSON.parse(localStorage.getItem('studyvillage-whiteboards-v1') || '{}');
-    return (saved.strokes || []).flatMap(([, list]: [string, {deleted:boolean;points:{x:number;y:number}[]}[]]) => list).filter((s:{deleted:boolean}) => !s.deleted).map(({ seq, ...s }: { seq:number }) => s);
-  });
+  const strokes = async () => (await savedStrokes(page)).map(({seq,...s})=>s);
   await page.mouse.move(box.x + box.width * .2, box.y + box.height * .5); await page.mouse.down();
   await page.mouse.move(box.x + box.width * .8, box.y + box.height * .5, { steps: 15 }); await page.mouse.up();
   await expect.poll(async () => (await strokes()).length).toBe(1);

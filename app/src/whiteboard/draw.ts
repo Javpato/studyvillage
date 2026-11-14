@@ -121,7 +121,7 @@ function drawNote(ctx: CanvasRenderingContext2D, stroke: Drawable): void {
 
 // ----------------------------------------------------------- primitives --
 
-function pathStroke(ctx: CanvasRenderingContext2D, stroke: Drawable): void {
+export function pathStroke(ctx: CanvasRenderingContext2D, stroke: Drawable): void {
   if (!stroke.points.length) return;
   if (stroke.tool === 'text') { drawNote(ctx, stroke); return; }
   const start = stroke.points[0];
@@ -131,6 +131,7 @@ function pathStroke(ctx: CanvasRenderingContext2D, stroke: Drawable): void {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.strokeStyle = stroke.color;
+  if(stroke.tool==='fill'){ctx.fillStyle=stroke.color;for(let i=0;i+3<stroke.points.length;i+=4){ctx.moveTo(stroke.points[i].x,stroke.points[i].y);for(let j=1;j<4;j++)ctx.lineTo(stroke.points[i+j].x,stroke.points[i+j].y);ctx.closePath();}ctx.fill();return;}
   if (stroke.tool === 'pen') {
     ctx.moveTo(start.x, start.y);
     for (const point of stroke.points.slice(1)) ctx.lineTo(point.x, point.y);

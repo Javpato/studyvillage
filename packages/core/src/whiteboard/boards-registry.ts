@@ -14,7 +14,7 @@ import { clampBoardPoint } from './model';
  * overwrites another board's strokes, metadata, permissions, or undo/redo history.
  */
 
-export type ExtendedBoardShapeKind = 'pen' | 'line' | 'rectangle' | 'circle' | 'arrow' | 'text';
+export type ExtendedBoardShapeKind = 'pen' | 'line' | 'rectangle' | 'circle' | 'arrow' | 'text' | 'fill';
 
 export interface BoardRichElement {
   id: string;
@@ -81,9 +81,9 @@ export function houseBoardId(houseScopeId: string, furnitureId: string): string 
 }
 
 export class WhiteboardRegistry {
-  private metadata = new Map<string, WhiteboardMetadata>();
-  private strokesByBoard = new Map<string, BoardStroke[]>();
-  private elementsByBoard = new Map<string, BoardRichElement[]>();
+  protected metadata = new Map<string, WhiteboardMetadata>();
+  protected strokesByBoard = new Map<string, BoardStroke[]>();
+  protected elementsByBoard = new Map<string, BoardRichElement[]>();
   private redoStackByBoardAndAuthor = new Map<string, BoardStroke[]>();
   private richRedoByBoard = new Map<string, BoardRichElement[]>();
   private remoteCursors = new Map<string, BoardRemoteCursor>();
@@ -172,14 +172,12 @@ export class WhiteboardRegistry {
 
   commitStrokes(boardId: string, changes: BoardStroke[]): void {
     const byId = new Map((this.strokesByBoard.get(boardId) ?? []).map(s => [s.id, structuredClone(s)]));
-    if (changes.length > 128) throw new AppError('invalid', 'Selecciona menos objetos para guardar esta operación.');
     for (const stroke of changes) {
       const old = byId.get(stroke.id);
       if (old && old.author !== stroke.author) throw new AppError('invalid', 'Solo puedes modificar tus propios objetos.');
       if (old?.deleted || old && old.seq >= stroke.seq) continue;
       byId.set(stroke.id, { ...structuredClone(stroke), boardId });
     }
-    if (byId.size > LIMITS.boardOperations) throw new AppError('invalid', 'Esta pizarra ha alcanzado su capacidad.');
     const next = new Map(this.strokesByBoard); next.set(boardId, [...byId.values()]);
     try {
       if (this.storage) this.storage?.setItem(STORAGE_KEY, JSON.stringify({ metadata:[...this.metadata.entries()], strokes:[...next.entries()],elements:[] }));
@@ -353,9 +351,6 @@ export class WhiteboardRegistry {
       throw new Error('Esta pizarra está en modo solo lectura para ti.');
     }
     const list = this.elementsByBoard.get(boardId) ?? [];
-    if (list.length >= LIMITS.boardOperations) {
-      throw new Error('La pizarra ha alcanzado el límite de elementos.');
-    }
     const el: BoardRichElement = {
       id: crypto.randomUUID(),
       boardId,
@@ -469,7 +464,7 @@ export class WhiteboardRegistry {
     return out;
   }
 
-  private saveToStorage(): void {
+  protected saveToStorage(): void {
     try {
       if (!this.storage) return;
       const payload = {
@@ -505,14 +500,14 @@ export class WhiteboardRegistry {
       if (Array.isArray(parsed.strokes)) {
         for (const [id, list] of parsed.strokes) {
           if (Array.isArray(list)) {
-            this.strokesByBoard.set(id, list.slice(0, LIMITS.boardOperations));
+            this.strokesByBoard.set(id, list);
           }
         }
       }
       if (Array.isArray(parsed.elements)) {
         for (const [id, list] of parsed.elements) {
           if (Array.isArray(list)) {
-            this.elementsByBoard.set(id, list.slice(0, LIMITS.boardOperations));
+            this.elementsByBoard.set(id, list);
           }
         }
       }

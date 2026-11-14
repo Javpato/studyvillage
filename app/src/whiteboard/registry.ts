@@ -2,11 +2,21 @@ export * from '../../../packages/core/src/whiteboard/boards-registry';
 import {WhiteboardRegistry as Registry,type ExtendedBoardShapeKind} from '../../../packages/core/src/whiteboard/boards-registry';
 import type {BoardPoint} from '../../../packages/core/src/protocol/types';
 import type {KeyValueStore} from '../../../packages/core/src/storage';
-import {browserKeyValue} from '../../../packages/runtime/src/storage/key-value';
+import {initializeBoards,saveBoardObjects,type PendingBoard} from '../../../packages/runtime/src/storage/whiteboards';
+import type {BoardStroke} from '../../../packages/core/src/protocol/types';
 /** Canvas and decoded image cache are presentation concerns; the registry model stays headless. */
 export class WhiteboardRegistry extends Registry {
  private decodedSprites=new Map<string,{url:string,image:HTMLImageElement}>();
- constructor(storage:KeyValueStore|null=browserKeyValue){super(storage);}
+ readonly ready:Promise<void>;loaded=false;storageError:unknown=null;private writes:Promise<void>=Promise.resolve();
+ constructor(storage?:KeyValueStore|null){super(storage??null);this.ready=storage!==undefined?Promise.resolve():initializeBoards().then(snapshot=>{for(const [id,m]of snapshot.metadata)this.metadata.set(id,m);for(const [id,strokes]of snapshot.strokes)this.strokesByBoard.set(id,strokes);}).then(()=>{this.loaded=true;});this.ready.catch(e=>{this.storageError=e;});}
+ async commitLocal(boardId:string,changes:BoardStroke[],pending?:PendingBoard):Promise<void>{
+  const job=this.writes.catch(()=>{}).then(async()=>{await this.ready;const current=new Map(this.getStrokes(boardId).map(s=>[s.id,s]));for(const s of changes){const old=current.get(s.id);if(old&&old.author!==s.author)throw Error('Solo puedes modificar tus propios objetos.');}
+   const accepted=changes.filter(s=>{const old=current.get(s.id);return !old||!old.deleted&&s.seq>old.seq;}).map(s=>({...s,boardId}));
+   await saveBoardObjects(accepted,this.listBoards(),pending);super.commitStrokes(boardId,accepted);this.storageError=null;
+  });this.writes=job;return job;
+ }
+ protected override saveToStorage():void {this.writes=this.writes.catch(()=>{}).then(async()=>{await this.ready;await saveBoardObjects([],this.listBoards());}).catch(e=>{this.storageError=e;});}
+
  getDecodedBoardSprite(boardId:string):HTMLImageElement|null {
   const url=this.getMetadata(boardId).customSpriteDataUrl;
   if(!url){this.decodedSprites.delete(boardId);return null;}

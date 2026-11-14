@@ -1,3 +1,4 @@
+import {initializeBoards,replaceBoardSnapshot,boardSnapshot,type BoardSnapshot} from './whiteboards';
 import {FOCUS_AUDIO_KEY,focusAudioSchema,verifyFocusAudio} from './focus-audio';
 import {parseFocusClockState} from '../../../core/src/focus/clock';
 import {ownedPetSchema,type OwnedPet} from '../../../core/src/pets/definitions';
@@ -20,8 +21,8 @@ import { validatePublicIdentity } from '../../../core/src/identity';
 const MAX_BACKUP=128*1024*1024;
 const baseKeys=['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1','whiteboards-v1','workspaces-v1','custom-assets-v1','avatar-sheet-v1','language','village-name','servers-v1','ollama-v2','review-v2','flashcard-progress-v1','role-sets','eraser-v1','hud-layout-v1','controls-v2','portrait-zoom-v1','environment-v1','interactive-objects-v1','network-v1','focus-clock-v1','focus-audio-v1','npc-dialogue-v1','apple-pencil-mode-v1','phone-layout-v1'];
 const acceptedKey=(key:string)=>/^studyvillage-mailbox-v1:(?:own|[a-f0-9]{64})$/.test(key)||baseKeys.some(base=>key===`studyvillage-${base}`||(['secure-notes-v1','flashcard-decks-v1','quizzes-v1','group-projects-v1'].includes(base)&&key.startsWith(`studyvillage-${base}:room:`)));
-const backupSchema=z.strictObject({format:z.literal('studyvillage-backup'),version:z.literal(1),createdAt:z.number().finite().nonnegative(),local:z.unknown(),values:z.record(z.string().max(512),z.string().max(8*1024*1024)),notebooks:z.unknown(),pets:z.array(ownedPetSchema).max(1000).optional(),references:z.record(z.string().max(512),z.string().max(8*1024*1024)).optional()});
-export interface AppBackup {format:'studyvillage-backup';version:1;createdAt:number;local:LocalData;values:Record<string,string>;notebooks:NotebookSnapshot;pets?:OwnedPet[];references?:Record<string,string>}
+const backupSchema=z.strictObject({format:z.literal('studyvillage-backup'),version:z.literal(1),createdAt:z.number().finite().nonnegative(),local:z.unknown(),values:z.record(z.string().max(512),z.string().max(8*1024*1024)),notebooks:z.unknown(),whiteboards:z.unknown().optional(),pets:z.array(ownedPetSchema).max(1000).optional(),references:z.record(z.string().max(512),z.string().max(8*1024*1024)).optional()});
+export interface AppBackup {format:'studyvillage-backup';version:1;createdAt:number;local:LocalData;values:Record<string,string>;notebooks:NotebookSnapshot;whiteboards?:BoardSnapshot;pets?:OwnedPet[];references?:Record<string,string>}
 export interface BackupPreview {profile:string;identity:string|null;keys:number;notebooks:number;pages:number;attachments:number;conflicts:number}
 function boundedJson(value:unknown,depth=0,budget={left:400000}):void {
  if(depth>32||--budget.left<0)throw new AppError('invalid','Copia fuera de límites.');
@@ -46,7 +47,7 @@ function validateEntry(key:string,raw:string):void {
  else if(key==='studyvillage-workspaces-v1'){const spaces=z.record(z.string(),workspaceSchema).parse(value);if(Object.keys(spaces).length>2000)throw new AppError('invalid','Copia fuera de límites.');for(const [scope,doc]of Object.entries(spaces))if(scope.endsWith('/@floor'))floorWorkspaceSchema.parse(doc);}
  else if(key==='studyvillage-custom-assets-v1')validateAssetPack(value);
  else if(key==='studyvillage-whiteboards-v1'){
-  z.object({metadata:z.array(z.tuple([z.string(),whiteboardMetadataSchema])).max(2000),strokes:z.array(z.tuple([z.string(),z.array(strokeSchema).max(2000)])).max(2000),elements:z.array(z.tuple([z.string(),z.array(z.object({id:z.string(),boardId:z.string(),authorId:z.string(),authorName:z.string(),kind:z.enum(['pen','line','rectangle','circle','arrow','text']),color:z.string().regex(/^#[0-9a-f]{6}$/i),width:z.number().min(.25).max(100),points:z.array(z.object({x:z.number().finite(),y:z.number().finite()})).max(200000),text:z.string().max(100000).optional(),deleted:z.boolean(),updatedAt:z.number()})).max(2000)])).max(2000)}).parse(value);
+  z.object({metadata:z.array(z.tuple([z.string(),whiteboardMetadataSchema])).max(2000),strokes:z.array(z.tuple([z.string(),z.array(strokeSchema)])).max(2000),elements:z.array(z.tuple([z.string(),z.array(z.object({id:z.string(),boardId:z.string(),authorId:z.string(),authorName:z.string(),kind:z.enum(['pen','line','rectangle','circle','arrow','text']),color:z.string().regex(/^#[0-9a-f]{6}$/i),width:z.number().min(.25).max(100),points:z.array(z.object({x:z.number().finite(),y:z.number().finite()})).max(200000),text:z.string().max(100000).optional(),deleted:z.boolean(),updatedAt:z.number()})).max(2000)])).max(2000)}).parse(value);
  }
  else if(key.startsWith('studyvillage-group-projects-v1')){
   z.array(z.object({id:z.string().max(128),name:z.string().max(120),description:z.string().max(10000),repoUrl:z.string().max(1000).nullable(),liveShareUrl:z.string().max(1000).nullable(),liveShareBy:z.string().max(128).nullable(),ownerId:z.string().max(128),ownerName:z.string().max(120),working:z.record(z.string(),z.object({name:z.string().max(120),color:z.string().regex(/^#[0-9a-f]{6}$/i)})),tasks:z.array(z.object({id:z.string(),text:z.string().max(1000),done:z.boolean(),by:z.string().nullable()})).max(1000),updatedAt:z.number()})).max(1000).parse(value);
@@ -55,7 +56,7 @@ function validateEntry(key:string,raw:string):void {
 function localValues():Record<string,string>{const values:Record<string,string>={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i)!;if(acceptedKey(key))values[key]=localStorage.getItem(key)!;}return values;}
 async function hash(bytes:Uint8Array):Promise<string>{return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes.slice().buffer))].map(n=>n.toString(16).padStart(2,'0')).join('');}
 function decode(value:string):Uint8Array{const binary=atob(value);return Uint8Array.from(binary,c=>c.charCodeAt(0));}
-export async function createBackup(local:LocalData):Promise<AppBackup>{const repo=new NotebookRepository();try{return {format:'studyvillage-backup',version:1,createdAt:Date.now(),local:parseLocalData(local),values:localValues(),notebooks:await repo.snapshot(),pets:await petCollection()};}finally{await repo.close();}}
+export async function createBackup(local:LocalData):Promise<AppBackup>{const repo=new NotebookRepository();try{return {format:'studyvillage-backup',version:1,createdAt:Date.now(),local:parseLocalData(local),values:localValues(),notebooks:await repo.snapshot(),pets:await petCollection(),whiteboards:await initializeBoards().then(()=>boardSnapshot())};}finally{await repo.close();}}
 export async function parseBackup(text:string):Promise<AppBackup>{
  if(new TextEncoder().encode(text).length>MAX_BACKUP)throw new AppError('invalid','La copia supera 128 MiB.');
  const parsed=backupSchema.parse(JSON.parse(text)),local=parseLocalData(parsed.local);serializeLocalData(local);
@@ -68,7 +69,8 @@ export async function parseBackup(text:string):Promise<AppBackup>{
  if(parsed.values[FOCUS_AUDIO_KEY])await verifyFocusAudio(JSON.parse(parsed.values[FOCUS_AUDIO_KEY]));
  const notebooks=NotebookRepository.parseSnapshot(parsed.notebooks);
  for(const attachment of notebooks.attachments)if(await hash(decode(attachment.base64))!==attachment.sha256)throw new AppError('invalid','La copia contiene un adjunto dañado.');
- return {...parsed,local,notebooks};
+ const whiteboards=parsed.whiteboards===undefined?undefined:parseBoards(parsed.whiteboards);
+ return {...parsed,local,notebooks,whiteboards};
 }
 export function previewBackup(backup:AppBackup,current?:AppBackup):BackupPreview {
  const existing=current?.values??Object.fromEntries(Object.keys(backup.values).flatMap(k=>{const value=localStorage.getItem(k);return value===null?[]:[[k,value]];}));
@@ -82,8 +84,14 @@ export function previewBackup(backup:AppBackup,current?:AppBackup):BackupPreview
 }
 async function recoveryDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const req=indexedDB.open('studyvillage-backup-recovery',1);req.onupgradeneeded=()=>req.result.createObjectStore('recovery');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
 async function journal(action:'put'|'get'|'delete',key:string,value?:unknown):Promise<unknown>{const db=await recoveryDb();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('recovery',action==='get'?'readonly':'readwrite'),store=tx.objectStore('recovery');const req=action==='get'?store.get(key):action==='put'?store.put(value,key):store.delete(key);let result:unknown;req.onsuccess=()=>result=req.result;tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(tx.error);});}finally{db.close();}}
+function parseBoards(value:unknown):BoardSnapshot {
+ const snapshot=z.object({metadata:z.array(z.tuple([z.string(),whiteboardMetadataSchema])),strokes:z.array(z.tuple([z.string(),z.array(z.unknown())])),elements:z.array(z.unknown())}).parse(value);
+ for(const [id,strokes]of snapshot.strokes)for(const raw of strokes){const stroke=raw as BoardStrokeForBackup;strokeSchema.parse({...stroke,boardId:'a'.repeat(64)});if(stroke.boardId!==id)throw new AppError('invalid','Copia no válida.');}
+ return snapshot as BoardSnapshot;
+}
+type BoardStrokeForBackup=import('../../../core/src/protocol/types').BoardStroke;
 async function applySnapshot(backup:AppBackup,store:LocalStore):Promise<void>{
- const repo=new NotebookRepository();try{await repo.importSnapshot(backup.notebooks);await replacePetCollection(backup.pets??[]);for(const key of Object.keys(localValues()))if(!(key in backup.values))localStorage.removeItem(key);for(const [key,value]of Object.entries(backup.values))localStorage.setItem(key,value);await store.save(backup.local);}finally{await repo.close();}
+ const repo=new NotebookRepository();try{await initializeBoards();if(backup.whiteboards)await replaceBoardSnapshot(backup.whiteboards);else {const raw=backup.values['studyvillage-whiteboards-v1'];await replaceBoardSnapshot(raw?parseBoards(JSON.parse(raw)):{metadata:[],strokes:[],elements:[]});}await repo.importSnapshot(backup.notebooks);await replacePetCollection(backup.pets??[]);for(const key of Object.keys(localValues()))if(!(key in backup.values))localStorage.removeItem(key);for(const [key,value]of Object.entries(backup.values))localStorage.setItem(key,value);await store.save(backup.local);}finally{await repo.close();}
 }
 /** Journal before any overwrite. An interrupted import is rolled back at the next application launch. */
 export async function restoreBackup(backup:AppBackup,current:LocalData,store:LocalStore):Promise<void>{
@@ -94,4 +102,4 @@ export async function restoreBackup(backup:AppBackup,current:LocalData,store:Loc
 export async function recoverInterruptedRestore(store:LocalStore):Promise<void>{const pending=await journal('get','pending');if(pending){await applySnapshot(parseRecovery(pending),store);await journal('delete','pending');}}
 export async function previousBackup():Promise<AppBackup|null>{const previous=await journal('get','previous');return previous?parseRecovery(previous):null;}
 
-function parseRecovery(value:unknown):AppBackup{const raw=backupSchema.parse(value);return {...raw,local:parseLocalData(raw.local),notebooks:NotebookRepository.parseSnapshot(raw.notebooks)};}
+function parseRecovery(value:unknown):AppBackup{const raw=backupSchema.parse(value);return {...raw,local:parseLocalData(raw.local),notebooks:NotebookRepository.parseSnapshot(raw.notebooks),whiteboards:raw.whiteboards===undefined?undefined:parseBoards(raw.whiteboards)};}

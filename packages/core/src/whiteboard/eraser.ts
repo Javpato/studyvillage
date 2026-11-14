@@ -47,6 +47,7 @@ function cutIntervals(a: BoardPoint, b: BoardPoint, from: BoardPoint, to: BoardP
 /** Same geometry as the renderer, flattened only when a shape is actually cut. */
 function outlines(stroke: BoardStroke): BoardPoint[][] {
   const first = stroke.points[0], last = stroke.points.at(-1)!;
+  if(stroke.tool==='fill')return Array.from({length:stroke.points.length/4},(_,i)=>[...stroke.points.slice(i*4,i*4+4),stroke.points[i*4]]);
   if (stroke.tool === 'rectangle') return [[first, { x: last.x, y: first.y }, last, { x: first.x, y: last.y }, first]];
   if (stroke.tool === 'circle') {
     const cx = (first.x + last.x) / 2, cy = (first.y + last.y) / 2;
@@ -64,6 +65,7 @@ function outlines(stroke: BoardStroke): BoardPoint[][] {
 /** null means no ink was touched; [] means all ink was removed. Text is never cut. */
 export function cutStroke(stroke: BoardStroke, from: BoardPoint, to: BoardPoint, radius: number): BoardPoint[][] | null {
   if (stroke.deleted || stroke.tool === 'text' || !stroke.points.length) return null;
+  if(stroke.tool==='fill'&&(strokeHit(stroke,from,radius)||strokeHit(stroke,to,radius)))return [];
   const reach = Math.max(0, radius) + stroke.width / 2;
   let touched = false;
   const result: BoardPoint[][] = [];
@@ -88,7 +90,7 @@ export function cutStroke(stroke: BoardStroke, from: BoardPoint, to: BoardPoint,
       if (!survivors.length || survivors.at(-1)![1] < 1 - EPS) current = null;
     }
   }
-  return touched ? result : null;
+  return touched ? stroke.tool==='fill'?[]:result : null;
 }
 
 /** A local preview; only its final changes are committed, once, on pointerup. */

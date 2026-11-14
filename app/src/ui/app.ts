@@ -1,3 +1,6 @@
+import {fillDrawing} from '../whiteboard/fill';
+import {pendingBoards,setBoardExtra,type PendingBoard} from '../../../packages/runtime/src/storage/whiteboards';
+import {boardBatches} from '../../../packages/core/src/whiteboard/batches';
 import {CompanionBoard} from '../companion/board';
 import {z} from 'zod';
 import {CompanionPanel} from '../companion/panel';
@@ -1170,7 +1173,7 @@ class StudyUI {
       this.boardAdvancedToggle.setAttribute('aria-expanded', String(!this.boardAdvancedPanel.hidden));
     });
     const labels: [BoardUiTool, DisplayText, DisplayText][] = [
-      ['pen', msg('Lápiz'), msg('Dibujo libre')], ['text', msg('Texto'), msg('Texto y fórmulas: escribe $x^2$ para LaTeX')],
+      ['fill', msg('Rellenar'), msg('Rellenar una zona cerrada')], ['pen', msg('Lápiz'), msg('Dibujo libre')], ['text', msg('Texto'), msg('Texto y fórmulas: escribe $x^2$ para LaTeX')],
       ['eraser', msg('Borrador'), msg('Borra tus propios trazos pasando por encima')], ['select', msg('Seleccionar'), msg('Selecciona, mueve y copia objetos')], ['hand', msg('Mano'), msg('Mover la vista (también: botón central o rueda)')],
       ['line', msg('Línea'), msg('Línea recta')], ['rectangle', msg('Rectángulo'), msg('Rectángulo')],
     ];
@@ -2035,7 +2038,7 @@ class StudyUI {
       house.ownerId || this.boardAuthor(),
     );
     const canConfigure=this.remoteBoard?.state?.configure??this.expansion.boardRegistry.canConfigure(boardId,this.boardAuthor(),view.network.isHost);
-    this.boardNameInput.disabled=this.boardAccessSelect.disabled=!canConfigure;
+    this.boardNameInput.disabled=this.boardAccessSelect.disabled=!canConfigure||!this.expansion.boardRegistry.loaded;
     if (this.boardNameInput) {
       setInput(this.boardNameInput, defaultText(boardMeta.displayName));
     }
@@ -2068,7 +2071,9 @@ class StudyUI {
     this.boardClearButton.classList.toggle('is-armed', this.boardClearArmed);
     this.boardCanvas.dataset.tool = this.richBoardTool || this.boardTool;
     setText(this.boardZoomLabel, `${Math.round(this.boardCamera().zoom * 100)}%`);
+    const syncKey=`${view.network.phase}:${this.wireBoardId()}:${this.boardAuthor()}`;if(this.syncAttempt!==syncKey){this.syncAttempt=syncKey;void this.flushBoardPending();}
     const canDraw = this.canDrawBoard();
+    if(!this.expansion.boardRegistry.loaded){setText(this.boardStatus,this.expansion.boardRegistry.storageError?msg('No se pudo guardar. Exporta tus cambios.'):msg('Cargando pizarra…'));return;}
     show(this.boardReadOnlyStatus, !canDraw || boardAtCapacity(strokes, boardId));
     setText(this.boardReadOnlyStatus, !canDraw ? msg('Esta pizarra es de solo lectura. Puedes consultar los permisos en Más.') : msg('La pizarra ha alcanzado su capacidad.'));
     setText(this.boardStatus, !canDraw
@@ -2367,7 +2372,7 @@ class StudyUI {
         if(action==='latex'){const v=z.strictObject({text:z.string().max(50000),prompt:z.string().max(4000),image:z.string().max(8000000)}).parse(value);return this.expansion.ollamaGateway.latex(v.text,v.prompt,v.image);}
         const v=z.strictObject({texts:z.array(z.string().max(10000)).max(1000),prompt:z.string().max(4000)}).parse(value);return this.expansion.ollamaGateway.tutor(v.texts,v.prompt);
       }
-if(action==='open')return this.companionBoard();if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema).max(128)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error('Esta pizarra es de solo lectura.');const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error('No se pudo guardar la selección.');}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return this.companionBoard();}}
+if(action==='open')return this.companionBoard();if(action==='state')return this.companionBoard();if(action==='commit'){const request=z.strictObject({board:z.string(),changes:z.array(strokeSchema)}).parse(value);if(request.board!==this.wireBoardId()||!this.canDrawBoard())throw Error('Esta pizarra es de solo lectura.');const current=this.allStrokes(this.boardId());for(const stroke of request.changes){const old=current.find(s=>s.id===stroke.id);if(stroke.boardId!==request.board||stroke.author!==view.identity.fingerprint&&(!old||!this.moderatesBoard()||old.author!==stroke.author)||old&&stroke.seq!==old.seq+1)throw Error('No se pudo guardar la selección.');}await this.commitBoardChanges(request.changes.map(s=>({...s,boardId:this.boardId()})));return this.companionBoard();}}
     throw Error('Esta acción ya no está disponible.');
   }
   private companionActiveView():{tool:CompanionTool|null;key:string}{
@@ -2551,35 +2556,33 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
     return [...byId.values()];
   }
   private boardCommits=new Map<string,Promise<void>>();
+  private pendingSync=false;private syncQueued=false;private syncAttempt='';
+  private async flushBoardPending():Promise<void>{
+    if(this.pendingSync){this.syncQueued=true;return;}if(this.view?.network.phase!=='JOINED')return;
+    const ref=this.wireBoardId(),author=this.boardAuthor();this.pendingSync=true;
+    try{for(const pending of await pendingBoards()){
+      if(pending.ref!==ref||pending.author!==author)continue;
+      for(const batch of boardBatches(pending.changes)){
+        if(this.view?.network.phase!=='JOINED'||this.wireBoardId()!==ref||this.boardAuthor()!==author)throw Error('Dispositivo no conectado.');
+        if(!await this.actions.commitBoard(ref,batch.map(s=>({...s,boardId:ref}))))throw Error('No se pudo guardar la selección.');
+      }
+      await setBoardExtra('pending:'+pending.id,undefined);
+    }}catch(e){this.notify(t('Guardado en este dispositivo. Sincronización pendiente.')+' '+errorMessage(e));}
+    finally{this.pendingSync=false;if(this.syncQueued){this.syncQueued=false;void this.flushBoardPending();}}
+  }
   private async commitBoardChanges(changes: BoardStroke[]): Promise<void> {
     if(this.remoteBoard?.state)return this.remoteBoard.commit(changes);
-    // Capture scope before any await: a completed gesture belongs to its original board.
-    const boardId=this.boardId(),ref=this.wireBoardId(),online=this.view?.network.phase==='JOINED';
-    const original=new Map(this.expansion.boardRegistry.getStrokes(boardId).map(s=>[s.id,structuredClone(s)]));
-    this.expansion.boardRegistry.commitStrokes(boardId,changes);
+    const boardId=this.boardId(),ref=this.wireBoardId(),author=this.boardAuthor();
+    const pending:PendingBoard={createdAt:Date.now(),id:crypto.randomUUID(),board:boardId,ref,author,changes:structuredClone(changes)};
+    await this.expansion.boardRegistry.commitLocal(boardId,changes,pending);
     this.lastBoardRenderSig='';this.boardExtraFrames=3;
-    const previous=this.boardCommits.get(ref)??Promise.resolve();
-    const job=previous.catch(()=>{}).then(async()=>{
-      if(online&&!await this.actions.commitBoard(ref,changes.map(s=>({...s,boardId:ref}))))throw new Error(t('No se pudo guardar la selección.'));
-    });
-    this.boardCommits.set(ref,job);
-    try { await job; }
-    catch(error){
-      const rejected=new Map(changes.map(s=>[s.id,s]));
-      // Roll back only this operation, never a newer stroke or remote revision.
-      const restored=this.expansion.boardRegistry.getStrokes(boardId).flatMap(s=>{
-        const failed=rejected.get(s.id);if(!failed||s.seq!==failed.seq)return [s];
-        const old=original.get(s.id);return old?[old]:[];
-      });
-      this.expansion.boardRegistry.replaceStrokes(boardId,restored);throw error;
-    } finally {
-      if(this.boardCommits.get(ref)===job)this.boardCommits.delete(ref);
-      this.lastBoardRenderSig='';this.boardExtraFrames=3;this.refreshBoardControls();
-    }
+    setText(this.boardStatus,msg('Guardado en este dispositivo'));
+    await this.flushBoardPending();
   }
 
   private canDrawBoard(): boolean {
     if(this.remoteBoard?.state)return this.remoteBoard.state.canEdit;
+    if(!this.expansion.boardRegistry.loaded)return false;
     const view = this.view;
     if (!view || view.lockedIdentity && view.network.phase==='JOINED') return false;
     const boardId = this.boardId();
@@ -3478,6 +3481,7 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
     }
     if(event.button!==0||!this.canDrawBoard())return;
     const point=clampBoardPoint(this.boardWorldPoint(event));
+    if(this.boardTool==='fill'){void this.fillBoardAt(point);return;}
     if(this.boardTool==='eraser'){
       this.boardErasing=event.pointerId;this.boardCursor=this.canvasPoint(event,this.boardCanvas);
       this.eraserGesture=new EraserGesture(this.allStrokes(this.boardId()),s=>!this.hiddenAuthors.has(s.author)&&(s.author===this.boardAuthor()||this.moderatesBoard()),this.eraserPrefs.mode,this.eraserRadius(),textBox);
@@ -3491,6 +3495,15 @@ if(action==='open')return this.companionBoard();if(action==='state')return this.
     this.captureBoardPointer(event);this.boardExtraFrames=2;
   };
 
+  private fillingBoard=false;
+  private async fillBoardAt(point:BoardPoint):Promise<void>{
+    if(this.fillingBoard)return;this.fillingBoard=true;
+    const boardId=this.boardId(),author=this.boardAuthor(),color=this.boardColor.value;
+    try{const parts=await fillDrawing(visibleStrokes(this.allStrokes(boardId),boardId,this.hiddenAuthors),point);if(this.boardId()!==boardId||this.boardAuthor()!==author)return;
+      if(!parts){this.notify(t('Cierra el contorno antes de rellenar.'));return;}
+      await this.boardEditor.apply(parts.map(points=>({id:crypto.randomUUID(),boardId,author,seq:0,tool:'fill',color,width:1,points,deleted:false})));
+    }catch(e){this.notify(errorMessage(e));}finally{this.fillingBoard=false;}
+  }
   private onBoardPointerMove = (event: PointerEvent): void => {
     if(event.pointerType==='touch'&&!this.boardPalms.touchMove(event,false)){event.preventDefault();if(this.activeBoardPointers.delete(event.pointerId))this.startBoardTouch();return;}
     if(event.pointerType==='touch'&&this.boardPointer?.kind==='pen'){event.preventDefault();return;}

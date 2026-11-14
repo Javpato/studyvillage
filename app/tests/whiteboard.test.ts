@@ -27,7 +27,7 @@ describe('whiteboard layers', () => {
       .toEqual({ x: LIMITS.boardExtent, y: -LIMITS.boardExtent });
     expect(normalized.width).toBe(12);
     expect(normalized.color).toBe('#123456');
-    expect(boardAtCapacity(Array(LIMITS.boardOperations).fill(normalized), 'room')).toBe(true);
+    expect(boardAtCapacity(Array(5000).fill(normalized), 'room')).toBe(false);
   });
 
   it('keeps author sequence within its board', () => {

@@ -2907,5 +2907,13 @@
   "Cruceta derecha": "D-pad right",
   "Stick izquierdo / cruceta": "Left stick / D-pad",
   "Forest Blocks": "Forest Blocks",
-  "Confirmar": "Confirm"
+  "Confirmar": "Confirm",
+  "Rellenar": "Fill",
+  "Rellenar una zona cerrada": "Fill an enclosed area",
+  "Mostrar fotograma anterior": "Show previous frame",
+  "Añadir fotograma anterior debajo": "Add previous frame underneath",
+  "Cierra el contorno antes de rellenar.": "Close the outline before filling.",
+  "No se pudo rellenar el dibujo.": "Could not fill the drawing.",
+  "Guardado en este dispositivo. Sincronización pendiente.": "Saved on this device. Sync pending.",
+  "Cargando pizarra…": "Loading whiteboard…"
 }

@@ -1,3 +1,4 @@
+import {pointInPolygon} from './selection';
 import { LIMITS, type BoardPoint, type BoardStroke } from '../protocol/types';
 
 export type BoardTool = BoardStroke['tool'];
@@ -32,7 +33,7 @@ export function makeStroke(
 }
 
 export function boardAtCapacity(strokes: readonly BoardStroke[], boardId: string): boolean {
-  return strokes.filter((stroke) => stroke.boardId === boardId).length >= LIMITS.boardOperations;
+  return false; // Storage availability, not lifetime operation count, determines capacity.
 }
 
 export function visibleStrokes(strokes: readonly BoardStroke[], boardId: string, hiddenAuthors: ReadonlySet<string>): BoardStroke[] {
@@ -72,6 +73,7 @@ function distanceToSegment(p: BoardPoint, a: BoardPoint, b: BoardPoint): number 
  */
 export function strokeHit(stroke: BoardStroke, point: BoardPoint, radius: number, textBox?: BoardRect | null): boolean {
   if (stroke.deleted || !stroke.points.length) return false;
+  if(stroke.tool==='fill'){for(let i=0;i<stroke.points.length;i+=4)if(pointInPolygon(point,stroke.points.slice(i,i+4)))return true;}
   const reach = radius + stroke.width / 2;
   const [first] = stroke.points;
   const last = stroke.points[stroke.points.length - 1];

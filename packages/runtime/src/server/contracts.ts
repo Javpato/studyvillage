@@ -13,7 +13,7 @@ import { appearanceSchema } from '../../../core/src/assets/appearance';
 import { appChannelSchema, boardCommitSchema, boardRefSchema, fingerprintSchema, identitySchema, idSchema, positionSchema, signedHouseSchema, signedStrokeSchema } from '../../../core/src/protocol/schema';
 import { LIMITS, type AccessRequest } from '../../../core/src/protocol/types';
 
-export const SERVER_PROTOCOL = 7;
+export const SERVER_PROTOCOL = 8;
 export const PLOTS_PER_NEIGHBORHOOD = 6;
 export const MAX_NEIGHBORHOODS = 4;
 export const MAX_ONLINE = 24;

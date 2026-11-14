@@ -1,3 +1,4 @@
+import {boardBatches} from '../../../core/src/whiteboard/batches';
 import {petSnapshotSchema,petCommandSchema} from '../../../core/src/pets/protocol';
 import {assertPetLimit,ownerPetGroups,ownsPet} from '../../../core/src/pets/model';
 import {Friends,emptyFriends,type FriendCommand} from '../../../core/src/social/friends';
@@ -285,7 +286,7 @@ export class VillageClient implements VillageActions {
       const start = () => {
         if (link.closed || link.hello || !this.endpoint || !this.sessionId) return;
         link.hello = {
-          v: 1, kind: 'auth.hello', sessionId: this.sessionId, epoch: this.epoch, intent: intent!,
+          v: 1, boardVersion:2, kind: 'auth.hello', sessionId: this.sessionId, epoch: this.epoch, intent: intent!,
           identity: structuredClone(this.identity.public), from: this.endpoint.id, to: raw.endpoint, nonce: randomId(32),
           generation: intent === 'join' ? this.invite!.generation : 0, secret: intent === 'join' ? this.invite!.secret : '',
         };
@@ -300,6 +301,7 @@ export class VillageClient implements VillageActions {
     if (!this.active(link)) return;
     link.lastSeen = this.clock.now();
     if (message.kind === 'auth.hello') {
+      if(message.boardVersion!==2)throw new Error('Actualiza StudyVillage en los dos dispositivos y crea un código nuevo.');
       if (link.step !== 'hello' || !this.endpoint || message.sessionId !== this.sessionId || message.epoch !== this.epoch || message.from !== link.raw.endpoint || message.to !== this.endpoint.id) throw new Error('Unexpected hello');
       if ([...this.links].some(other => other !== link && !other.closed && other.raw.endpoint === message.from)) throw new Error('Duplicate identity');
       if (message.intent === 'join') {
@@ -316,10 +318,11 @@ export class VillageClient implements VillageActions {
       link.transcript = { v: 1, sessionId: message.sessionId, epoch: message.epoch, intent: message.intent, initiator: message.identity.fingerprint, responder: this.id, from: message.from, to: message.to, initiatorNonce: message.nonce, responderNonce: randomId(32), generation: message.generation, secret: message.secret };
       link.step = 'proof';
       const signature = await sign(this.identity, 'auth-responder', link.transcript);
-      if (this.active(link)) link.wire.send({ v: 1, kind: 'auth.challenge', identity: structuredClone(this.identity.public), transcript: link.transcript, signature });
+      if (this.active(link)) link.wire.send({ v: 1, boardVersion:2, kind: 'auth.challenge', identity: structuredClone(this.identity.public), transcript: link.transcript, signature });
       return;
     }
     if (message.kind === 'auth.challenge') {
+      if(message.boardVersion!==2)throw new Error('Actualiza StudyVillage en los dos dispositivos y crea un código nuevo.');
       if (link.step !== 'challenge' || !link.hello) throw new Error('Unexpected challenge');
       const identity = await validatePublicIdentity(message.identity);
       const expected = typeof link.expected === 'string' ? link.expected : link.expected?.fingerprint;
@@ -752,7 +755,11 @@ export class VillageClient implements VillageActions {
     for (const link of this.links) { link.syncRoom = undefined; link.syncExpected = undefined; }
     this.syncMedia(); this.notify();
   }
-  commitBoard(boardId: string, changes: BoardStroke[]): Promise<boolean> {
+  async commitBoard(boardId: string, changes: BoardStroke[]): Promise<boolean> {
+    for(const batch of boardBatches(changes))await this.commitBoardBatch(boardId,batch);
+    return true;
+  }
+  private commitBoardBatch(boardId: string, changes: BoardStroke[]): Promise<boolean> {
     if (!changes.length) return Promise.resolve(true);
     const localOnly = !activePhases.includes(this.phase);
     // In my own house I may change anyone's layer; everywhere else only my own objects.

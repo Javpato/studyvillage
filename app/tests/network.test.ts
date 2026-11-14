@@ -445,13 +445,13 @@ describe('bounded protocol and board unit tests', () => {
     for (let i = 0; i < 10000; i++) for (const callback of raw.data) callback(data);
     expect(raw.closed).toBe(true); expect(errors).toHaveLength(1); release(); await gate; channel.close();
   });
-  it('caps board operations at 2000 and forbids deleting a different author', () => {
+  it('allows edits beyond 2000 and forbids deleting a different author', () => {
     const board = new BoardStore();
     const stroke = { id: 's', author: 'a'.repeat(64), boardId: 'b'.repeat(64), seq: 1, color: '#000000', width: 1, tool: 'pen' as const, points: [{ x: 1, y: 1 }], deleted: false };
     expect(board.apply({ stroke, signature: '' })).toBe('applied');
     expect(board.apply({ stroke: { ...stroke, author: 'c'.repeat(64), seq: 2, deleted: true }, signature: '' })).toBe('forbidden');
     for (let seq = 2; seq <= 2000; seq++) expect(board.apply({ stroke: { ...stroke, seq }, signature: '' })).toBe('applied');
-    expect(board.apply({ stroke: { ...stroke, seq: 2001 }, signature: '' })).toBe('full');
+    expect(board.apply({ stroke: { ...stroke, seq: 2001 }, signature: '' })).toBe('applied');
     expect(board.documents(stroke.boardId)).toHaveLength(1);
   });
 });

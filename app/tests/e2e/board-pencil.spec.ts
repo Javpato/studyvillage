@@ -1,9 +1,10 @@
+import {savedBoards,savedStrokes} from './board-storage';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page} from '@playwright/test';
 import {openDecorate} from './root-polish-helpers';
 import type {BoardStroke} from '../../../packages/core/src/protocol/types';
 const board=(page:Page)=>page.locator('.sv-board-pane canvas.sv-canvas');
-const strokes=(page:Page):Promise<BoardStroke[]>=>page.evaluate(()=>{const data=JSON.parse(localStorage.getItem('studyvillage-whiteboards-v1')||'{"strokes":[]}');return data.strokes.flatMap(([,items]:[string,BoardStroke[]])=>items).filter((s:BoardStroke)=>!s.deleted);});
+const strokes=savedStrokes;
 async function openBoard(page:Page){const editor=await openDecorate(page);await editor.locator('.sv-furniture-item').filter({hasText:'Pizarra'}).dblclick();await expect(board(page)).toBeVisible();await page.locator('.sv-board-pane').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished.catch(()=>{}))));await board(page).evaluate(canvas=>{canvas.setPointerCapture=()=>{};canvas.hasPointerCapture=()=>false;});}
 async function pointer(page:Page,type:string,id:number,kind:string,x:number,y:number,extra:Record<string,number>={},coalesced:number[][]=[]){await board(page).evaluate((element,{type,id,kind,x,y,extra,coalesced})=>{const canvas=element as HTMLCanvasElement;const b=canvas.getBoundingClientRect(),sample=(x:number,y:number)=>({bubbles:true,cancelable:true,pointerId:id,pointerType:kind,button:0,buttons:type==='pointerup'?0:1,pressure:.01,width:1,height:1,clientX:b.left+x*b.width/768,clientY:b.top+y*b.height/(canvas.height*768/canvas.width),...extra});const event=new PointerEvent(type,sample(x,y));if(coalesced.length)Object.defineProperty(event,'getCoalescedEvents',{value:()=>coalesced.map(([x,y])=>new PointerEvent('pointermove',sample(x,y)))});canvas.dispatchEvent(event);},{type,id,kind,x,y,extra,coalesced});}
 async function mode(page:Page){await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await page.getByTestId('board-pencil-mode').check();await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();}

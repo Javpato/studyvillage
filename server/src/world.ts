@@ -1,3 +1,4 @@
+import {boardBatches} from '../../packages/core/src/whiteboard/batches';
 import {PetReservations,petSnapshotSchema,petCommandSchema} from '../../packages/core/src/pets/protocol';
 import {assertPetLimit,ownerPetGroups,ownsPet} from '../../packages/core/src/pets/model';
 import {Friends} from '../../packages/core/src/social/friends';
@@ -272,7 +273,7 @@ export class World {
       case 'board.select': {
         if (body.ref && !this.canAccessBoard(c, body.ref)) throw new Reject('forbidden');
         c.board = body.ref;
-        if (body.ref) this.send(c, { t: 'board', ref: body.ref, documents: this.store.strokes(this.boardKey(c.neighborhood, body.ref)) as SignedStroke[], reset: true });
+        if(body.ref){const documents=this.store.strokes(this.boardKey(c.neighborhood,body.ref)) as SignedStroke[],byId=new Map(documents.map(d=>[d.stroke.id,d]));this.send(c,{t:'board',ref:body.ref,documents:[],reset:true});for(const batch of boardBatches(documents.map(d=>d.stroke)))this.send(c,{t:'board',ref:body.ref,documents:batch.map(s=>byId.get(s.id)!),reset:false});}
         return null;
       }
       case 'board.commit': return this.withRequest(c, async () => {
@@ -450,7 +451,6 @@ export class World {
       if (previous && (previous.deleted || d.stroke.seq <= previous.seq)) continue;
       changed.push(d);
     }
-    if (this.store.operations(key) + changed.length > LIMITS.boardOperations) throw new Reject('full');
     for (const d of changed) this.store.putStroke(key, d);
     return changed;
   }

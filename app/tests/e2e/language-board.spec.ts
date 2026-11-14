@@ -1,3 +1,4 @@
+import {savedBoards,savedStrokes} from './board-storage';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect, type Page } from '@playwright/test';
 
@@ -25,7 +26,7 @@ test('switching to English happens in place: no reload, open drafts and drawings
   const box = (await canvas.boundingBox())!;
   await page.mouse.move(box.x + box.width * .3, box.y + box.height * .4); await page.mouse.down();
   await page.mouse.move(box.x + box.width * .6, box.y + box.height * .5, { steps: 8 }); await page.mouse.up();
-  const savedStrokes=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('studyvillage-whiteboards-v1')||'{}').strokes);
+  const savedStrokes=()=>savedBoards(page).then(s=>s.strokes);
   await expect.poll(async()=>JSON.stringify(await savedStrokes())).toContain('points');
   const drawn=await savedStrokes();
 

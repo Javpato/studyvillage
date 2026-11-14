@@ -51,7 +51,7 @@ export type SessionPhase = 'IDLE' | 'SIGNALING' | 'CONNECTING' | 'AUTHENTICATING
 export type BoardRef = string;
 export interface BoardTextStyle { fontSize: number; fontFamily: 'sans' | 'serif' | 'mono' | 'excalifont'; bold: boolean; italic: boolean; underline?: boolean; align: 'left' | 'center' | 'right'; boxWidth?: number }
 export interface BoardPoint { x: number; y: number }
-export interface BoardStroke { id: string; author: IdentityId; boardId: IdentityId; seq: number; color: string; width: number; tool: 'pen' | 'line' | 'rectangle' | 'circle' | 'arrow' | 'text'; points: BoardPoint[]; deleted: boolean; text?: string; textStyle?: BoardTextStyle }
+export interface BoardStroke { id: string; author: IdentityId; boardId: IdentityId; seq: number; color: string; width: number; tool: 'pen' | 'line' | 'rectangle' | 'circle' | 'arrow' | 'text' | 'fill'; points: BoardPoint[]; deleted: boolean; text?: string; textStyle?: BoardTextStyle }
 export type ScreenPhase = 'OFF' | 'REQUESTING_OS_PERMISSION' | 'CAPTURING_LOCAL' | 'NEGOTIATING' | 'SENDING' | 'DENIED' | 'NOT_SUPPORTED' | 'SOURCE_ENDED' | 'NETWORK_FAILED';
 export interface RemoteMedia { identityId: IdentityId; kind: 'audio' | 'screen'; stream: MediaStream }
 export interface MediaView { screenAvailable?: boolean; micEnabled: boolean; muted: boolean; deafened: boolean; pushToTalk: boolean; talking: boolean; screenPhase: ScreenPhase; localScreen: MediaStream | null; remote: RemoteMedia[]; audience: string; error: string | null }

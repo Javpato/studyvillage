@@ -1,3 +1,4 @@
+import {savedStrokes} from './board-storage';
 import {test,expect,type Page} from '@playwright/test';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {openDecorate} from './root-polish-helpers';
@@ -9,7 +10,7 @@ for(const dpr of [1,2])test.describe(`completed strokes at DPR ${dpr}`,()=>{
  test('immediate consecutive releases remain saved with one undo action each',async({page})=>{
   await page.goto('/');const editor=await openDecorate(page);await editor.locator('.sv-furniture-item').filter({hasText:'Pizarra'}).dblclick();const board=page.locator('.sv-board-pane canvas.sv-canvas');await expect(board).toBeVisible();
   await board.evaluate(element=>{const r=element.getBoundingClientRect();for(let i=0;i<12;i++){const values={bubbles:true,pointerId:i+1,pointerType:'pen',button:0,buttons:1,clientX:r.left+r.width*.2,clientY:r.top+r.height*(.2+i*.03)};element.dispatchEvent(new PointerEvent('pointerdown',values));element.dispatchEvent(new PointerEvent('pointermove',{...values,clientX:r.left+r.width*.4}));window.dispatchEvent(new PointerEvent('pointerup',{...values,buttons:0,clientX:r.left+r.width*.45}));element.dispatchEvent(new PointerEvent('lostpointercapture',{...values,buttons:0}));}});
-  const count=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('studyvillage-whiteboards-v1')!).strokes.flatMap((entry:any)=>entry[1]).filter((s:any)=>!s.deleted).length);
+  const count=()=>savedStrokes(page).then(s=>s.length);
   await expect.poll(count).toBe(12);await page.keyboard.press('ControlOrMeta+z');await expect.poll(count).toBe(11);await page.keyboard.press('ControlOrMeta+Shift+z');await expect.poll(count).toBe(12);
   await page.reload();expect(await count()).toBe(12);
  });

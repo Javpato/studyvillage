@@ -2907,5 +2907,13 @@
   "Cruceta derecha": "Cruceta derecha",
   "Stick izquierdo / cruceta": "Stick izquierdo / cruceta",
   "Forest Blocks": "Forest Blocks",
-  "Confirmar": "Confirmar"
+  "Confirmar": "Confirmar",
+  "Rellenar": "Rellenar",
+  "Rellenar una zona cerrada": "Rellenar una zona cerrada",
+  "Mostrar fotograma anterior": "Mostrar fotograma anterior",
+  "Añadir fotograma anterior debajo": "Añadir fotograma anterior debajo",
+  "Cierra el contorno antes de rellenar.": "Cierra el contorno antes de rellenar.",
+  "No se pudo rellenar el dibujo.": "No se pudo rellenar el dibujo.",
+  "Guardado en este dispositivo. Sincronización pendiente.": "Guardado en este dispositivo. Sincronización pendiente.",
+  "Cargando pizarra…": "Cargando pizarra…"
 }

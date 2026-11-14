@@ -1,3 +1,4 @@
+import {savedBoards,savedStrokes} from './board-storage';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import {test,expect,type Page,type Locator} from '@playwright/test';
 import {openDecorate} from './root-polish-helpers';
@@ -33,8 +34,8 @@ async function zoom(page:Page,s:Surface){
  return Number((await page.locator('.sv-zoom-label').textContent())!.replace('%',''))/100;
 }
 async function contents(page:Page,s:Surface){
- if(s==='board')return page.evaluate(()=>JSON.parse(localStorage.getItem('studyvillage-whiteboards-v1')||'{"strokes":[]}').strokes.flatMap(([,items]:[string,{deleted?:boolean}[]])=>items.filter(i=>!i.deleted)));
- return page.evaluate(()=>new Promise<unknown[]>((resolve,reject)=>{const r=indexedDB.open('studyvillage-notebooks-v1');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,q=db.transaction('notebooks').objectStore('notebooks').getAll();q.onsuccess=()=>{resolve(q.result.flatMap(b=>b.pages.flatMap((p:{ink:unknown[]})=>p.ink)));db.close();};q.onerror=()=>{reject(q.error);db.close();};};}));
+ if(s==='board')return savedStrokes(page);
+ return page.evaluate(()=>new Promise<{id:string;points:{x:number;y:number}[]}[]>((resolve,reject)=>{const r=indexedDB.open('studyvillage-notebooks-v1');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,q=db.transaction('notebooks').objectStore('notebooks').getAll();q.onsuccess=()=>{resolve(q.result.flatMap(b=>b.pages.flatMap((p:{ink:unknown[]})=>p.ink)));db.close();};q.onerror=()=>{reject(q.error);db.close();};};}));
 }
 async function view(c:Locator,s:Surface){return c.evaluate(async(el,s)=>{
  // Board rendering is scheduled on animation frames, not inside pointer events.

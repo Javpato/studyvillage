@@ -1,3 +1,4 @@
+import {setBoardExtra} from '../../../packages/runtime/src/storage/whiteboards';
 import {z} from 'zod';
 import {strokeSchema} from '../../../packages/core/src/protocol/schema';
 import {whiteboardMetadataSchema} from '../../../packages/core/src/whiteboard/boards-registry';
@@ -28,7 +29,7 @@ export class CompanionBoard {
   const state=this.state;if(!state)return Promise.reject(Error('Esta acción ya no está disponible.'));
   this.mutation++;const generation=this.generation,request=this.request,key='studyvillage-companion-pending-board:'+state.board+':'+crypto.randomUUID();
   for(const stroke of changes)this.pending.set(stroke.id,stroke);
-  const job=(async()=>{try{localStorage.setItem(key,JSON.stringify({board:state.board,changes}));const result=companionBoardSchema.parse(await request('commit',{board:state.board,changes}));localStorage.removeItem(key);if(generation===this.generation)this.state=result;}finally{if(generation===this.generation){for(const stroke of changes)this.pending.delete(stroke.id);this.surface.changed();}}})();
+  const job=(async()=>{try{await setBoardExtra(key,{board:state.board,changes});const result=companionBoardSchema.parse(await request('commit',{board:state.board,changes}));await setBoardExtra(key,undefined);if(generation===this.generation)this.state=result;}finally{if(generation===this.generation){for(const stroke of changes)this.pending.delete(stroke.id);this.surface.changed();}}})();
   this.jobs.add(job);void job.finally(()=>this.jobs.delete(job)).catch(()=>{});return job;
  }
  close(){if(!this.state)return;this.surface.deactivate();this.generation++;this.root.close();this.home.replaceWith(this.surface.node);this.state=null;this.pending.clear();}

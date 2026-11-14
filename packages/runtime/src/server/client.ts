@@ -1,3 +1,4 @@
+import {boardBatches} from '../../../core/src/whiteboard/batches';
 import {friendViewSchema,type FriendCommand,type FriendView} from '../../../core/src/social/friends';
 import {LocalWorkspaces} from '../storage/workspaces';
 import {unwrapMailboxResult,type MailboxCommand,type MailboxView} from '../../../core/src/house/mailbox';
@@ -420,6 +421,10 @@ export class ServerVillageClient implements VillageActions {
     return { ...unsigned, signature: await sign(this.identity, 'board-commit', { ...scope, ...unsigned }) };
   }
   async commitBoard(boardId: string, changes: BoardStroke[]): Promise<boolean> {
+    for(const batch of boardBatches(changes))await this.commitBoardBatch(boardId,batch);
+    return true;
+  }
+  private async commitBoardBatch(boardId: string, changes: BoardStroke[]): Promise<boolean> {
     if (!changes.length) return true;
     const moderator = boardId.startsWith(`house:${this.id}:`);
     if (changes.length > 128 || changes.some(s => (s.author !== this.id && !moderator) || s.boardId !== boardId || !strokeSchema.safeParse(s).success)) throw userError(t('No puedes modificar esta pizarra.'));

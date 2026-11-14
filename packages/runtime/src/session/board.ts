@@ -13,7 +13,6 @@ export class BoardStore {
     if (previous && previous.stroke.author !== stroke.author) return 'forbidden';
     if (previous && (stroke.seq <= previous.stroke.seq || previous.stroke.deleted)) return 'duplicate';
     const count = this.operations.get(stroke.boardId) ?? 0;
-    if (count >= LIMITS.boardOperations) return 'full';
     board.set(stroke.id, structuredClone(document)); this.operations.set(stroke.boardId, count + 1);
     return 'applied';
   }
@@ -30,7 +29,7 @@ export class BoardStore {
       changed++;
     }
     if (!changed) return 'duplicate';
-    if ((this.operations.get(boardId) ?? 0) + changed > LIMITS.boardOperations || (!existing && this.boards.size >= 256)) return 'full';
+    if ((!existing && this.boards.size >= 256)) return 'full';
     for (const document of documents) this.apply(document);
     return 'applied';
   }

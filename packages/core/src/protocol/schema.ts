@@ -48,12 +48,12 @@ export const boardRefSchema = z.string().max(200).regex(/^(?:[a-f0-9]{64}|house:
 export const boardTextStyleSchema = z.strictObject({fontSize:z.number().min(8).max(160),fontFamily:z.enum(['sans','serif','mono','excalifont']),bold:z.boolean(),italic:z.boolean(),underline:z.boolean().optional(),align:z.enum(['left','center','right']),boxWidth:z.number().min(24).max(4000).optional()});
 export const strokeSchema = z.strictObject({
   id: idSchema, author: fingerprintSchema, boardId: boardRefSchema, seq: integer,
-  color, width: z.number().min(1).max(32), tool: z.enum(['pen', 'line', 'rectangle', 'circle', 'arrow', 'text']),
+  color, width: z.number().min(1).max(32), tool: z.enum(['pen', 'line', 'rectangle', 'circle', 'arrow', 'text', 'fill']),
   points: z.array(z.strictObject({ x: boardCoordinate, y: boardCoordinate })).min(1).max(LIMITS.strokePoints),
   deleted: z.boolean(),
   // Only text notes carry text, and every text note must carry some.
   text: z.string().min(1).max(LIMITS.boardText).optional(), textStyle: boardTextStyleSchema.optional(),
-}).refine((stroke) => (stroke.tool === 'text') === (stroke.text !== undefined) && (!stroke.textStyle || stroke.tool === 'text'), { message: 'text belongs to text notes only' });
+}).refine((stroke) => (stroke.tool !== 'fill'||stroke.points.length>=4&&stroke.points.length%4===0) && (stroke.tool === 'text') === (stroke.text !== undefined) && (!stroke.textStyle || stroke.tool === 'text'), { message: 'text belongs to text notes only' });
 const signature = z.string().regex(/^[A-Za-z0-9_-]{86}$/);
 export const signedHouseSchema = z.strictObject({ house: houseSchema, signature });
 export const signedStrokeSchema = z.strictObject({ stroke: strokeSchema, signature });
@@ -70,7 +70,7 @@ export type SignedHouse = z.infer<typeof signedHouseSchema>;
 export type SignedStroke = z.infer<typeof signedStrokeSchema>;
 const intent = z.enum(['join', 'resume', 'mesh']);
 export const helloSchema = z.strictObject({
-  v: z.literal(1), kind: z.literal('auth.hello'), sessionId: idSchema, epoch: integer.min(1),
+  v: z.literal(1), boardVersion:z.number().optional(), kind: z.literal('auth.hello'), sessionId: idSchema, epoch: integer.min(1),
   intent, identity: identitySchema, from: endpointSchema, to: endpointSchema, nonce,
   generation: integer, secret: z.union([nonce, z.literal('')]),
 });
@@ -110,8 +110,8 @@ export const payloadSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('player.relay'), identityId: fingerprintSchema, position: positionSchema }),
   z.strictObject({ type: z.literal('board.stroke'), document: signedStrokeSchema }),
   z.strictObject({ type:z.literal('board.commit'),document:boardCommitSchema }),
-  z.strictObject({ type: z.literal('board.sync.request'), boardId: boardRefSchema, cursor: integer.max(2000) }),
-  z.strictObject({ type: z.literal('board.sync.response'), boardId: boardRefSchema, document: signedStrokeSchema.nullable(), next: integer.max(2000).nullable() }),
+  z.strictObject({ type: z.literal('board.sync.request'), boardId: boardRefSchema, cursor: integer }),
+  z.strictObject({ type: z.literal('board.sync.response'), boardId: boardRefSchema, document: signedStrokeSchema.nullable(), next: integer.nullable() }),
   z.strictObject({type:z.literal('device.media'),endpoint:endpointSchema}),
   z.strictObject({ type: z.literal('media.token'), token: nonce }),
   z.strictObject({ type: z.literal('media.received'), kind: z.enum(['audio', 'screen']) }),
@@ -131,7 +131,7 @@ export const eventSchema = z.strictObject({
 });
 export const wireSchema = z.discriminatedUnion('kind', [
   helloSchema,
-  z.strictObject({ v: z.literal(1), kind: z.literal('auth.challenge'), identity: identitySchema, transcript: transcriptSchema, signature }),
+  z.strictObject({ v: z.literal(1), kind: z.literal('auth.challenge'), boardVersion:z.number().optional(), identity: identitySchema, transcript: transcriptSchema, signature }),
   z.strictObject({ v: z.literal(1), kind: z.literal('auth.proof'), signature }),
   z.strictObject({ v: z.literal(1), kind: z.literal('auth.ok'), signature }),
   eventSchema,

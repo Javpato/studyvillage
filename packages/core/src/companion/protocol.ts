@@ -2,7 +2,7 @@ import {z} from 'zod';
 export const COMPANION_TOOLS=['notebook','whiteboard','avatar','animal','focus','media'] as const;
 export const companionToolSchema=z.enum(COMPANION_TOOLS);
 export type CompanionTool=typeof COMPANION_TOOLS[number];
-export const PAIR_PROTOCOL=3;
+export const PAIR_PROTOCOL=4;
 export const PAIR_CONNECT_TIMEOUT=20000;
 const id=z.string().uuid();
 export const pairPacketSchema=z.discriminatedUnion('type',[
