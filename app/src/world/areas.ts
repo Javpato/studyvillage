@@ -464,13 +464,15 @@ function paintStationObject(
     contactShadow(ctx, x + w / 2, y + h - 2, w * 0.46, 0.32);
   }
 
-  const customSprite = registry.getDecodedSprite(obj.id) || sprite(obj.kind === 'guide' ? 'guide' : obj.id.replace(':','-'));
+  const customSprite = registry.getDecodedSprite(obj.id) || sprite(obj.id.replace(':','-')) || (obj.kind === 'guide' ? sprite('guide') : null);
   const baseColor = obj.customColor || earth2;
   const baseDark = shade(baseColor, -28);
   const baseLit = shade(baseColor, 20);
 
   if (customSprite) {
-    ctx.drawImage(customSprite, ipx(x), ipx(y), ipx(w), ipx(h));
+    ctx.imageSmoothingEnabled=false;
+    if(obj.kind==='guide'&&!obj.customSpriteDataUrl)ctx.drawImage(customSprite,ipx(x+w/2-32),ipx(y+h-52),64,64);
+    else ctx.drawImage(customSprite, ipx(x), ipx(y), ipx(w), ipx(h));
   } else {
     switch (obj.kind) {
       case 'campfire_werewolves': {

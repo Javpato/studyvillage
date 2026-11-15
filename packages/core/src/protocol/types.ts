@@ -112,7 +112,7 @@ export interface DiagnosticEntry { test: string; status: 'PASS' | 'FAIL' | 'UNVE
 export interface AppView {
   identity: PublicIdentity; network: NetworkView; ownHouse: PublicHouse;
   contacts: Contact[]; friendCode: string; storage: 'sqlite' | 'indexeddb' | 'memory';
-  identitySaved: boolean; lockedIdentity: boolean; notice: string | null;
+  identitySaved: boolean; guestSession?: boolean; lockedIdentity: boolean; notice: string | null;
   diagnostics: DiagnosticEntry[]; editorText: string;
 }
 export interface AppActions extends VillageActions {
@@ -121,7 +121,7 @@ export interface AppActions extends VillageActions {
   updateOwnHouse(house: PublicHouse): void; copyInvite(): Promise<void>;
   exportBackup():Promise<void>;inspectBackup(file:File):Promise<{profile:string;identity:string|null;keys:number;notebooks:number;pages:number;attachments:number;conflicts:number}>;restoreBackup(file:File):Promise<void>;exportRecoveryBackup():Promise<void>;
   exportIdentity():Promise<void>; importIdentity(file:File,passphrase:string):Promise<void>;
-  saveIdentity(passphrase: string): Promise<void>; unlockIdentity(passphrase: string): Promise<void>;
+  continueAsGuest(): Promise<void>; saveIdentity(passphrase: string): Promise<void>; unlockIdentity(passphrase: string): Promise<void>;
   addSessionContact(identityId: IdentityId): Promise<void>; setContactNickname(identityId: IdentityId, nickname: string): Promise<void>;
   shareContact(): Promise<void>;
   exportContact(): void; importContact(file: File): Promise<void>; rotateFriendCode(): void;

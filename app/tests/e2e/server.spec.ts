@@ -1,3 +1,4 @@
+import {savedStrokes} from './board-storage';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { readPersistedLocalData } from './helpers/persistence';
 import { test, expect, type Page, type Browser } from '@playwright/test';
@@ -67,14 +68,21 @@ test('owner claims the server, invites a temporary visitor, grows capacity, leav
   expect(invite).toMatch(/^[A-Za-z0-9_-]{20,}$/);
   await expect(dialog.locator('.sv-servers-invites li')).toContainText(['clase · 0/10 usos']);
 
-  // A temporary identity enters as a visitor.
+  // A locked saved identity enters as a temporary visitor without password unlock.
   const guest = await newPerson(browser);
+  const identityDialog=await settings(guest.page,'Identidad');
+  await identityDialog.getByLabel('Contraseña (12+ caracteres)').fill(PASS);
+  await identityDialog.getByRole('button',{name:'Cifrar y guardar'}).click();
+  await expect(guest.page.getByText(/Identidad guardada cifrada/).first()).toBeVisible();
+  const savedGuest=(await readPersistedLocalData(guest.page)).encryptedIdentity;
+  await guest.page.reload();
   const guestDialog = await settings(guest.page, 'Servidores');
   await guestDialog.getByLabel('Dirección del servidor').fill(`http://127.0.0.1:${port}`);
   await guestDialog.getByLabel('Invitación del servidor').fill(invite);
   await guestDialog.getByRole('button', { name: 'Conectar' }).click();
   await expect(guestDialog.getByText(/Visitante · Barrio 1 de 1 · 2\/6 conectadas/)).toBeVisible({ timeout: 15_000 });
   await expect(dialog.getByText(/Administración · Barrio 1 de 1 · 2\/6 conectadas/)).toBeVisible();
+  expect((await readPersistedLocalData(guest.page)).encryptedIdentity).toEqual(savedGuest);
 
   // Ten people need two neighbourhoods.
   await dialog.getByRole('spinbutton', { name: 'Personas conectadas a la vez' }).fill('10');
@@ -142,6 +150,12 @@ test('in my own house I can clear a guest\'s layer from the layers panel', async
   await dialog.getByRole('button', { name: 'Cerrar', exact: true }).first().click();
 
   const guest = await newPerson(browser);
+  const identityDialog=await settings(guest.page,'Identidad');
+  await identityDialog.getByLabel('Contraseña (12+ caracteres)').fill(PASS);
+  await identityDialog.getByRole('button',{name:'Cifrar y guardar'}).click();
+  await expect(guest.page.getByText(/Identidad guardada cifrada/).first()).toBeVisible();
+  const savedGuest=(await readPersistedLocalData(guest.page)).encryptedIdentity;
+  await guest.page.reload();
   const guestDialog = await settings(guest.page, 'Servidores');
   await guestDialog.getByLabel('Dirección del servidor').fill(`http://127.0.0.1:${port}`);
   await guestDialog.getByLabel('Invitación del servidor').fill(invite);
@@ -177,8 +191,8 @@ test('in my own house I can clear a guest\'s layer from the layers panel', async
   const c = (await canvas.boundingBox())!;
   await guest.page.mouse.move(c.x + c.width * .3, c.y + c.height * .4); await guest.page.mouse.down();
   await guest.page.mouse.move(c.x + c.width * .6, c.y + c.height * .5, { steps: 8 }); await guest.page.mouse.up();
-  await expect(guest.page.getByText('1 trazos en esta pizarra')).toBeAttached();
-  await expect(owner.page.getByText('1 trazos en esta pizarra')).toBeAttached({ timeout: 15_000 });
+  await expect.poll(async()=>(await savedStrokes(guest.page)).length).toBe(1);
+  await expect.poll(async()=>(await savedStrokes(owner.page)).length,{timeout:15000}).toBe(1);
 
   // The guest cannot clear the owner's layers (no button); the owner can clear the guest's.
   await owner.page.getByRole('button', { name: 'Opciones avanzadas', exact: true }).click();
@@ -186,8 +200,8 @@ test('in my own house I can clear a guest\'s layer from the layers panel', async
   // The layer shows the guest's name, not their identity code.
   await expect(owner.page.locator('.sv-layer').filter({ hasText: 'Explorador' })).toHaveCount(1);
   await owner.page.getByRole('button', { name: /Borrar la capa de/ }).click();
-  await expect(owner.page.getByText('0 trazos en esta pizarra')).toBeAttached();
-  await expect(guest.page.getByText('0 trazos en esta pizarra')).toBeAttached({ timeout: 15_000 });
+  await expect.poll(async()=>(await savedStrokes(owner.page)).length).toBe(0);
+  await expect.poll(async()=>(await savedStrokes(guest.page)).length,{timeout:15000}).toBe(0);
   await guest.page.getByRole('button', { name: 'Opciones avanzadas', exact: true }).click();
   await expect(guest.page.getByRole('button', { name: /Borrar la capa de/ })).toHaveCount(0);
   await owner.context.close(); await guest.context.close();

@@ -2916,5 +2916,8 @@
   "No se pudo rellenar el dibujo.": "Could not fill the drawing.",
   "Guardado en este dispositivo. Sincronización pendiente.": "Saved on this device. Sync pending.",
   "Cargando pizarra…": "Loading whiteboard…",
-  "Rellenando…": "Filling…"
+  "Rellenando…": "Filling…",
+  "Desbloquea tu identidad o continúa como invitado. Tus datos guardados se conservan.": "Unlock your identity or continue as a guest. Your saved data is preserved.",
+  "Continuar como invitado": "Continue as guest",
+  "Sesión de invitado. Tu identidad guardada sigue protegida.": "Guest session. Your saved identity remains protected."
 }

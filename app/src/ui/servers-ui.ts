@@ -95,7 +95,7 @@ export class ServersPanel {
     this.connectBox.hidden = connected;
     this.connectedBox.hidden = !connected;
     this.adminBox.hidden = !connected || server?.role !== 'admin';
-    setDisplayText(this.identityNote, view.identitySaved
+    setDisplayText(this.identityNote, view.identitySaved && !view.guestSession
       ? (view.lockedIdentity ? msg('Desbloquea tu identidad guardada para entrar como residente.') : msg('Entrarás con tu identidad guardada: puedes tener parcela.'))
       : msg('Tu identidad es temporal: entrarás como visitante. Guárdala cifrada en Identidad para tener parcela.'));
     if (view.network.server && ['RECONNECTING', 'CONNECTING', 'AUTHENTICATING'].includes(view.network.phase)) setDisplayText(this.status, msg('Conectando con el servidor…'));

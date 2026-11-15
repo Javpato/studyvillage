@@ -606,7 +606,9 @@
       ],
       "walk": [
         1,
-        2
+        0,
+        2,
+        0
       ],
       "eat": [
         3,
@@ -628,7 +630,7 @@
       "right": 2,
       "up": 3
     },
-    "fps": 6,
+    "fps": 8,
     "scale": 1.25,
     "anchor": {
       "x": 16,
@@ -653,7 +655,9 @@
       ],
       "walk": [
         1,
-        2
+        0,
+        2,
+        0
       ],
       "eat": [
         3,
@@ -675,7 +679,7 @@
       "right": 2,
       "up": 3
     },
-    "fps": 6,
+    "fps": 8,
     "scale": 1.25,
     "anchor": {
       "x": 16,
@@ -700,7 +704,9 @@
       ],
       "walk": [
         1,
-        2
+        0,
+        2,
+        0
       ],
       "eat": [
         3,
@@ -722,7 +728,7 @@
       "right": 2,
       "up": 3
     },
-    "fps": 6,
+    "fps": 8,
     "scale": 1.25,
     "anchor": {
       "x": 16,
@@ -747,7 +753,9 @@
       ],
       "walk": [
         1,
-        2
+        0,
+        2,
+        0
       ],
       "eat": [
         3,
@@ -775,7 +783,7 @@
       "right": 2,
       "up": 3
     },
-    "fps": 6,
+    "fps": 8,
     "scale": 1.25,
     "anchor": {
       "x": 16,
@@ -800,7 +808,9 @@
       ],
       "walk": [
         1,
-        2
+        0,
+        2,
+        0
       ],
       "eat": [
         3,
@@ -825,7 +835,7 @@
       "right": 2,
       "up": 3
     },
-    "fps": 6,
+    "fps": 8,
     "scale": 1.25,
     "anchor": {
       "x": 16,
@@ -858,5 +868,65 @@
     "file": "pet-effect-purr.png",
     "width": 64,
     "height": 64
+  },
+  "protagonist-sheet": {
+    "file": "protagonist-sheet.png",
+    "width": 192,
+    "height": 256
+  },
+  "heroine-sheet": {
+    "file": "heroine-sheet.png",
+    "width": 192,
+    "height": 256
+  },
+  "guide-wolves": {
+    "file": "guide-wolves.png",
+    "width": 64,
+    "height": 64
+  },
+  "guide-wolves-sheet": {
+    "file": "guide-wolves-sheet.png",
+    "width": 192,
+    "height": 256
+  },
+  "guide-drawing": {
+    "file": "guide-drawing.png",
+    "width": 64,
+    "height": 64
+  },
+  "guide-drawing-sheet": {
+    "file": "guide-drawing-sheet.png",
+    "width": 192,
+    "height": 256
+  },
+  "guide-tetris": {
+    "file": "guide-tetris.png",
+    "width": 64,
+    "height": 64
+  },
+  "guide-tetris-sheet": {
+    "file": "guide-tetris-sheet.png",
+    "width": 192,
+    "height": 256
+  },
+  "guide-ollama": {
+    "file": "guide-ollama.png",
+    "width": 64,
+    "height": 64
+  },
+  "guide-ollama-sheet": {
+    "file": "guide-ollama-sheet.png",
+    "width": 192,
+    "height": 256
+  },
+  "guide-study": {
+    "file": "guide-study.png",
+    "width": 64,
+    "height": 64
+  },
+  "guide-study-sheet": {
+    "file": "guide-study-sheet.png",
+    "width": 192,
+    "height": 256
   }
 }

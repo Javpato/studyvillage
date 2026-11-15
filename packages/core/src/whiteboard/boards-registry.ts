@@ -81,6 +81,8 @@ export function houseBoardId(houseScopeId: string, furnitureId: string): string 
 }
 
 export class WhiteboardRegistry {
+  /** Changes to persisted board content invalidate presentation caches. */
+  revision = 0;
   protected metadata = new Map<string, WhiteboardMetadata>();
   protected strokesByBoard = new Map<string, BoardStroke[]>();
   protected elementsByBoard = new Map<string, BoardRichElement[]>();
@@ -171,7 +173,7 @@ export class WhiteboardRegistry {
   }
 
   commitStrokes(boardId: string, changes: BoardStroke[]): void {
-    const byId = new Map((this.strokesByBoard.get(boardId) ?? []).map(s => [s.id, structuredClone(s)]));
+    const byId = new Map((this.strokesByBoard.get(boardId) ?? []).map(s => [s.id, s]));
     for (const stroke of changes) {
       const old = byId.get(stroke.id);
       if (old && old.author !== stroke.author) throw new AppError('invalid', 'Solo puedes modificar tus propios objetos.');
@@ -182,12 +184,12 @@ export class WhiteboardRegistry {
     try {
       if (this.storage) this.storage?.setItem(STORAGE_KEY, JSON.stringify({ metadata:[...this.metadata.entries()], strokes:[...next.entries()],elements:[] }));
     } catch { throw new AppError('storage'); }
-    this.strokesByBoard = next;
+    this.strokesByBoard = next; this.revision++;
   }
   replaceStrokes(boardId:string,strokes:BoardStroke[]):void {
     const next=new Map(this.strokesByBoard);next.set(boardId,structuredClone(strokes));
     try { if(this.storage)this.storage?.setItem(STORAGE_KEY,JSON.stringify({metadata:[...this.metadata.entries()],strokes:[...next.entries()],elements:[]})); }catch{throw new AppError('storage');}
-    this.strokesByBoard=next;
+    this.strokesByBoard=next; this.revision++;
   }
   saveStroke(boardId: string, stroke: BoardStroke): void { this.commitStrokes(boardId, [stroke]); }
 
@@ -465,6 +467,7 @@ export class WhiteboardRegistry {
   }
 
   protected saveToStorage(): void {
+    this.revision++;
     try {
       if (!this.storage) return;
       const payload = {

@@ -1,0 +1,261 @@
+{
+  "canvas": [
+    32,
+    32
+  ],
+  "anchor": [
+    16,
+    27
+  ],
+  "fps": 6,
+  "lighting": "top left",
+  "body": [
+    "....ooooooo.....",
+    "..ooLFFFFFFoo...",
+    ".oLFFFFFFFFFfo..",
+    "oLFFFFFFFFFFFfo.",
+    "oFFFFFFWWFFFFfo.",
+    "oFFFFFWWWWFFFfo.",
+    ".oFFFFWWWWFFfo..",
+    "..offFFFFFFfo...",
+    "..oFFoo..oFFo...",
+    "..oooo....ooo..."
+  ],
+  "back": [
+    "....ooooooo.....",
+    "..ooLFFFFFFoo...",
+    ".oLFFFFFFFFFfo..",
+    "oLFFFFFFFFFFFfo.",
+    "oFFFFFFFFFFFFfo.",
+    "oFFFFFFFFFFFFfo.",
+    ".oFFFFFFFFFFfo..",
+    "..offFFFFFFfo...",
+    "...offfffffo....",
+    "....ooooooo....."
+  ],
+  "animals": {
+    "cat": {
+      "palette": {
+        "o": "#343043",
+        "F": "#d49b60",
+        "f": "#a96352",
+        "L": "#f0c481",
+        "H": "#81555b",
+        "W": "#fff0ce",
+        "s": "#d98b91",
+        "n": "#9e5770"
+      },
+      "front": [
+        "o.............o",
+        "ofo.........ofo",
+        "ofFo.......ofFfo",
+        "ofFFoooooooFFffo",
+        "ofFFFFFFFFFFFffo",
+        "ofFFLLFFFFFLLffo",
+        "ofFFFWFFFFFWFffo",
+        "ofFFoWFFFFoWFffo",
+        "ofFFFWWWWWWWfffo",
+        ".ofFFWWnWWWWffo.",
+        "..ofFFWWWWfffo.",
+        "...offFFFFffo...",
+        "....oooooooo...."
+      ],
+      "right": [
+        ".....o..........",
+        "....oFo.........",
+        "...oFFfo........",
+        "..oFFFFfooooo...",
+        ".oLFFFFFFFfffo..",
+        "oLFFFFFFFFFfffo.",
+        "oFFFFFFoWFFFffo.",
+        "oFFFFFFoWFFFFffo",
+        "oFFFFFFFFWWWWnno",
+        ".oFFFFFFWWWWffo.",
+        "..offFFFFFFffo..",
+        "....oooooooo...."
+      ]
+    },
+    "dog": {
+      "palette": {
+        "o": "#343043",
+        "F": "#c79a71",
+        "f": "#9d6d60",
+        "L": "#e8bc88",
+        "H": "#615366",
+        "W": "#f6e8c6",
+        "s": "#d28d8c",
+        "n": "#40394c"
+      },
+      "front": [
+        "..oooo....oooo..",
+        ".oHHHfooooHHHHo.",
+        "oHHHfFFFFFfHHHHo",
+        "oHHfFFFFLFFfHHHo",
+        "oHHfFFLFFFFfHHHo",
+        "oHHfFoWFFoWfHHHo",
+        ".ooFFoWFFoWFFoo.",
+        "..oFFFFWWFFFFo..",
+        "..oFFWWnnWWFFo..",
+        "...oFWWWWWWFo...",
+        "....offffffo....",
+        ".....oooooo....."
+      ],
+      "right": [
+        ".....oooo.......",
+        "...ooFFFFoo.....",
+        "..oLFFFFFFfoo...",
+        ".oLFFFFHHHfFFo..",
+        "oLFFFFHHHHfFWo..",
+        "oFFFFFHHHHfWoWo.",
+        "oFFFFFHHHHfWWFFo",
+        "oFFFFFHHHHfWWWnno",
+        ".oFFFFHHHHfWWWWo",
+        "..offFFHHffWWfo.",
+        "....offfffffoo..",
+        "......oooooo...."
+      ]
+    },
+    "parrot": {
+      "palette": {
+        "o": "#343043",
+        "F": "#79a378",
+        "f": "#467d77",
+        "L": "#b8cf83",
+        "H": "#6782ad",
+        "W": "#fff0cd",
+        "s": "#dc9464",
+        "n": "#d9a858"
+      },
+      "front": [
+        "......ooo.......",
+        ".....oLFFoo.....",
+        "....oLFFFFfo....",
+        "...oLFFFFFFfo...",
+        "..oLFFFFFFFffo..",
+        "..oFWWFFFFWWfo..",
+        "..oFWoFFFFoWfo..",
+        "..oFWWWnnWWWfo..",
+        "...oWWnnnnWfo...",
+        "....oWnnnWfo....",
+        ".....ofnffo.....",
+        "......oooo......"
+      ],
+      "right": [
+        "....ooo.........",
+        "...oLFFoo.......",
+        "..oLFFFFfoo.....",
+        ".oLFFFFFFFfo....",
+        "oLFFFFFWWWWfo...",
+        "oFFFFFFWWoWWfo..",
+        "oFFFFFFWWoWWnnno",
+        "oFFFFFFFWWWnnnno",
+        ".oFFFFFFFWWnnno.",
+        "..offFFFFWnnno..",
+        "....offffo......",
+        ".....oooo......."
+      ]
+    },
+    "hamster": {
+      "palette": {
+        "o": "#343043",
+        "F": "#d9ad7d",
+        "f": "#ac7d70",
+        "L": "#f1d3a2",
+        "H": "#825b66",
+        "W": "#fff0d6",
+        "s": "#dc9d9b",
+        "n": "#ad687d"
+      },
+      "front": [
+        "..oooo....oooo..",
+        ".oFssFo..oFssFo.",
+        "oFLssFFooFFssFfo",
+        "oFLFFFFFFFFFFFfo",
+        ".oLFFFFFFFFFFfo.",
+        ".oLFFFFLLFFFFfo.",
+        ".oFFFoWFFoWFFfo.",
+        ".oFFFoWFFoWFFfo.",
+        "oFWWWWWWWWWWWWfo",
+        "oFWWWWnnWWWWWWfo",
+        ".oFWWWWWWWWWWfo.",
+        "..offWWWWWWffo..",
+        "....oooooooo...."
+      ],
+      "right": [
+        "....oooo........",
+        "...oFssFoo......",
+        "..oLFssFFFoo....",
+        ".oLFFFFFFFFFo...",
+        "oLFFFFFFFFFFfo..",
+        "oFFFFFFFoWFFFfo.",
+        "oFFFFFFFoWFFFfo.",
+        "oFFFFFFFFWWWWWno",
+        ".oFFFFFWWWWWWWfo",
+        "..offFFWWWWWWfo.",
+        "....offWWWWffo..",
+        "......oooooo...."
+      ]
+    },
+    "rabbit": {
+      "palette": {
+        "o": "#343043",
+        "F": "#e8dfce",
+        "f": "#b5a5b5",
+        "L": "#fff5e0",
+        "H": "#857d9a",
+        "W": "#fff5e6",
+        "s": "#dc9ca7",
+        "n": "#b97c91"
+      },
+      "front": [
+        "...ooo....ooo...",
+        "..oFWso..oFWso..",
+        "..oFWso..oFWso..",
+        "..oFWso..oFWso..",
+        "..oFWso..oFWso..",
+        "..oFWso..oFWso..",
+        "...oFFooooFFo...",
+        "..oLFFFFFFFFfo..",
+        ".oLFFFFFFFFFFfo.",
+        ".oLFFFFFFFFFFfo.",
+        ".oFFFoWFFoWFFfo.",
+        ".oFFFoWFFoWFFfo.",
+        "..oFWWWWWWWWfo..",
+        "..oFWWWnnWWWfo..",
+        "...oFWWWWWWfo...",
+        "....offffffo....",
+        ".....oooooo....."
+      ],
+      "right": [
+        "....ooo.........",
+        "...oFWso........",
+        "...oFWso........",
+        "...oFWso........",
+        "...oFWso........",
+        "...oFWso........",
+        "....oFFoooo.....",
+        "...oLFFFFFFoo...",
+        "..oLFFFFFFFFfo..",
+        ".oLFFFFFFFFFFfo.",
+        ".oFFFFFFFoWFFfo.",
+        ".oFFFFFFFoWFFFfo",
+        "..oFFFFFFFWWWWno",
+        "...oFFFFFWWWWfo.",
+        "....offFFFFffo..",
+        "......oooooo...."
+      ]
+    }
+  },
+  "sideBody": [
+    "....oooooooooooo....",
+    "..ooLLFFFFFFFFFFoo..",
+    ".oLFFFFFFFFFFFFFFfo.",
+    "oLFFFFFFFFFFFFFFFffo",
+    "oFFFFFFFFFFFFFFFFffo",
+    "oFFFFFFFFWWWWFFFFffo",
+    ".offFFFFWWWWWFFFffo.",
+    "..oFFfoo.....oFFfoo.",
+    "..oFFo.......oFFo...",
+    "..oooo.......oooo..."
+  ]
+}

@@ -29,11 +29,12 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
   // A saved identity is never silently used without unlocking its private key.
   let identity = await generateIdentity(data.profile.displayName, data.profile.color);
   let lockedIdentity = !!data.encryptedIdentity;
+  let guestSession = false;
   let ownHouse = data.house ? publicHouse(data.house, identity.public.fingerprint) : initialHouse(identity.public.fingerprint);
   if (data.profile.appearance) setAvatarCustomization(data.profile.appearance);
   let client: VillageClient | ServerVillageClient = new VillageClient(identity, ownHouse, { appearance: getAvatarCustomization(), mailboxLocalAlias: !data.encryptedIdentity, mailboxPreviousOwner: data.house?.ownerId });
   let network = client.view;
-  let notice: string | null = lockedIdentity ? 'Desbloquea tu identidad guardada para conectar. Tu casa sigue disponible sin conexión.' : null;
+  let notice: string | null = lockedIdentity ? 'Desbloquea tu identidad o continúa como invitado. Tus datos guardados se conservan.' : null;
   let closed = false;
   let ui: ReturnType<typeof createStudyUI> | null = null;
   let savingFailed = false;
@@ -41,7 +42,7 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
     if (closed) return;
     const view: AppView = { identity: identity.public, network, ownHouse, contacts: data.contacts,
       friendCode: data.friendCode, storage: store.kind, identitySaved: !!data.encryptedIdentity,
-      lockedIdentity, notice, diagnostics: diagnostic.entries, editorText: data.editor };
+      lockedIdentity, guestSession, notice, diagnostics: diagnostic.entries, editorText: data.editor };
     ui?.update(view);
   };
   const diagnostic = new MediaDiagnostic(update);
@@ -79,20 +80,22 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
   const run = async (action: () => void | Promise<void>) => { try { await action(); } catch (error) { report(error); throw error; } };
   const runSync = (action: () => void) => { try { action(); } catch (error) { report(error); } };
 
+  const useGuest = () => { if (lockedIdentity) { guestSession = true; notice = 'Sesión de invitado. Tu identidad guardada sigue protegida.'; update(); } };
   const actions: AppActions = {
-    openVillage: () => run(async () => { requireUnlocked(); diagnostic.stop(); await client.openVillage(); }),
-    joinVillage: invite => run(async () => { requireUnlocked(); diagnostic.stop(); await client.joinVillage(invite); }),
+    continueAsGuest: () => run(async () => { requireOffline(); useGuest(); }),
+    openVillage: () => run(async () => { useGuest(); diagnostic.stop(); await client.openVillage(); }),
+    joinVillage: invite => run(async () => { useGuest(); diagnostic.stop(); await client.joinVillage(invite); }),
     decideJoin: (id, accept) => runSync(() => client.decideJoin(id, accept)),
     rotateInvite: () => runSync(() => client.rotateInvite()),
     leave: () => run(async () => { diagnostic.stop(); const wasServer = client instanceof ServerVillageClient; await client.leave(); await writes.flush(); if (wasServer) { replaceClient(); update(); } }),
     checkServer: url => checkServer(url),
     connectServer: (url, options) => run(async () => {
       requireOffline();
-      // A locked saved identity must be unlocked first; a temporary identity may only visit.
-      if (lockedIdentity) throw new Error('Desbloquea tu identidad guardada antes de conectar.');
+      // A temporary session may visit without claiming the encrypted identity.
+      useGuest();
       const address = serverHttpUrl(url);
       diagnostic.stop(); unsubscribe(); client.dispose();
-      client = new ServerVillageClient(identity, ownHouse, { url: address, saved: !!data.encryptedIdentity, invite: options.invite || undefined, claim: options.claim || undefined, appearance: getAvatarCustomization() });
+      client = new ServerVillageClient(identity, ownHouse, { url: address, saved: !!data.encryptedIdentity && !lockedIdentity, invite: options.invite || undefined, claim: options.claim || undefined, appearance: getAvatarCustomization() });
       subscribe();
       try { await client.connect(); }
       catch (error) { const failed = client; replaceClient(); failed.dispose(); notice = errorMessage(error); update(); throw error; }
@@ -205,18 +208,18 @@ export async function startApp(root: HTMLElement): Promise<() => void> {
     importIdentity: (file,passphrase) => run(async()=>{
       requireOffline();if(file.size>16384)throw userError(t('La copia de identidad supera 16 KiB.'));
       const imported=await unlockIdentityTransfer(await file.text(),passphrase);
-      const previous={data,identity,ownHouse,lockedIdentity};
-      identity=imported.identity;lockedIdentity=false;ownHouse=publicHouse(ownHouse,identity.public.fingerprint);
+      const previous={data,identity,ownHouse,lockedIdentity,guestSession};
+      identity=imported.identity;lockedIdentity=false;guestSession=false;ownHouse=publicHouse(ownHouse,identity.public.fingerprint);
       data={...data,encryptedIdentity:imported.encrypted,profile:{...data.profile,displayName:identity.public.displayName,color:identity.public.color}};
       await persist();
-      if(savingFailed){({data,identity,ownHouse,lockedIdentity}=previous);throw userError(t('No se pudo guardar la identidad. Comprueba el almacenamiento local.'));}
+      if(savingFailed){({data,identity,ownHouse,lockedIdentity,guestSession}=previous);throw userError(t('No se pudo guardar la identidad. Comprueba el almacenamiento local.'));}
       replaceClient();notice=t('Identidad importada y verificada.');update();
     }),
     unlockIdentity: passphrase => run(async () => {
       requireOffline(); if (!data.encryptedIdentity) throw new Error('No hay ninguna identidad guardada.');
       const unlocked = await decryptIdentity(data.encryptedIdentity, passphrase);
       identity = { ...unlocked, public: { ...unlocked.public, ...data.profile } };
-      ownHouse = publicHouse(ownHouse, identity.public.fingerprint); lockedIdentity = false;
+      ownHouse = publicHouse(ownHouse, identity.public.fingerprint); lockedIdentity = false; guestSession = false;
       replaceClient(); await persist(); notice = 'Identidad desbloqueada; tus contactos pueden reconocer tu huella.'; update();
     }),
     addSessionContact: id => run(async () => {

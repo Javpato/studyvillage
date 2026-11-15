@@ -1,3 +1,4 @@
+import {pathStroke} from '../whiteboard/draw';
 import {fillDrawing} from '../whiteboard/fill';
 import {boardExtra,pendingBoards,setBoardExtra,type PendingBoard} from '../../../packages/runtime/src/storage/whiteboards';
 import {boardBatches} from '../../../packages/core/src/whiteboard/batches';
@@ -608,6 +609,8 @@ class StudyUI {
   }
 
   update(view: AppView): void {
+    const ink = view.network.strokes.map(s=>`${s.id}:${s.seq}:${s.deleted}`).join('|');
+    if (ink !== this.networkInkSignature) { this.networkInkSignature=ink; this.networkInkRevision++; }
     this.headCameras.update(view);
     this.servers?.update(view);
     const previousAccess=this.view?.network.pendingAccess;
@@ -749,7 +752,9 @@ class StudyUI {
     this.lockMessage.setAttribute('role', 'status');
     const stayOffline = button(msg('Continuar sin conexión'), 'sv-button sv-button-outline');
     stayOffline.addEventListener('click', () => { this.lockDismissed = true; this.refresh(); this.stageCanvas.focus(); });
-    append(lockCard, this.lockMessage, stayOffline);
+    const guest = button(msg('Continuar como invitado'), 'sv-button sv-button-primary');
+    guest.onclick = () => this.run(async () => { await this.actions.continueAsGuest(); this.lockDismissed = true; this.refresh(); this.stageCanvas.focus(); });
+    append(lockCard, this.lockMessage, guest, stayOffline);
     lockCard.addEventListener('submit', (event) => {
       event.preventDefault();
       const passphrase = this.unlockInput.value;
@@ -1790,7 +1795,7 @@ class StudyUI {
     for(const invitation of view.network.voice?.invitations??[]){const key=`voice:${invitation.id}`;if(!this.seenRequests.has(key)){this.seenRequests.add(key);this.requestNoticeTarget='voice';const name=view.network.voiceDirectory?.find(p=>p.fingerprint===invitation.from)?.displayName??view.network.members.find(p=>p.identity.fingerprint===invitation.from)?.identity.displayName??t('Vecino');this.localNotice=t('{name} te invita a una llamada',{name});this.localNoticeSeq++;}}
     const phase = view.network.phase;
     const joined = phase === 'JOINED';
-    const ready = !view.lockedIdentity;
+    const ready = true;
     setText(this.statusBadge, PHASE_LABEL[phase]);
     this.statusBadge.classList.toggle('is-online', joined);
     setText(this.profileName, defaultMsg(view.identity.displayName));
@@ -1815,7 +1820,7 @@ class StudyUI {
     show(this.lockOverlay, view.lockedIdentity && !this.lockDismissed);
     show(this.unlockToggleButton, view.lockedIdentity);
     setText(this.lockMessage, view.notice ? t(view.notice) : '');
-    setText(this.identityStatus, view.identitySaved
+    setText(this.identityStatus, view.guestSession ? msg('Sesión de invitado. Tu identidad guardada sigue protegida.') : view.identitySaved
       ? msg('Identidad cifrada en este equipo. No se usa el llavero del sistema.')
       : msg('Puedes cifrarla para recuperarla al volver. Sin guardar, vive solo en esta sesión.'));
     this.saveIdentityButton.disabled = view.lockedIdentity;
@@ -2179,7 +2184,7 @@ class StudyUI {
     // Voice now works wherever you are: the open village, a house, or a
     // private call. The manager already scopes who can hear you.
     const showingCurrentRoom = view.network.phase === 'JOINED';
-    const connected = view.network.phase === 'JOINED' && !view.lockedIdentity;
+    const connected = view.network.phase === 'JOINED' && (!view.lockedIdentity || !!view.guestSession);
     const call = view.network.privateCall;
     setText(this.mediaEyebrow, call.active ? msg('LLAMADA PRIVADA') : ownMember?.houseId ? msg('EN ESTA CASA') : msg('EN LA ALDEA'));
     setText(this.mediaAudience, connected ? (media.audience || msg('Nadie recibe tu audio o pantalla ahora.')) : msg('Conéctate a una aldea para hablar con otras personas.'));
@@ -2593,14 +2598,14 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
     this.boardSaveStates.set(boardId,this.view?.network.phase==='JOINED'?'pending':'saved');
     this.lastBoardRenderSig='';this.boardExtraFrames=3;
     setText(this.boardStatus,msg('Guardado en este dispositivo'));
-    await this.flushBoardPending();
+    void this.flushBoardPending();
   }
 
   private canDrawBoard(): boolean {
     if(this.remoteBoard?.state)return this.remoteBoard.state.canEdit;
     if(!this.expansion.boardRegistry.loaded)return false;
     const view = this.view;
-    if (!view || view.lockedIdentity && view.network.phase==='JOINED') return false;
+    if (!view) return false;
     const boardId = this.boardId();
     if (!this.expansion.boardRegistry.canEdit(boardId, view.identity.fingerprint, view.network.isHost)) {
       return false;
@@ -3461,7 +3466,7 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
     this.boardEditor?.cancelGesture();this.lastPinchDistance=0;this.lastPinchCenter=null;
     if(clearTouches){this.activeBoardPointers.clear();this.boardPalms.reset();}
     if(clearTouches&&id!==undefined&&this.boardCanvas?.hasPointerCapture(id))this.boardCanvas.releasePointerCapture(id);
-    this.lastBoardRenderSig='';this.boardExtraFrames=2;
+    this.lastBoardRenderSig='';this.boardBackgroundKey='';this.boardExtraFrames=2;
   }
   private captureBoardPointer(event:PointerEvent):void {try{this.boardCanvas.setPointerCapture(event.pointerId);}catch{/* A cancelled native contact may already have ended. */}}
   private startBoardTouch():void {
@@ -3574,7 +3579,7 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
       const conflict=this.eraserGesture?.conflicts(this.allStrokes(this.boardId())),changes=this.eraserGesture?.changes()??[];
       this.boardErasing=null;this.eraserGesture=null;
       if(conflict)this.notify(t('El dibujo cambió durante el borrado. Vuelve a intentarlo.'));else if(changes.length)void this.boardEditor.apply(changes);
-      this.lastBoardRenderSig='';return;
+      this.lastBoardRenderSig='';this.boardBackgroundKey='';return;
     }
     if(this.richBoardDraft&&this.view){const draft=this.richBoardDraft;this.richBoardDraft=null;this.saveStroke({points:[draft.start,draft.current],tool:draft.kind,color:this.boardColor.value,width:Number(this.boardWidth.value)});this.boardExtraFrames=3;this.refreshBoardControls();return;}
     const draft=this.boardDraft;if(draft)this.saveStroke(draft);this.boardDraft=null;
@@ -3680,13 +3685,28 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
   }
 
   private lastStageRenderSig = '';
+  private networkInkSignature = '';
+  private networkInkRevision = 0;
+  private boardBackground = document.createElement('canvas');
+  private boardBackgroundKey = '';
+  private renderError = '';
   private lastBoardRenderSig = '';
   private boardExtraFrames = 0;
 
   private tick = (now: number): void => {
+    // Schedule first: a failed frame must never strand Safari's animation loop.
+    this.raf = requestAnimationFrame(this.tick);
+    try { this.renderFrame(now); this.renderError=''; } catch(error) {
+      const message=errorMessage(error);
+      if(message!==this.renderError){this.renderError=message;console.error('StudyVillage frame',error);this.notify(message);}
+      this.boardCanvas.width=this.boardCanvas.width;this.stageCanvas.width=this.stageCanvas.width;
+      this.boardBackgroundKey='';this.lastBoardRenderSig='';this.lastStageRenderSig='';this.boardExtraFrames=2;
+    }
+  };
+  private renderFrame = (now: number): void => {
     if (document.hidden || (this.lastFrame && now - this.lastFrame < 1000 / 61)) {
       if (document.hidden) this.lastFrame = now;
-      this.raf = requestAnimationFrame(this.tick); return;
+      return;
     }
     const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.05) : 0;
     this.lastFrame = now;
@@ -3880,16 +3900,11 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
       const height = this.isDisplayBoard()?432:Math.max(1, Math.round(768 * rect.height / Math.max(1, rect.width)));
       if (height !== this.boardHeight) { this.boardHeight = height; this.boardCanvas.height = height * 2; this.lastBoardRenderSig = ''; this.positionBoardTextInput(); }
       const boardId = this.boardId();
-      const committed = visibleStrokes(this.allStrokes(boardId), boardId, this.hiddenAuthors);
-      const visible = this.eraserGesture?.preview(committed) ?? this.boardEditor.displayed(committed);
-      const richShapes = this.expansion.boardRegistry.getRichElements(boardId);
       const cam = this.boardCamera();
       const cursor = this.boardTool === 'eraser' ? this.boardCursor : null;
-      const boardSig = JSON.stringify([boardId, this.boardEditor.version, visible, richShapes.map((s) => s.id), this.boardDraft, this.richBoardDraft, cam, cursor, getMathGeneration(), boardFontGeneration()]);
-      if (boardSig !== this.lastBoardRenderSig) {
-        this.lastBoardRenderSig = boardSig;
-        this.boardExtraFrames = 2;
-      }
+      const contentKey = JSON.stringify([boardId,this.expansion.boardRegistry.revision,this.networkInkRevision,this.boardEditor.version,this.remoteBoard?.revision??0,[...this.hiddenAuthors],cam,this.boardHeight,getMathGeneration(),boardFontGeneration()]);
+      const boardSig = contentKey + JSON.stringify([this.boardDraft?.points.length,this.boardDraft?.points.at(-1),this.richBoardDraft,cursor]);
+      if (boardSig !== this.lastBoardRenderSig) { this.lastBoardRenderSig=boardSig;this.boardExtraFrames=2; }
       if (this.boardExtraFrames > 0) {
         this.boardExtraFrames--;
         const ctx = this.boardCanvas.getContext('2d');
@@ -3897,7 +3912,18 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
           const scale = this.boardCanvas.width / 768;
           ctx.save();
           ctx.setTransform(scale, 0, 0, scale, 0, 0);
-          drawBoard(ctx, visible, this.boardDraft, cam, 768, this.boardHeight, false, scale);
+          // Active ink never repaints the entire committed drawing.
+          const background=this.boardBackground;
+          if(this.boardBackgroundKey!==contentKey||this.eraserGesture){
+            background.width=this.boardCanvas.width;background.height=this.boardCanvas.height;
+            const base=background.getContext('2d')!;base.setTransform(scale,0,0,scale,0,0);
+            const committed=visibleStrokes(this.allStrokes(boardId),boardId,this.hiddenAuthors);
+            const visible=this.eraserGesture?.preview(committed)??this.boardEditor.displayed(committed);
+            drawBoard(base,visible,null,cam,768,this.boardHeight,false,scale);
+            this.boardBackgroundKey=contentKey;
+          }
+          ctx.drawImage(background,0,0,768,this.boardHeight);
+          if(this.boardDraft){ctx.save();ctx.scale(cam.zoom,cam.zoom);ctx.translate(-cam.x,-cam.y);pathStroke(ctx,this.boardDraft);ctx.restore();}
           this.boardEditor.draw(ctx);
           ctx.save();
           ctx.scale(cam.zoom, cam.zoom);
@@ -3936,7 +3962,6 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
       }
     }
     this.updatePortraitCamera();
-    this.raf = requestAnimationFrame(this.tick);
   };
 
   private setPortraitZoom(zoom: number): void {
