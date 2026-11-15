@@ -1,12 +1,51 @@
+# Publication candidate — 15 November 2026
+
+Owner explicitly requested “pushea y mergea”, superseding the earlier local-only restriction for these changes. The implementation is already on `main` (base candidate `a4d573f`); a fresh fetch found no divergence and GitHub has no open PR to merge. Push `main` normally, including the corrected hamster ball and this verification record. Do not force push or create a new installer release.
+
+Scope: temporary guest hosting/joining while preserving the locked identity, rapid-ink rendering improvements, new original pixel cast, and the circular hamster ball. The subsequent audio discussion was diagnosis only: no voice-meter, TURN, or audio-delivery fix is included.
+
+Completed local checks are recorded below, including 596 unit tests, Chromium/local WebRTC/server journeys, 15 production WebKit cases, package/cache upgrades, and the final hamster correction's two focused browser checks and production build. Current local production cache: `studyvillage-176fe9b2156b54e2`.
+
+Remaining: push the correction commit, record the candidate SHA and workflow run, wait for [Publish StudyVillage](https://github.com/Javpato/studyvillage/actions/workflows/pages.yml), and verify the published service worker against the current build. Until deployment succeeds this is a candidate, not a verified publication. Physical iPad/Pencil and cross-network audio remain unverified.
+
+---
+
+# Local hamster ball correction — 15 November 2026
+
+Redrew the four hamster ball frames with a circular 30×30 rim, transparent interior, curved seams and fixed upper-left highlights. The side-facing hamster now fits fully inside the shell. Native frame dimensions, anchor, animation indices and saved ball state are unchanged. Other hamster frames and all other animal sheets are byte-for-byte unchanged.
+
+Verified: visual review on light/dark backgrounds; both existing hamster persistence/removal and directional sprite checks passed in Chromium; type checks and local production build passed. Current local cache: `studyvillage-176fe9b2156b54e2`. Preview: `docs/images/pixel-cast/hamster-ball.png`. Local-only follow-up to `a4d573f`; no commit, push, or publication for this small correction. Task-owned test output removed; current builds retained.
+
+---
+
+# Local guest hosting, rapid ink, and pixel cast — 15 November 2026
+
+Owner requested **local preview only** during implementation: do not push or publish this candidate. Local candidate commit: `a4d573f`. It has not been pushed; no workflow was triggered. This verification document retains the owner’s pre-existing edits and remains outside the candidate commit. Existing verification edits below are preserved.
+
+Implemented candidate: guest identity selection while the saved key stays encrypted; guest server sessions cannot claim residency; revision-based board rendering and committed-layer cache; render-loop recovery; original editable human and animal pixel grids and exports. Local preview: http://127.0.0.1:3100/ .
+
+Completed locally:
+- Full validation: 559 application + 37 server unit tests; types; 2921 ES/EN/FR messages; web/PWA/server builds. Final local cache: `studyvillage-cd9c701de3635ffb`.
+- Chromium: all 11 existing Pencil/large-board checks passed; all 4 new guest/rapid-ink journeys passed, including a locked saved identity hosting a signed village and a second local browser joining. PeerJS discovery/signaling was intercepted inside the test; real WebRTC data channels and signed authentication ran locally with no external STUN.
+- All 4 server browser journeys passed, including a locked saved identity entering as a visitor while retaining its encrypted key, shared ink moderation, server restart, and custom avatar transfer. Both sprite-rendering checks and 7 wardrobe/pet-expression journeys passed.
+- Production WebKit: 15 tablet/touch/guest/large-board/rapid-ink cases passed; the Chromium-only local WebRTC check was intentionally skipped. New rapid-ink coverage saves 80 strokes on empty and 2500-object boards, survives an injected canvas failure, undoes correctly, and persists after reload without pressing Back.
+- Packaged application/offline and legacy sprite-cache upgrades passed in Chromium and WebKit; 190 packaged files verified. Human direction sheets reviewed against light/dark backgrounds and in the actual village; animal palettes/alpha/directions/walking checked.
+
+Test corrections: unlock is opened through Identity settings because the existing UI starts with its overlay dismissed. Shared ink tests now inspect persisted stroke counts rather than the status label that shows save progress. The old hard-coded two-eye pixel assertion was replaced with validation of the new original directional sheets, crisp alpha, bounded palette and distinct walking poses. No runtime failure assertion was removed.
+
+Limits: physical iPad/Pencil and cross-network connections were not tested. No GitHub workflow, deployment, release, or installer build was requested or run. Local preview remains at http://127.0.0.1:3100/ . The current web/server builds and sprite source/preview artifacts are retained; task-owned temporary scripts and test output are removed.
+
+---
+
 # Whiteboard update — 14 November 2026
 
-Owner explicitly authorized pushing this implementation to `https://github.com/Javpato/studyvillage` on `main`. Candidate `5b4ed6a` passed and published through [Pages 43616159083](https://github.com/Javpato/studyvillage/actions/runs/43616159083). The final sharing/recovery changes in this checkpoint supersede it; publication status must be checked after their push. Native dev.11 installers are unchanged.
+Owner explicitly authorized pushing this implementation to `https://github.com/Javpato/studyvillage` on `main`. Candidate `5b4ed6a` passed and published through [Pages 43616159083](https://github.com/Javpato/studyvillage/actions/runs/43616159083). Final source [`28e1d32`](https://github.com/Javpato/studyvillage/commit/28e1d32dbef18fd861fc66acd95fe32e87e9eeac) is verified and published by [Pages 43617345879](https://github.com/Javpato/studyvillage/actions/runs/43617345879), completed successfully at 16:47:43 UTC. The public service worker matches the tested local build byte for byte: `studyvillage-4c606dcc7a799bf1`. Native dev.11 installers are unchanged.
 
 Implemented: device IndexedDB storage with verified legacy migration, no lifetime operation/selection caps, large erase/clear/copy/cut/paste/duplicate operations with grouped undo, persistent clipboard, bucket fill, and animal/avatar previous-frame shadows and copying underneath. Network messages remain bounded internally: server snapshots are batched; peers acknowledge each edit batch; companion snapshots are paged. Pending edits retain their author/board/session scope and acknowledged progress. Received shared drawings are cached locally; failed device writes retain unsaved strokes for export and retry. Legacy rich-shape backups are converted without dropping shapes. Both devices must update: server protocol 8, companion 5, peer board capability 3.
 
 Completed locally:
 
-- Full suite: 558 client + 37 server tests passed; the additional legacy-board backup regression and identity-backup checks passed (11 focused tests). Types, 2918 ES/EN/FR messages, web/PWA/server builds passed.
+- Final CI suite: 559 client + 37 server tests passed; legacy-board backup and identity-backup checks also passed locally (11 focused tests). Types, 2918 ES/EN/FR messages, web/PWA/server builds passed.
 - Chromium: migration of 2500 objects, copying/duplicating/pasting to 5000, clearing a complete layer and undoing it once, reload persistence, enclosed whiteboard fill/undo/reload, animal bucket/shadow/composite/undo, and backup/recovery journeys passed.
 - Production WebKit: 14 touch/layout/Pencil/eraser/large-board checks passed. All 4 final feature cases passed, including simulated storage failure preserving the saved drawing and retrying the unsaved stroke. These are browser simulations, not physical iPad/Pencil certification.
 - Local peer integration: signed 2200-object edits and deletes with batch acknowledgments passed. Local companion browser test: 2200-object paged snapshot plus bounded bulk commit passed.
@@ -16,7 +55,7 @@ External live-pair testing was rejected by automatic approval review because the
 
 First candidate `0731cd2` failed its server snapshot regression in [43615522858](https://github.com/Javpato/studyvillage/actions/runs/43615522858); the initial reset now carries the first batch and the corrected server suite passes. Large selection testing also removed quadratic cleanup and undo loops. Original user documentation edits below were preserved.
 
-Remaining: push the final sharing/recovery candidate, record its SHA and Pages workflow result, and remove task-owned test output. Retain the current builds and existing installers.
+Completed: final Pages workflow and public service-worker verification. Task-owned test output, logs and temporary scripts removed; current web/server builds and release-current installers retained. No required implementation work remains. Verification limits remain the physical iPad/Pencil and external signaling checks described above.
 
 ---
 

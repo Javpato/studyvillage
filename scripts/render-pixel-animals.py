@@ -20,14 +20,14 @@ for species,art in data['animals'].items():
    if frame in [1,2]:
     body[-2]=('...oFFo.......oFFo..' if frame==1 else '.oFFo.......oFFo....') if quadruped else ('..oFFoo.........' if frame==1 else '.........oFFo...')
     body[-1]=('...oooo.......oooo..' if frame==1 else '.oooo.......oooo....') if quadruped else ('..oooo..........' if frame==1 else '.........oooo...')
-   grid(body,5 if quadruped else 8,17+bob)
+   grid(body,5 if quadruped else 8,(16 if species=='hamster' and frame==6 else 17)+bob)
    face=art['front'] if direction==0 else art['right'] if direction in [1,2] else data['back']
    # Long rabbit ears have room above the eye line; all feet share the same anchor.
    y=3 if species=='rabbit' else 7
    if direction==3:
     grid(art['front'][:6] if species=='rabbit' else art['front'][:3],8,y+bob)
     grid(face,8,10+bob)
-   else:grid(face,14 if quadruped else 8,y+bob+(2 if frame==3 else 0))
+   else:grid(face,(10 if species=='hamster' and frame==6 else 14) if quadruped else 8,y+bob+(2 if frame==3 else 0))
    if species=='parrot':grid(['.oHHHo..oHHHo.','oHHHho..oHHHho','.ohho....ohho.'],8,19+bob)
    if species=='cat':grid(['...oo','..oFo','..oFo','.oFfo','oFffo','.ooo.'],1 if quadruped else 24,16+bob)
    if species=='dog':grid(['...oo','..oFo','.oFfo','offo.','.oo..'],1 if quadruped else 24,16+bob)
@@ -39,10 +39,7 @@ for species,art in data['animals'].items():
     if direction==0:grid(['FFFF','oooo'],19,14+bob)
    if frame==6:
     if species=='hamster':
-     p={**p,'b':'#75b5c2','B':'#d4efec'}
-     grid(['........bbbbbbbb........','.....bbb........bbb.....','...bb..............bb...','..b..................b..','.b....................b.','b......................b'],4,0)
-     grid(['b......................b','.b....................b.','..b..................b..','...bb..............bb...','.....bbb........bbb.....','........bbbbbbbb........'],4,26)
-     for y in range(6,26):grid(['b......................b'],4,y)
+     pass # The spherical shell is drawn after direction mirroring to keep lighting consistent.
     elif species=='rabbit':
      for y in range(25,28):
       for x in range(7,25):im.putpixel((x,y),(0,0,0,0))
@@ -51,6 +48,8 @@ for species,art in data['animals'].items():
     elif species=='parrot':grid(['oHHHHho','oHHHho.','oHHho..','ooo....'],2,18)
     else:grid(['L...L','..L..','L...L'],25,5)
    if direction==1:im=im.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+   if species=='hamster' and frame==6:
+    p={**p,**data['hamsterBall']['palette']};grid(data['hamsterBall']['rows'],0,0)
    sheet.alpha_composite(im,(frame*32,direction*32))
  sheet.save(out/f'pet-{species}-sheet.png');previews.append(sheet)
  # Keep existing frame contract, animation semantics, anchors and movement footprint.
