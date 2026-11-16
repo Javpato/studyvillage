@@ -73,14 +73,16 @@ async function verify(name,engine){
   // `active` can already exist while its activate event is still running. A reload
   // during that interval may remain uncontrolled because this app does not claim open tabs.
   await page.waitForFunction(async()=>(await navigator.serviceWorker.getRegistration())?.active?.state==='activated');
-  // Open a new client after installation. An existing document can remain
-  // uncontrolled across a reload in Chromium; the app deliberately never claims
-  // open editors or forces a reload while someone is writing. Keep the installed
-  // client alive until the new client is controlled (some CI Chromium lifecycles
-  // discard the idle worker between closing the final page and opening another).
+  // Activation in the renderer can precede Chromium's navigation registration.
+  // An uncontrolled client cannot acquire control by waiting: this worker never
+  // claims open editors. Retry normal navigation before opening any document.
   const installedPage=page;page=await context.newPage();page.setDefaultTimeout(20000);
   page.on('pageerror',error=>errors.push(error.message));
-  let navigation=await page.goto(address);if(!await page.evaluate(()=>!!navigator.serviceWorker.controller)){console.log(`${name}: fresh tab is not controlled yet; checking after normal reload.`);navigation=await page.reload();}try{await page.waitForFunction(()=>!!navigator.serviceWorker.controller);}catch(error){console.error('Offline controller diagnostic',name,JSON.stringify({version:browser.version(),url:page.url(),fromWorker:navigation?.fromServiceWorker(),state:await page.evaluate(async()=>({controlled:!!navigator.serviceWorker.controller,registrations:(await navigator.serviceWorker.getRegistrations()).map(r=>({scope:r.scope,active:r.active?.state,script:r.active?.scriptURL,waiting:r.waiting?.state,installing:r.installing?.state})),caches:await caches.keys(),secure:isSecureContext}))},null,2));throw error;}await installedPage.close();
+  let navigation;
+  try{
+   await expect.poll(async()=>{navigation=await page.goto(address);return page.evaluate(()=>!!navigator.serviceWorker.controller);},{message:'A new navigation is controlled after worker installation',intervals:[250,500,1000],timeout:20000}).toBe(true);
+  }catch(error){console.error('Offline controller diagnostic',name,JSON.stringify({version:browser.version(),url:page.url(),fromWorker:navigation?.fromServiceWorker(),state:await page.evaluate(async()=>({controlled:!!navigator.serviceWorker.controller,registrations:(await navigator.serviceWorker.getRegistrations()).map(r=>({scope:r.scope,active:r.active?.state,script:r.active?.scriptURL,waiting:r.waiting?.state,installing:r.installing?.state})),caches:await caches.keys(),secure:isSecureContext}))},null,2));throw error;}
+  await installedPage.close();
   const installed=await page.evaluate(async key=>(await (await caches.open(key)).keys()).map(request=>new URL(request.url).pathname+new URL(request.url).search),cache);
   assert.deepEqual(installed.sort(),precache.map(name=>mount+name.slice(2)).sort(),'Incomplete offline package');
   await openNotebook(page);await options(page,'Página');
