@@ -6,15 +6,15 @@ Una aldea acogedora en pixel art para tener tu propio rincón, visitar a tus ami
 
 ## Estado y descargas
 
-**[1.0.0-dev.11 está publicada](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.11)** con cuatro instaladores verificados, información de compilación y sumas SHA-256. Descarga el archivo de tu sistema en la tabla. La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages; cada entrega de instaladores queda asociada a su propia etiqueta de versión.
+**[1.0.0-dev.12 está publicada](https://github.com/Javpato/studyvillage/releases/tag/v1.0.0-dev.12)** con cuatro instaladores verificados, información de compilación y sumas SHA-256. Incluye inglés por defecto y escritura continua en la pizarra, también en dispositivos vinculados. Descarga el archivo de tu sistema en la tabla. La web se actualiza desde `main` cuando pasan las pruebas de GitHub Pages; cada entrega de instaladores queda asociada a su propia etiqueta de versión.
 
 | Dispositivo | Qué abrir o descargar |
 |---|---|
 | Navegador, iPhone o iPad | [Web de StudyVillage](https://javpato.github.io/studyvillage/); en Safari, Compartir → Añadir a pantalla de inicio |
-| Windows x64 | [StudyVillage-Setup-x64.exe](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.11/StudyVillage-Setup-x64.exe) |
-| Linux x64 | [StudyVillage-linux-x64.AppImage](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.11/StudyVillage-linux-x64.AppImage) |
-| macOS Intel o Apple Silicon | [StudyVillage-macos-universal.dmg](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.11/StudyVillage-macos-universal.dmg) — el mismo archivo para ambos |
-| Android | [StudyVillage-development.apk](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.11/StudyVillage-development.apk) |
+| Windows x64 | [StudyVillage-Setup-x64.exe](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.12/StudyVillage-Setup-x64.exe) |
+| Linux x64 | [StudyVillage-linux-x64.AppImage](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.12/StudyVillage-linux-x64.AppImage) |
+| macOS Intel o Apple Silicon | [StudyVillage-macos-universal.dmg](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.12/StudyVillage-macos-universal.dmg) — el mismo archivo para ambos |
+| Android | [StudyVillage-development.apk](https://github.com/Javpato/studyvillage/releases/download/v1.0.0-dev.12/StudyVillage-development.apk) |
 
 Son versiones de desarrollo. Los instaladores de escritorio no tienen firma comercial ni notarización; el APK usa firma de desarrollo. Exporta una copia de tus datos antes de desinstalar o cambiar de dispositivo. No hay instalador nativo de iOS.
 
