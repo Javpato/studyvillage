@@ -16,6 +16,14 @@ Current candidate: `73005ff3c138ca04ec36ebd0c19cefc80a0d359d`, pushed to `origin
 
 Follow-up review preserved immediate IndexedDB recovery for every linked-device gesture while serializing only network delivery/snapshots. Its focused browser regression now holds the first network response and verifies that both gestures are already recoverable from IndexedDB. Both companion browser cases pass. Release 43778128787 was cancelled before packaging to include this refinement. Packaged/offline checks pass in both Chromium and WebKit for the prior build; production WebKit's nine Pencil/mouse checks, including both every-frame slow-save checks, pass.
 
+Final runtime candidate: `afb2a4ac92bb0699f63fbe6bb505dfd7552a1c4d` pushed to `origin/main`. [Pages 43778288792](https://github.com/Javpato/studyvillage/actions/runs/43778288792) and [Release 43778288604](https://github.com/Javpato/studyvillage/actions/runs/43778288604) are running/queued against this source. No native release is published yet.
+
+Final local package recheck passed in Chromium and WebKit (190 files; offline, persistence, palm rejection, navigation and legacy sprite-cache upgrades). Cache: `studyvillage-d198b0f4443b26a2`. Production WebKit completed with 21 passed and one intentionally skipped Chromium-only local WebRTC case. No physical iPad/Pencil claim. Waiting for full CI and native gates.
+
+Web publication is verified: Pages 43778288792 succeeded for `afb2a4a`; public `sw.js` matches the final local build byte for byte (SHA-256 `eba9f75135969407aa251c85fe691167e1d0c66860cd832bf2551fdc1342c3c4`, cache `studyvillage-d198b0f4443b26a2`). Native release remains pending in 43778288604, currently running the complete Chromium suite.
+
+Release 43778288604 stopped at complete Chromium: 263 passed, 18 intentional skips, seven failures. Four still asserted the obsolete stroke-count status label (the app now shows save status); assertions now inspect durable strokes. The legacy restore fixture had no explicit language and correctly reopened in English; it now migrates and verifies a saved Spanish choice. The short focus-program fixture let real time run between simulated jumps; its clock is now explicitly paused. The full 2500/5000-object migration/duplicate/paste/clear/undo/reload case exhausted the generic 45-second budget on the shared runner; only that extensive case gets Playwright's slow-test budget, preserving every assertion. Targeted regressions are running locally before a new full release attempt. No native artifact was published.
+
 ---
 
 # Verified web publication — 15 November 2026

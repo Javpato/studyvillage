@@ -80,23 +80,23 @@ test('board: text format, selection, duplicate, undo of the whole gesture and de
   await expect(editor).toHaveCSS('text-decoration-line', 'underline');
   await editor.fill('Hola pizarra');
   await editor.press('Enter');
-  await expect(page.getByText('1 trazos en esta pizarra')).toBeAttached();
+  await expect.poll(async()=>(await savedStrokes(page)).length).toBe(1);
 
   await tools.getByRole('button', { name: 'Seleccionar', exact: true }).click();
   await canvas.click({ position: { x: box.width * .3 + 12, y: box.height * .3 + 12 } });
   await expect(context.getByRole('button', { name: 'Editar', exact: true })).toBeVisible();
   await context.getByRole('button', { name: 'Duplicar', exact: true }).click();
-  await expect(page.getByText('2 trazos en esta pizarra')).toBeAttached();
+  await expect.poll(async()=>(await savedStrokes(page)).length).toBe(2);
   // Undo reverts the duplicate as one step.
   await page.getByRole('button', { name: '↶ Deshacer' }).click();
-  await expect(page.getByText('1 trazos en esta pizarra')).toBeAttached();
+  await expect.poll(async()=>(await savedStrokes(page)).length).toBe(1);
 
   // Rectangle selection then drag moves it as one transaction.
   await page.mouse.move(box.x + 4, box.y + 4); await page.mouse.down();
   await page.mouse.move(box.x + box.width * .8, box.y + box.height * .8, { steps: 6 }); await page.mouse.up();
   await expect(context.getByRole('button', { name: 'Eliminar', exact: true })).toBeVisible();
   await context.getByRole('button', { name: 'Eliminar', exact: true }).click();
-  await expect(page.getByText('0 trazos en esta pizarra')).toBeAttached();
+  await expect.poll(async()=>(await savedStrokes(page)).length).toBe(0);
   await page.getByRole('button', { name: '↶ Deshacer' }).click();
-  await expect(page.getByText('1 trazos en esta pizarra')).toBeAttached();
+  await expect.poll(async()=>(await savedStrokes(page)).length).toBe(1);
 });

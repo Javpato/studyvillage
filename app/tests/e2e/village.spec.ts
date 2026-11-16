@@ -1,3 +1,4 @@
+import {savedStrokes} from './board-storage';
 import {openPhoneApp} from '../../../scripts/phone-ui.mjs';
 import { test, expect } from '@playwright/test';
 
@@ -107,7 +108,7 @@ test('drawing on the board marks the canvas and undo reverts exactly that stroke
     return dark;
   });
   await expect.poll(darkInStroke).toBe(0);
-  await expect(page.locator('.sv-board-pane').getByText('0 trazos en esta pizarra')).toBeAttached();
+  await expect.poll(async()=>(await savedStrokes(page)).length).toBe(0);
 });
 
 test.describe('with decorative motion suppressed', () => {
@@ -237,10 +238,10 @@ test.describe('whiteboard tools', () => {
     await page.mouse.down();
     await page.mouse.move(eraseX, box.y + box.height * (320 / 432), { steps: 6 });
     await page.mouse.up();
-    await expect(page.getByText('0 trazos en esta pizarra')).toBeAttached();
+    await expect.poll(async()=>(await savedStrokes(page)).length).toBe(0);
     // Erasing is itself one undoable gesture.
     await undo.click();
-    await expect(page.getByText('1 trazos en esta pizarra')).toBeAttached();
+    await expect.poll(async()=>(await savedStrokes(page)).length).toBe(1);
   });
 
   test('"Borrar lo mío" asks once more, then clears every stroke of yours', async ({ page }) => {
@@ -254,7 +255,7 @@ test.describe('whiteboard tools', () => {
     // First click only arms it; nothing is deleted yet.
     await expect(undo).toBeEnabled();
     await page.getByRole('button', { name: '¿Borrar todo lo tuyo?' }).click();
-    await expect(page.getByText('0 trazos en esta pizarra')).toBeAttached();
+    await expect.poll(async()=>(await savedStrokes(page)).length).toBe(0);
     await expect(page.locator('.sv-notice')).toContainText('Se borraron 2 trazo(s) tuyos');
   });
 

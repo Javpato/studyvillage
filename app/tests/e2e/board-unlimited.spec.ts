@@ -4,6 +4,7 @@ import {savedStrokes} from './board-storage';
 async function openBoard(page:Page){const editor=await openDecorate(page);await editor.locator('.sv-furniture-item').filter({hasText:'Pizarra'}).first().dblclick();await expect(page.getByLabel('Pizarra para dibujar')).toBeVisible();}
 async function draw(page:Page){const c=page.getByLabel('Pizarra para dibujar'),r=(await c.boundingBox())!;await page.mouse.move(r.x+r.width*.2,r.y+r.height*.3);await page.mouse.down();await page.mouse.move(r.x+r.width*.4,r.y+r.height*.4);await page.mouse.up();}
 test('migrates over 2000 strokes, clears the entire layer, undoes and persists',async({page})=>{
+ test.slow(); // Several 2500/5000-object durable writes and reloads on shared CI runners.
  await page.goto('/');await openBoard(page);await draw(page);await expect.poll(async()=>(await savedStrokes(page)).length).toBe(1);
  const [first]=await savedStrokes(page);
  await page.evaluate(async first=>{await new Promise<void>((resolve,reject)=>{const r=indexedDB.deleteDatabase('studyvillage-whiteboards');r.onsuccess=()=>resolve();r.onerror=()=>reject(r.error);r.onblocked=()=>resolve();});localStorage.setItem('studyvillage-whiteboards-v1',JSON.stringify({metadata:[],elements:[],strokes:[[first.boardId,Array.from({length:2500},(_,n)=>({...first,id:'large'+n,points:[{x:100+n%100,y:100+Math.floor(n/100)},{x:101+n%100,y:100+Math.floor(n/100)}]}))]]}));},first);
