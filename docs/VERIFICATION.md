@@ -1,12 +1,26 @@
-# Publication candidate — 15 November 2026
+# English default and continuous local ink — 16 November 2026
 
-Owner explicitly requested “pushea y mergea”, superseding the earlier local-only restriction for these changes. The implementation is already on `main` (base candidate `a4d573f`); a fresh fetch found no divergence and GitHub has no open PR to merge. Push `main` normally, including the corrected hamster ball and this verification record. Do not force push or create a new installer release.
+Owner authorized push, integration into `main`, and updated releases. Candidate is being committed on the existing `main` branch; remote base is `da98d93d481a3af3c5fe7cfb66b03b4ff356f475`, with no open PR or divergence. Target release: `v1.0.0-dev.12`, Android version code 10011. This is a candidate, not yet a verified or published release.
+
+Changes: new installations default to English while preserving explicit languages; a local pending-ink projection bridges pointer release to durable storage; linked devices invalidate their ink layer immediately and order writes/snapshots. Failed local writes remain recoverable. Existing Spanish browser journeys now select Spanish explicitly; fresh-install tests assert English.
+
+Completed: TypeScript checks; 11 focused unit checks; 16 Chromium browser cases, including every-frame ink visibility during 500 ms storage delays for both pen and mouse, consecutive strokes, undo/reload persistence, linked-device immediate visibility and ordering, and all three saved language choices.
+
+Remaining: full unit/build and packaged/offline checks; production WebKit; complete Chromium and live pairing CI; native builds and installation checks on Windows, Linux, both macOS architectures and Android; publish dev.12 only after all gates pass; verify public web/release hashes; update download links and remove temporary output. Physical iPad/Pencil is not claimed. The earlier audio discussion remains diagnosis only.
+
+Workflow links and candidate SHA will be recorded after the push, before extended verification. Prior records below are preserved.
+
+---
+
+# Verified web publication — 15 November 2026
+
+Owner explicitly requested “pushea y mergea”, superseding the earlier local-only restriction for these changes. The implementation is already on `main` (base candidate `a4d573f`); a fresh fetch found no divergence and GitHub has no open PR to merge. Pushed `main` normally, including the corrected hamster ball and verification record; no force push or new installer release.
 
 Scope: temporary guest hosting/joining while preserving the locked identity, rapid-ink rendering improvements, new original pixel cast, and the circular hamster ball. The subsequent audio discussion was diagnosis only: no voice-meter, TURN, or audio-delivery fix is included.
 
 Completed local checks are recorded below, including 596 unit tests, Chromium/local WebRTC/server journeys, 15 production WebKit cases, package/cache upgrades, and the final hamster correction's two focused browser checks and production build. Current local production cache: `studyvillage-176fe9b2156b54e2`.
 
-Remaining: push the correction commit, record the candidate SHA and workflow run, wait for [Publish StudyVillage](https://github.com/Javpato/studyvillage/actions/workflows/pages.yml), and verify the published service worker against the current build. Until deployment succeeds this is a candidate, not a verified publication. Physical iPad/Pencil and cross-network audio remain unverified.
+Candidate `da98d93d481a3af3c5fe7cfb66b03b4ff356f475` is pushed to `origin/main`. [Publication workflow 43768016136](https://github.com/Javpato/studyvillage/actions/runs/43768016136) attempt 1 failed only at the packaged Chromium service-worker controller wait: active registration and complete cache were present, but the new tab remained uncontrolled. Types/build/unit checks passed; deployment was skipped. Re-running the unchanged failed job once to distinguish lifecycle timing from a reproducible regression; no assertion was relaxed. Attempt 2 passed the unchanged package check, build, and deploy jobs. Publication of `da98d93` is verified: the public `sw.js` and hamster sheet match the current local build byte for byte. Cache: `studyvillage-176fe9b2156b54e2`; worker SHA-256: `cb4f4afefe7fe473915d9ae665f8de4ad4b0174c1fbfdec741ba468c66b27a16`; hamster sheet SHA-256: `52a2f5475d078d025ed43336c151718ab97285b4c668e782e1af8a10edaad315`. No publication work remains. This final observation is a local verification note, not another runtime change. Physical iPad/Pencil and cross-network audio remain unverified.
 
 ---
 

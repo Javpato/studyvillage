@@ -12,7 +12,7 @@ async function launch(name) {
   const data = path.join(directory, name);mkdirSync(path.join(data, 'localstorage'), { recursive: true });
   const old = new DatabaseSync(path.join(data, 'localstorage/tauri_localhost_0.localstorage'));
   old.exec('CREATE TABLE ItemTable (key TEXT UNIQUE,value BLOB)');
-  old.prepare('INSERT INTO ItemTable VALUES(?,?)').run('studyvillage-migration-test', Buffer.from('Apuntes 📝', 'utf16le'));old.close();
+  old.prepare('INSERT INTO ItemTable VALUES(?,?)').run('studyvillage-migration-test', Buffer.from('Apuntes 📝', 'utf16le'));old.prepare('INSERT INTO ItemTable VALUES(?,?)').run('studyvillage-language', Buffer.from('es', 'utf16le'));old.close();
   const app = await electron.launch({ executablePath, chromiumSandbox:true, args: ['--allow-loopback-in-peer-connection','--add-server=https://saved-server.example.org','--server-name=Synthetic saved server'], env: { ...process.env, STUDYVILLAGE_TEST_DATA_DIR: data } });apps.push(app);
   expect(await app.evaluate(({app})=>app.commandLine.hasSwitch('no-sandbox'))).toBe(false);
   const page = await app.firstWindow();await expect(page.getByTestId('phone-button')).toBeVisible();

@@ -1,3 +1,4 @@
+import {PendingInk} from '../whiteboard/pending';
 import {pathStroke} from '../whiteboard/draw';
 import {fillDrawing} from '../whiteboard/fill';
 import {boardExtra,pendingBoards,setBoardExtra,type PendingBoard} from '../../../packages/runtime/src/storage/whiteboards';
@@ -2568,8 +2569,10 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
     const byId=new Map<string,BoardStroke>();for(const stroke of this.expansion.boardRegistry.getStrokes(boardId))byId.set(stroke.id,{...stroke,boardId});
     if(this.view?.network.boardRef===this.wireBoardId())for(const stroke of this.view.network.strokes){const old=byId.get(stroke.id);if(!old||stroke.seq>=old.seq)byId.set(stroke.id,{...stroke,boardId});}
     for(const stroke of this.expansion.boardRegistry.unsavedStrokes(boardId)){const old=byId.get(stroke.id);if(!old||stroke.seq>old.seq)byId.set(stroke.id,stroke);}
-    return [...byId.values()];
+    return this.pendingInk.merge(this.inkScope(boardId),[...byId.values()]);
   }
+  private pendingInk=new PendingInk();
+  private inkScope(boardId:string):string{return JSON.stringify([boardId,this.boardAuthor(),this.view?.network.sessionId??null]);}
   private boardCommits=new Map<string,Promise<void>>();
   private boardSaveStates=new Map<string,'saving'|'saved'|'pending'>();
   private pendingSync=false;private syncQueued=false;private syncAttempt='';
@@ -2589,15 +2592,25 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
   }
   private async commitBoardChanges(changes: BoardStroke[]): Promise<void> {
     if(this.remoteBoard?.state)return this.remoteBoard.commit(changes);
-    const boardId=this.boardId(),ref=this.wireBoardId(),author=this.boardAuthor();
-    this.boardSaveStates.set(boardId,'saving');setText(this.boardStatus,msg('Guardando…'));
-    const scopeKey='scope:'+boardId+':'+author,scope=this.view?.network.sessionId??await boardExtra<string>(scopeKey)??null;
-    if(scope)await setBoardExtra(scopeKey,scope);
-    const pending:PendingBoard={scope,createdAt:Date.now(),id:crypto.randomUUID(),board:boardId,ref,author,changes:structuredClone(changes)};
-    try{await this.expansion.boardRegistry.commitLocal(boardId,changes,pending);}catch(e){this.boardSaveStates.delete(boardId);throw e;}
-    this.boardSaveStates.set(boardId,this.view?.network.phase==='JOINED'?'pending':'saved');
-    this.lastBoardRenderSig='';this.boardExtraFrames=3;
-    setText(this.boardStatus,msg('Guardado en este dispositivo'));
+    const boardId=this.boardId(),ref=this.wireBoardId(),author=this.boardAuthor(),session=this.view?.network.sessionId??null;
+    const scope=this.inkScope(boardId),finish=this.pendingInk.stage(scope,changes);
+    this.boardSaveStates.set(boardId,'saving');this.lastBoardRenderSig='';this.boardExtraFrames=2;
+    // Capture routing before the first await, and keep writes ordered while input stays live.
+    const job=(this.boardCommits.get(scope)??Promise.resolve()).catch(()=>{}).then(async()=>{
+      const scopeKey='scope:'+boardId+':'+author,networkScope=session??await boardExtra<string>(scopeKey)??null;
+      if(networkScope)await setBoardExtra(scopeKey,networkScope);
+      const pending:PendingBoard={scope:networkScope,createdAt:Date.now(),id:crypto.randomUUID(),board:boardId,ref,author,changes:structuredClone(changes)};
+      await this.expansion.boardRegistry.commitLocal(boardId,changes,pending);
+      this.boardSaveStates.set(boardId,session?'pending':'saved');
+    });
+    this.boardCommits.set(scope,job);
+    try{await job;}catch(error){
+      this.expansion.boardRegistry.retainUnsaved(boardId,changes);this.boardSaveStates.delete(boardId);throw error;
+    }finally{
+      // Durable or recoverable ink is already present before removing the local projection.
+      finish();if(this.boardCommits.get(scope)===job)this.boardCommits.delete(scope);
+      this.lastBoardRenderSig='';this.boardExtraFrames=2;
+    }
     void this.flushBoardPending();
   }
 
@@ -3902,7 +3915,7 @@ if(action==='page'){const cursor=z.object({token:z.string(),offset:z.number().in
       const boardId = this.boardId();
       const cam = this.boardCamera();
       const cursor = this.boardTool === 'eraser' ? this.boardCursor : null;
-      const contentKey = JSON.stringify([boardId,this.expansion.boardRegistry.revision,this.networkInkRevision,this.boardEditor.version,this.remoteBoard?.revision??0,[...this.hiddenAuthors],cam,this.boardHeight,getMathGeneration(),boardFontGeneration()]);
+      const contentKey = JSON.stringify([boardId,this.expansion.boardRegistry.revision,this.pendingInk.revision,this.networkInkRevision,this.boardEditor.version,this.remoteBoard?.revision??0,[...this.hiddenAuthors],cam,this.boardHeight,getMathGeneration(),boardFontGeneration()]);
       const boardSig = contentKey + JSON.stringify([this.boardDraft?.points.length,this.boardDraft?.points.at(-1),this.richBoardDraft,cursor]);
       if (boardSig !== this.lastBoardRenderSig) { this.lastBoardRenderSig=boardSig;this.boardExtraFrames=2; }
       if (this.boardExtraFrames > 0) {

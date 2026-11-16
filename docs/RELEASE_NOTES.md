@@ -1,21 +1,19 @@
-# StudyVillage 1.0.0-dev.11
+# StudyVillage 1.0.0-dev.12
 
-Actualiza Windows, Linux, macOS y Android con la nueva interfaz de controles y las preferencias de mando desactivadas por defecto.
+Inglés por defecto y escritura continua en la pizarra, también desde dispositivos vinculados.
 
 ## Novedades
 
-- Mando genérico en SVG, con acciones agrupadas por contexto, indicadores por posición física y resaltado al seleccionar acciones o pulsar botones.
-- Ayuda para exploración, navegación y Forest Blocks, con teclado en una sección separada. Gartic y los demás minijuegos conservan sus controles reales.
-- Ayuda flotante compacta en móvil, ocultación persistente y acceso permanente desde **Ajustes → Controles**, también sin mando conectado.
-- **Activar mando** y **Mostrar ayuda flotante** están desactivados por defecto. Las preferencias explícitas ya guardadas se respetan; puedes cambiarlas desde Ajustes.
-- Se reutiliza el mapeo estándar de la Gamepad API por posición física, sin depender de la marca. Los dispositivos sin correspondencia fiable muestran un aviso y mantienen disponible el teclado.
-- La ayuda captura la entrada para evitar acciones involuntarias en el juego. La conexión y desconexión actualizan la interfaz sin recargar.
+- Las instalaciones nuevas empiezan en inglés. Se conserva el español, francés o inglés que hayas elegido en este dispositivo.
+- El trazo permanece visible al levantar el lápiz o el ratón mientras termina el guardado local. Los dispositivos vinculados muestran su propia tinta inmediatamente, sin esperar la respuesta del principal.
+- Los guardados consecutivos se procesan en orden; la recuperación de tinta pendiente, deshacer y la persistencia siguen disponibles.
+- Los instaladores incorporan los cambios web posteriores a dev.11: anfitrión invitado cuando la identidad guardada está bloqueada, pizarra grande sin límites de operaciones, nuevos personajes y animales en pixel art, y la bola circular del hámster.
 
 ## Actualizar
 
-Cierra todas las ventanas anteriores de la web y vuelve a abrirla para activar la actualización. Los cuatro instaladores contienen el mismo cliente. Se conservan los perfiles, casas, cuadernos y preferencias explícitas. Esta versión mantiene el protocolo de compañero 3 de dev.10; no introduce una migración destructiva. Actualizar el cliente no actualiza automáticamente el servidor.
+Cierra todas las ventanas anteriores de la web y vuelve a abrirla para activar la actualización. Los cuatro instaladores contienen el mismo cliente. Se conservan los perfiles, casas, cuadernos y preferencias explícitas. Actualiza ambos dispositivos para usar el enlace: protocolo de compañero 5, protocolo de servidor 8 y capacidad de pizarra entre pares 3. Actualizar el cliente no actualiza automáticamente el servidor.
 
-La compatibilidad de mandos depende del mapeo que exponga el navegador o sistema; algunos requieren una primera pulsación para detectarlos. Las pruebas de entrada incluyen mandos simulados y no certifican todos los dispositivos físicos.
+Las pruebas de escritura incluyen lápiz y ratón simulados, guardado lento y WebKit de tableta; no equivalen a una prueba física con Apple Pencil. Esta versión no incluye un cambio en el transporte de voz.
 
 ## Descargar e instalar
 

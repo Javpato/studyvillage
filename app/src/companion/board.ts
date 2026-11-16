@@ -14,6 +14,7 @@ export class CompanionBoard {
  revision=0;
  readonly root=document.createElement('dialog');state:CompanionBoardState|null=null;
  private home=document.createComment('whiteboard home');private timer:ReturnType<typeof setInterval>;private generation=0;private polling=false;private mutation=0;
+ private commitTail:Promise<unknown>=Promise.resolve();
  private pending=new Map<string,BoardStroke>();private jobs=new Set<Promise<unknown>>();
  private request:(action:string,value?:unknown)=>Promise<unknown>=async()=>{throw Error('Dispositivo no conectado.');};
  constructor(private surface:BoardSurface,private notify:(error:unknown)=>void){
@@ -26,14 +27,15 @@ export class CompanionBoard {
   this.surface.node.before(this.home);this.root.append(this.surface.node);this.root.show();this.surface.activate();this.revision++;this.surface.changed();
  }
  private async completeState(raw:unknown,request:(action:string,value?:unknown)=>Promise<unknown>):Promise<CompanionBoardState>{const state=companionBoardSchema.parse(raw),strokes=[...state.strokes];let next=state.next;while(next){const page=companionBoardSchema.parse(await request('page',next));if(page.board!==state.board||page.next&&page.next.offset<=next.offset)throw Error('La pizarra cambió antes de guardar.');strokes.push(...page.strokes);next=page.next;}return {...state,strokes,next:undefined};}
- all(){const map=new Map(this.state?.strokes.map(s=>[s.id,s])??[]);for(const [id,stroke]of this.pending)map.set(id,stroke);return [...map.values()];}
+ all(){const map=new Map(this.state?.strokes.map(s=>[s.id,s])??[]);for(const [id,stroke]of this.pending){const old=map.get(id);if(!old||!old.deleted&&stroke.seq>old.seq)map.set(id,stroke);}return [...map.values()];}
  async command(action:string,value?:unknown){const generation=this.generation;const result=await this.request(action,value);if(['rename','access'].includes(action)){const state=await this.completeState(result,this.request);if(generation===this.generation){this.state=state;this.revision++;this.surface.changed();}}return result;}
  commit(changes:BoardStroke[]):Promise<void>{
   const state=this.state;if(!state)return Promise.reject(Error('Esta acción ya no está disponible.'));
   this.mutation++;const generation=this.generation,request=this.request,key='studyvillage-companion-pending-board:'+state.board+':'+crypto.randomUUID();
   for(const stroke of changes)this.pending.set(stroke.id,stroke);
-  const job=(async()=>{let complete=false;try{await setBoardExtra(key,{board:state.board,author:state.author,changes});let remaining=changes;for(const batch of boardBatches(changes)){await request('commit',{board:state.board,changes:batch});remaining=remaining.slice(batch.length);await setBoardExtra(key,{board:state.board,author:state.author,changes:remaining});}const result=await this.completeState(await request('state'),request);await setBoardExtra(key,undefined);if(generation===this.generation)this.state=result;complete=true;}finally{if(generation===this.generation){if(complete)for(const stroke of changes)if(this.pending.get(stroke.id)?.seq===stroke.seq)this.pending.delete(stroke.id);this.revision++;this.surface.changed();}}})();
-  this.jobs.add(job);void job.finally(()=>this.jobs.delete(job)).catch(()=>{});return job;
+  this.revision++;this.surface.changed();
+  const job=this.commitTail.catch(()=>{}).then(async()=>{let complete=false;try{await setBoardExtra(key,{board:state.board,author:state.author,changes});let remaining=changes;for(const batch of boardBatches(changes)){await request('commit',{board:state.board,changes:batch});remaining=remaining.slice(batch.length);await setBoardExtra(key,{board:state.board,author:state.author,changes:remaining});}const result=await this.completeState(await request('state'),request);await setBoardExtra(key,undefined);if(generation===this.generation)this.state=result;complete=true;}finally{if(generation===this.generation){if(complete)for(const stroke of changes)if(this.pending.get(stroke.id)?.seq===stroke.seq)this.pending.delete(stroke.id);this.revision++;this.surface.changed();}}});
+  this.commitTail=job;this.jobs.add(job);void job.finally(()=>this.jobs.delete(job)).catch(()=>{});return job;
  }
  close(){if(!this.state)return;this.surface.deactivate();this.generation++;this.root.close();this.home.replaceWith(this.surface.node);this.state=null;this.pending.clear();}
  async flush(){await Promise.allSettled([...this.jobs]);}

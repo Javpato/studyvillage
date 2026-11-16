@@ -79,3 +79,24 @@ test('Excalifont renders in the editor, survives offline reload and exports with
  await page.getByRole('button',{name:'Opciones avanzadas',exact:true}).click();await page.locator('.sv-board-options-panel summary').filter({hasText:/^Pizarra y archivo$/}).click();
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'↓ Exportar PNG',exact:true}).click();expect((await download).suggestedFilename()).toMatch(/\.png$/);
 });
+
+for(const kind of ['pen','mouse'])test(`${kind} ink stays on every frame after release while storage is slow`,async({page})=>{
+ await page.goto('/');await openBoard(page);
+ const result=await board(page).evaluate(async(element,kind)=>{
+  const canvas=element as HTMLCanvasElement,b=canvas.getBoundingClientRect(),ctx=canvas.getContext('2d')!;
+  // Delay transaction completion, not input or rendering: the durable registry must wait.
+  const transaction=IDBDatabase.prototype.transaction,complete=Object.getOwnPropertyDescriptor(IDBTransaction.prototype,'oncomplete')!;
+  IDBDatabase.prototype.transaction=function(...args:Parameters<IDBDatabase['transaction']>){const tx=Reflect.apply(transaction,this,args);if(this.name==='studyvillage-whiteboards'&&args[1]==='readwrite'&&tx.objectStoreNames.contains('strokes'))Object.defineProperty(tx,'oncomplete',{set(fn){complete.set!.call(tx,function(event:Event){setTimeout(()=>fn.call(tx,event),500);});}});return tx;};
+  const point=(type:string,x:number,y:number,id=1)=>canvas.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:kind,button:0,buttons:type==='pointerup'?0:1,pressure:.5,clientX:b.left+x*b.width/768,clientY:b.top+y*b.width/768}));
+  const crop=()=>ctx.getImageData(Math.round(160*canvas.width/768),Math.round(96*canvas.width/768),Math.ceil(30*canvas.width/768),Math.ceil(8*canvas.width/768)).data;
+  const blank=crop(),samples:number[]=[];point('pointerdown',100,100);point('pointermove',260,100);
+  await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));point('pointerup',280,100);
+  const start=performance.now();let second=false;
+  while(performance.now()-start<1200){await new Promise(requestAnimationFrame);const data=crop();let ink=0;for(let i=0;i<data.length;i+=4)if(Math.abs(data[i]-blank[i])+Math.abs(data[i+1]-blank[i+1])+Math.abs(data[i+2]-blank[i+2])>100)ink++;samples.push(ink);if(!second&&performance.now()-start>80){second=true;point('pointerdown',100,150,2);point('pointermove',260,150,2);point('pointerup',280,150,2);}}
+  IDBDatabase.prototype.transaction=transaction;return {frames:samples.length,minimumInk:Math.min(...samples)};
+ },kind);
+ expect(result.frames).toBeGreaterThan(10);expect(result.minimumInk).toBeGreaterThan(10);
+ await expect.poll(async()=>(await strokes(page)).filter(s=>!s.deleted).length).toBe(2);
+ await page.getByRole('button',{name:'↶ Deshacer',exact:true}).click();await expect.poll(async()=>(await strokes(page)).filter(s=>!s.deleted).length).toBe(1);
+ await page.reload();await openBoard(page);expect((await strokes(page)).filter(s=>!s.deleted)).toHaveLength(1);
+});

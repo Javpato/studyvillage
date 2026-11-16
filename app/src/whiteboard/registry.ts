@@ -9,6 +9,7 @@ import type {BoardStroke} from '../../../packages/core/src/protocol/types';
 export class WhiteboardRegistry extends Registry {
  private decodedSprites=new Map<string,{url:string,image:HTMLImageElement}>();
  private unsaved=new Map<string,Map<string,BoardStroke>>();
+ retainUnsaved(board:string,changes:BoardStroke[]):void{const entries=this.unsaved.get(board)??new Map<string,BoardStroke>();for(const stroke of changes){const old=entries.get(stroke.id);if(!old||stroke.seq>old.seq)entries.set(stroke.id,structuredClone(stroke));}this.unsaved.set(board,entries);this.revision++;}
  unsavedStrokes(board:string):BoardStroke[]{return [...(this.unsaved.get(board)?.values()??[])];}
  readonly ready:Promise<void>;loaded=false;storageError:unknown=null;private writes:Promise<void>=Promise.resolve();
  constructor(storage?:KeyValueStore|null){super(storage??null);this.ready=storage!==undefined?Promise.resolve():initializeBoards().then(snapshot=>{for(const [id,m]of snapshot.metadata)this.metadata.set(id,m);for(const [id,strokes]of snapshot.strokes)this.strokesByBoard.set(id,strokes);}).then(()=>{this.loaded=true;this.revision++;});this.ready.catch(e=>{this.storageError=e;});}

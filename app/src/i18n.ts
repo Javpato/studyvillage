@@ -8,7 +8,7 @@ const MESSAGE = Symbol('interface-message');
 export interface MessageRef { readonly [MESSAGE]: true; readonly source: string; readonly params: Readonly<Record<string, FormatValue>> }
 export type FormatValue = string | number | boolean | null | undefined | MessageRef;
 export type DisplayText = string | MessageRef;
-function readLanguage(): Language { try { const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(LANGUAGE_KEY) : null; return saved === 'en' || saved === 'fr' ? saved : 'es'; } catch { return 'es'; } }
+function readLanguage(): Language { try { const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(LANGUAGE_KEY) : null; return saved === 'es' || saved === 'fr' || saved === 'en' ? saved : 'en'; } catch { return 'en'; } }
 let language: Language = readLanguage();
 const listeners = new Set<(language: Language) => void>();
 interface Binding { element: WeakRef<Element>; node?: WeakRef<Text>; attribute?: string; message: MessageRef }

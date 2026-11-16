@@ -66,7 +66,7 @@ async function verify(name,engine){
  const errors=[];
  try{
   const context=await browser.newContext({viewport:{width:1024,height:768},hasTouch:true,isMobile:true});
-  let page=await context.newPage();page.setDefaultTimeout(20000);
+  await context.addInitScript(()=>localStorage.setItem('studyvillage-language','es'));let page=await context.newPage();page.setDefaultTimeout(20000);
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(address);await expect(page.getByTestId('phone-button')).toBeVisible();
   await expect(page.getByTestId('board-pencil-mode')).toHaveAttribute('aria-label','Modo lápiz');
