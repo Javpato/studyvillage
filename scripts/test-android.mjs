@@ -1,15 +1,17 @@
 /** Exercise the shipping debug APK through Android accessibility, without enabling WebView debugging. */
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {recordInstallerCheck} from './installer-receipt.mjs';
 const pkg='com.studyvillage.rebuild',out='test-results/android-smoke';
 await mkdir(out,{recursive:true});
 const adb=(...args)=>execFileSync('adb',args,{timeout:45000,maxBuffer:8*1024*1024});
 const shell=(...args)=>adb('shell',...args).toString('utf8');
 const decode=value=>value.replaceAll('&amp;','&').replaceAll('&quot;','"').replaceAll('&lt;','<').replaceAll('&gt;','>');
+const english=JSON.parse(await readFile('app/src/i18n/en.json','utf8'));
 let lastXml='';
-async function node(label){
+async function node(source){
+ const label=english[source]??source;
  const end=Date.now()+45000;
  while(Date.now()<end){
   shell('uiautomator','dump','/sdcard/studyvillage-ui.xml');lastXml=shell('cat','/sdcard/studyvillage-ui.xml');

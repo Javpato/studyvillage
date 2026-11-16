@@ -1,3 +1,4 @@
+import {setLanguage} from '../src/i18n';
 import {browserKeyValue} from '../../packages/runtime/src/storage/key-value';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StudyLibrary, quizDefinitionSchema } from '../../packages/core/src/study/library';
@@ -6,7 +7,7 @@ import { AppError, errorMessage } from '../src/errors/messages';
 import { SecureNotesStore } from '../../packages/core/src/notes/secure-notes';
 import { StudyQuiz } from '../../packages/core/src/minigames/study-quiz';
 let data:Map<string,string>;let failed=false;
-beforeEach(()=>{data=new Map();failed=false;vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null,setItem:(key:string,value:string)=>{if(failed)throw new Error('QuotaExceeded');data.set(key,value);},removeItem:(key:string)=>data.delete(key)});});
+beforeEach(()=>{setLanguage('es');data=new Map();failed=false;vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null,setItem:(key:string,value:string)=>{if(failed)throw new Error('QuotaExceeded');data.set(key,value);},removeItem:(key:string)=>data.delete(key)});});
 afterEach(()=>{vi.unstubAllGlobals();vi.restoreAllMocks();});
 const quiz=()=>quizDefinitionSchema.parse({id:'quiz-1',title:'Mi quiz',questions:[{id:'q1',text:'¿Capital de Francia?',choices:['París','Lyon'],correctChoice:0}],updatedAt:1});
 describe('independent quiz library and migration',()=>{

@@ -8,7 +8,9 @@ Completed: TypeScript checks; 11 focused unit checks; 16 Chromium browser cases,
 
 Remaining: full unit/build and packaged/offline checks; production WebKit; complete Chromium and live pairing CI; native builds and installation checks on Windows, Linux, both macOS architectures and Android; publish dev.12 only after all gates pass; verify public web/release hashes; update download links and remove temporary output. Physical iPad/Pencil is not claimed. The earlier audio discussion remains diagnosis only.
 
-Workflow links and candidate SHA will be recorded after the push, before extended verification. Prior records below are preserved.
+Pushed candidate: `ceae1e26165a4425e60f2d97c6c97764df86e8e4` on `origin/main`. [Pages 43777959496](https://github.com/Javpato/studyvillage/actions/runs/43777959496) and [Release 43777976902](https://github.com/Javpato/studyvillage/actions/runs/43777976902) are running. The release is dispatched against this exact source and creates its tag only after successful verification. Prior records below are preserved.
+
+Initial CI caught Spanish-specific unit assertions using the changed default. Those fixtures now select Spanish explicitly; the full client suite passes (562 tests). Android installation assertions use the English catalogue to verify the new default. Superseded release workflow 43777976902 was cancelled before packaging; Pages 43777959496 failed its language-dependent unit assertions and did not deploy. A corrected test-fixture candidate follows.
 
 ---
 

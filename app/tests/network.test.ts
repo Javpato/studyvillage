@@ -1,9 +1,10 @@
+import {setLanguage} from '../src/i18n';
 import { makeStroke } from '../../packages/core/src/whiteboard/model';
 import { SharedRoom } from '../../packages/runtime/src/session/shared-room';
 import { StudyQuiz, type QuizAction, type QuizView } from '../../packages/core/src/minigames/study-quiz';
 import { normalizeAppearance } from '../src/assets/appearance';
 import { areaOf, isInScene } from '../src/world/location';
-import { afterEach, describe, expect, it } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import { setTimeout as waitReal } from 'node:timers/promises';
 import { generateIdentity, randomId } from '../../packages/core/src/identity';
 import { houseSchema, parseWire, strokeSchema, type WireMessage } from '../../packages/core/src/protocol/schema';
@@ -89,6 +90,7 @@ async function until(predicate: () => boolean, label = 'condition'): Promise<voi
   for (let i = 0; i < 500; i++) { if (predicate()) return; await waitReal(2); }
   throw new Error(`Fake integration timed out: ${label}`);
 }
+beforeEach(()=>setLanguage('es'));
 const clients: VillageClient[] = [];
 afterEach(() => { for (const client of clients.splice(0)) client.dispose(); });
 const houseFor = (identity: LocalIdentity): PublicHouse => ({ ownerId: identity.public.fingerprint, revision: 1, name: `Casa ${identity.public.displayName}`, access: 'open', theme: 'mint', furniture: [] });
