@@ -12,6 +12,10 @@ Pushed candidate: `ceae1e26165a4425e60f2d97c6c97764df86e8e4` on `origin/main`. [
 
 Initial CI caught Spanish-specific unit assertions using the changed default. Those fixtures now select Spanish explicitly; the full client suite passes (562 tests). Android installation assertions use the English catalogue to verify the new default. Superseded release workflow 43777976902 was cancelled before packaging; Pages 43777959496 failed its language-dependent unit assertions and did not deploy. A corrected test-fixture candidate follows.
 
+Current candidate: `73005ff3c138ca04ec36ebd0c19cefc80a0d359d`, pushed to `origin/main`. [Pages 43778128447](https://github.com/Javpato/studyvillage/actions/runs/43778128447) and [Release 43778128787](https://github.com/Javpato/studyvillage/actions/runs/43778128787) queued. Full local `npm run check` passed: 562 client + 37 server tests, types, 2921 ES/EN/FR messages, production web and server builds. Local PWA cache: `studyvillage-2640532ae178d760`. Next: packaged/offline verification and production WebKit locally; CI complete Chromium/live/native gates.
+
+Follow-up review preserved immediate IndexedDB recovery for every linked-device gesture while serializing only network delivery/snapshots. Its focused browser regression now holds the first network response and verifies that both gestures are already recoverable from IndexedDB. Both companion browser cases pass. Release 43778128787 was cancelled before packaging to include this refinement. Packaged/offline checks pass in both Chromium and WebKit for the prior build; production WebKit's nine Pencil/mouse checks, including both every-frame slow-save checks, pass.
+
 ---
 
 # Verified web publication — 15 November 2026
